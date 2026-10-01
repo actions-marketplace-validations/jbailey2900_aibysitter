@@ -4,8 +4,10 @@ namespace Aibysitter.Rules;
 
 public sealed partial class RulesFile
 {
-    private RulesFile(IReadOnlyList<RulesLine> lines, IReadOnlyList<Section> sections, int? unclosedFenceLine)
+    private RulesFile(IReadOnlyList<RulesLine> lines, IReadOnlyList<Section> sections, int? unclosedFenceLine, Frontmatter? frontmatter, RulesFormat format)
     {
+        Frontmatter = frontmatter;
+        Format = format;
         Lines = lines;
         Sections = sections;
         UnclosedFenceLine = unclosedFenceLine;
@@ -21,7 +23,17 @@ public sealed partial class RulesFile
     /// <summary>Line of a code fence that is still open at end of file; null when every fence closes.</summary>
     public int? UnclosedFenceLine { get; }
 
-    public static RulesFile Parse(string text)
+    /// <summary>A leading <c>---</c> block, when present.</summary>
+    public Frontmatter? Frontmatter { get; }
+
+    /// <summary>Resolved format: never <see cref="RulesFormat.Auto"/>.</summary>
+    public RulesFormat Format { get; }
+
+    /// <summary>
+    /// Parses text as the given format. <see cref="RulesFormat.Auto"/> resolves to <see cref="RulesFormat.CursorMdc"/>
+    /// when frontmatter has a Cursor key, otherwise <see cref="RulesFormat.Markdown"/>.
+    /// </summary>
+    public static RulesFile Parse(string text, RulesFormat format = RulesFormat.Auto)
     {
         ArgumentNullException.ThrowIfNull(text);
 
@@ -41,7 +53,19 @@ public sealed partial class RulesFile
         var sectionLevel = 0;
         var sectionStart = 1;
 
-        for (var i = 0; i < count; i++)
+        var frontmatter = Frontmatter.TryRead(raw, count);
+        var first = 0;
+        if (frontmatter is not null)
+        {
+            for (; first < frontmatter.EndLine; first++)
+            {
+                lines.Add(new RulesLine(first + 1, raw[first], IsHeading: false, IsInCodeFence: false, IsFrontmatter: true));
+            }
+
+            sectionStart = frontmatter.EndLine + 1;
+        }
+
+        for (var i = first; i < count; i++)
         {
             var number = i + 1;
             var lineText = raw[i];
@@ -89,7 +113,12 @@ public sealed partial class RulesFile
             sections.Add(new Section(sectionHeading, sectionLevel, sectionStart, count));
         }
 
-        return new RulesFile(lines, sections, inFence ? fenceOpenLine : null);
+        if (format == RulesFormat.Auto)
+        {
+            format = frontmatter is not null && frontmatter.Keys.Any(RulesFormats.CursorKeys.Contains) ? RulesFormat.CursorMdc : RulesFormat.Markdown;
+        }
+
+        return new RulesFile(lines, sections, inFence ? fenceOpenLine : null, frontmatter, format);
     }
 
     /// <summary>A closing fence uses the opening character, is at least as long, and has nothing after it.</summary>

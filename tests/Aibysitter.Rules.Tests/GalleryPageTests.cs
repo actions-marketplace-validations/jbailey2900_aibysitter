@@ -19,7 +19,7 @@ public partial class GalleryPageTests(WebApplicationFactory<Program> factory)
         var html = await factory.CreateClient().GetStringAsync("/Gallery");
         var catalog = factory.Services.GetRequiredService<GalleryCatalog>();
 
-        Assert.Equal(8, EntryCount(html));
+        Assert.Equal(13, EntryCount(html));
         Assert.All(catalog.All, e => Assert.Contains($"href=\"/Gallery/{e.Id}\"", html));
     }
 
@@ -28,8 +28,9 @@ public partial class GalleryPageTests(WebApplicationFactory<Program> factory)
     {
         var html = await factory.CreateClient().GetStringAsync("/Gallery?category=Go");
 
-        Assert.Equal(1, EntryCount(html));
+        Assert.Equal(2, EntryCount(html));
         Assert.Contains("href=\"/Gallery/go-http-service\"", html);
+        Assert.Contains("href=\"/Gallery/go-http-service-gemini\"", html);
         Assert.Matches("<a[^>]*aria-current=\"page\"[^>]*>Go</a>|<a[^>]*href=\"/Gallery\\?category=Go\"[^>]*aria-current=\"page\"", html);
     }
 
@@ -38,7 +39,7 @@ public partial class GalleryPageTests(WebApplicationFactory<Program> factory)
     {
         var html = await factory.CreateClient().GetStringAsync("/Gallery?tag=C%23");
 
-        Assert.Equal(3, EntryCount(html));
+        Assert.Equal(4, EntryCount(html));
         Assert.Contains("Tagged <strong>C#</strong>", html);
     }
 

@@ -13,6 +13,10 @@
 <dl class="facts">
     <dt>File</dt>
     <dd>@e.FileName, @e.Lines.Count lines</dd>
+    <dt>Format</dt>
+    <dd>@e.FormatName</dd>
+    <dt>Save as</dt>
+    <dd><code>@e.InstallPath</code></dd>
     <dt>Category</dt>
     <dd><a asp-page="/Gallery/Index" asp-route-category="@e.Category">@e.Category</a></dd>
     <dt>Tags</dt>

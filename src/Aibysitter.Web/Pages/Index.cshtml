@@ -7,7 +7,7 @@
 
 <section class="hero">
     <h1>Lint the rules you give AI coding agents.</h1>
-    <p class="lede">Paste a CLAUDE.md or AGENTS.md. Get line-level findings and a score for the instructions your agent reads before it writes code.</p>
+    <p class="lede">Paste a CLAUDE.md, AGENTS.md, Cursor rule, Copilot instructions, GEMINI.md, or .windsurfrules. Get line-level findings and a score for the instructions your agent reads before it writes code.</p>
     <p class="actions">
         <a class="button primary" asp-page="/Lint">Lint a file</a>
         <a class="button" asp-page="/Lint" asp-route-sample="true">Open the sample</a>
@@ -52,7 +52,7 @@
 
 <section class="section">
     <h2>Example rules files</h2>
-    <p>Public-domain CLAUDE.md and AGENTS.md files for common stacks, each scored by the linter.</p>
+    <p>Public-domain rules files for common stacks and agents, each scored by the linter.</p>
     <ul class="marks">
         @foreach (var entry in Model.GalleryEntries)
         {

@@ -1,0 +1,9 @@
+{
+  "id": "python-fastapi-cursorrules",
+  "name": "Python FastAPI service, .cursorrules",
+  "description": "The FastAPI billing service rules as a legacy Cursor .cursorrules file: same content.",
+  "category": "Python",
+  "tags": ["Python", "FastAPI", "SQLAlchemy", "pytest", "uv", "Cursor"],
+  "file": ".cursorrules",
+  "license": "CC0-1.0"
+}

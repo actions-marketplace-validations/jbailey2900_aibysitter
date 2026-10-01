@@ -17,11 +17,11 @@ public sealed class LintEngine
 
     public IReadOnlyList<IRule> Rules { get; }
 
-    public IReadOnlyList<Finding> Lint(string text) => Lint(RulesFile.Parse(text));
+    public IReadOnlyList<Finding> Lint(string text, RulesFormat format = RulesFormat.Auto) => Lint(RulesFile.Parse(text, format));
 
     public IReadOnlyList<Finding> Lint(RulesFile file) => Analyze(file).Findings;
 
-    public LintResult Analyze(string text) => Analyze(RulesFile.Parse(text));
+    public LintResult Analyze(string text, RulesFormat format = RulesFormat.Auto) => Analyze(RulesFile.Parse(text, format));
 
     /// <summary>Runs every rule. Findings matched by an <c>aibysitter-disable</c> comment go to <see cref="LintResult.Suppressed"/>.</summary>
     public LintResult Analyze(RulesFile file)
@@ -36,8 +36,8 @@ public sealed class LintEngine
 
         var suppressed = all.Where(file.Suppressions.IsSuppressed).ToList();
         return suppressed.Count == 0
-            ? new LintResult(all, [])
-            : new LintResult(all.Where(f => !file.Suppressions.IsSuppressed(f)).ToList(), suppressed);
+            ? new LintResult(all, [], file.Format)
+            : new LintResult(all.Where(f => !file.Suppressions.IsSuppressed(f)).ToList(), suppressed, file.Format);
     }
 
     public LintScore Score(IReadOnlyList<Finding> findings) =>

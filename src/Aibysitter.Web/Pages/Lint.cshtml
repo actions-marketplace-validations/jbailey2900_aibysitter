@@ -1,5 +1,6 @@
 @page
 @model LintModel
+@using Aibysitter.Rules
 @{
     ViewData["Title"] = "Lint";
 }
@@ -7,12 +8,19 @@
 <h1>Lint a rules file</h1>
 
 <form method="post">
-    <label for="RulesText">CLAUDE.md / AGENTS.md content</label>
+    <label for="Format">Format</label>
+    <select asp-for="Format" asp-items="Model.FormatOptions"></select>
+    <label for="RulesText">Rules file content</label>
     <textarea asp-for="RulesText" rows="20" spellcheck="false"></textarea>
     <span asp-validation-for="RulesText" class="error"></span>
     <button type="submit">Lint</button>
     <a class="sample-link" asp-page="/Lint" asp-route-sample="true">Try a sample</a>
 </form>
+
+@if (Model.LintedFormat is { } linted)
+{
+    <p class="note">Linted as @RulesFormats.DisplayName(linted)@(Model.Format == RulesFormat.Auto ? " (detected)" : "").</p>
+}
 
 @if (Model.Score is not null)
 {
