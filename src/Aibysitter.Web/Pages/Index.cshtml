@@ -1,9 +1,57 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Lint the rules you give AI coding agents";
+    var demo = Model.Demo;
 }
 
-<h1>Aibysitter</h1>
-<p>Tooling for supervising AI coding agents.</p>
-<p><a asp-page="/Lint">Lint a rules file</a> — paste a CLAUDE.md or AGENTS.md and get line-level findings.</p>
+<section class="hero">
+    <h1>Lint the rules you give AI coding agents.</h1>
+    <p class="lede">Paste a CLAUDE.md or AGENTS.md. Get line-level findings and a score for the instructions your agent reads before it writes code.</p>
+    <p class="actions">
+        <a class="button primary" asp-page="/Lint">Lint a file</a>
+        <a class="button" asp-page="/Lint" asp-route-sample="true">Open the sample</a>
+    </p>
+</section>
+
+<figure class="terminal" aria-label="Example lint run">
+    <pre><code><span class="t-prompt">$</span> aibysitter lint @demo.FileName
+@foreach (var line in demo.Lines)
+{
+@:<span class="t-loc">@demo.FileName:@line.Line.ToString().PadRight(3)</span> <span class="t-sev t-@line.Severity.ToString().ToLowerInvariant()">@line.Severity.ToString().ToLowerInvariant().PadRight(7)</span> <span class="t-rule">@line.RuleId</span>  @line.Message
+}
+<span class="t-sum">@demo.Lines.Count findings, score @demo.Score.Value/100 (@demo.Score.Grade)</span>
+<span class="t-prompt">$</span> <span class="cursor" aria-hidden="true"></span></code></pre>
+    <figcaption>Output from the embedded sample, linted by the same engine as the <a asp-page="/Lint">lint page</a>.</figcaption>
+</figure>
+
+<section class="section">
+    <h2>What it checks</h2>
+    <div class="columns">
+        <div>
+            <h3>Rules files</h3>
+            <ul class="marks">
+                @foreach (var doc in Model.RuleDocs)
+                {
+                    <li><a asp-page="/Notes/Rule" asp-route-id="@doc.Id">@doc.Id</a> @doc.Summary</li>
+                }
+            </ul>
+        </div>
+        <div>
+            <h3>Pull requests</h3>
+            <ul class="marks">
+                @foreach (var check in Model.PullRequestChecks)
+                {
+                    <li><span class="id">@check.Id</span> @check.Title</li>
+                }
+            </ul>
+            <p class="note">Pull request checks run through the Aibysitter GitHub App, currently in testing.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <h2>How scoring works</h2>
+    <p>Every file starts at 100. Each error costs 10 points, each warning 4 and each info 1, and no single rule can cost more than 30. A is 90 and up; F is below 60. Code blocks are ignored.</p>
+    <p><a asp-page="/Notes/Index">Read the rules</a></p>
+</section>
