@@ -12,6 +12,9 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
 
     public Dictionary<string, string> Contents { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>File list at head; null simulates a truncated listing.</summary>
+    public List<string>? Paths { get; set; } = [];
+
     public long NextCheckRunId { get; set; } = 777;
 
     public Exception? ThrowOnCreate { get; set; }
@@ -44,6 +47,12 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
     {
         Calls.Enqueue($"content {path}");
         return Task.FromResult(Contents.GetValueOrDefault(path));
+    }
+
+    public Task<IReadOnlyList<string>?> GetFilePathsAsync(PullRequestRef pr, CancellationToken cancellationToken)
+    {
+        Calls.Enqueue("tree");
+        return Task.FromResult<IReadOnlyList<string>?>(Paths);
     }
 
     public Task CompleteCheckRunAsync(PullRequestRef pr, long checkRunId, CheckRunReport report, CancellationToken cancellationToken)

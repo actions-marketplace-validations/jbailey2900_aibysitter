@@ -18,7 +18,8 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         IReadOnlyList<IPullRequestCheck> checks,
         IReadOnlyList<ChangedFile> files,
         RepoConfig config,
-        IReadOnlyList<string> configErrors)
+        IReadOnlyList<string> configErrors,
+        IReadOnlyList<string>? notes = null)
     {
         ArgumentNullException.ThrowIfNull(review);
 
@@ -69,6 +70,15 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
             foreach (var f in onRemoved)
             {
                 summary.AppendLine($"- `{f.Path}`: {f.CheckId} {f.Message}");
+            }
+        }
+
+        if (notes is { Count: > 0 })
+        {
+            summary.AppendLine();
+            foreach (var note in notes)
+            {
+                summary.AppendLine($"- {note}");
             }
         }
 

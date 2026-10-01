@@ -12,7 +12,11 @@ public class IndexModel(LintEngine engine, PullRequestReviewer reviewer) : PageM
 
     public void OnGet()
     {
-        Rows = engine.Rules.Select(r => new RuleRow(RuleDocs.Find(r.Id)!, r.Severity)).ToList();
+        var missing = new Aibysitter.Rules.Rules.MissingIdentifiers();
+        Rows = engine.Rules.Select(r => new RuleRow(RuleDocs.Find(r.Id)!, r.Severity))
+            .Append(new RuleRow(RuleDocs.Find(missing.Id)!, missing.Severity))
+            .OrderBy(r => r.Doc.Id, StringComparer.Ordinal)
+            .ToList();
         CheckRows = reviewer.Checks.Select(c => new RuleRow(PullRequestCheckDocs.Find(c.Id)!, c.Severity)).ToList();
     }
 

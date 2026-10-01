@@ -15,7 +15,7 @@
             <tr>
                 <td><a asp-page="/Notes/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a></td>
                 <td>@row.Doc.Name</td>
-                <td>@row.Severity</td>
+                <td>@row.Severity@(row.Doc.AppOnly ? " (GitHub App only)" : "")</td>
                 <td>@row.Doc.Summary</td>
             </tr>
         }

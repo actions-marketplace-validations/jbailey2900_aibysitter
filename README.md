@@ -25,7 +25,7 @@ Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`
 | R014 | UnverifiableCrossReference | Info |
 | R015 | FrontmatterFields (Cursor .mdc only) | Warning |
 
-R006 (MissingIdentifiers) is reserved for a repo-aware mode.
+R006 (MissingIdentifiers, Warning) runs only in the GitHub App, through P014: it checks that paths, package scripts, make targets, and MSBuild targets a rules file names exist in the repository.
 
 Suppress a rule with an HTML comment on its own line: `<!-- aibysitter-disable R002 -->` (whole file) or `<!-- aibysitter-disable-next-line R002 -->` (next line). Suppressed findings are listed and not scored.
 
