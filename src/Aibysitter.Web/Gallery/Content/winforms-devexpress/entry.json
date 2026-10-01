@@ -1,0 +1,9 @@
+{
+  "id": "winforms-devexpress",
+  "name": "WinForms + DevExpress desktop app",
+  "description": "Windows desktop app on .NET 10 with DevExpress controls, a UI-free core library, and fixture-based CSV export tests.",
+  "category": ".NET",
+  "tags": ["C#", "WinForms", "DevExpress", "Desktop", "xUnit"],
+  "file": "CLAUDE.md",
+  "license": "CC0-1.0"
+}

@@ -1,0 +1,49 @@
+@page
+@model Aibysitter.Web.Pages.Gallery.IndexModel
+@{
+    ViewData["Title"] = "Rules gallery";
+}
+
+<h1>Rules gallery</h1>
+<p class="lede">Example CLAUDE.md and AGENTS.md files for common stacks, scored by the same linter as the <a asp-page="/Lint">lint page</a>. All of them are public domain (CC0): copy one into your repo and edit it.</p>
+
+<nav class="filters" aria-label="Filter examples">
+    <ul>
+        <li><a asp-page="/Gallery/Index" aria-current="@(Model.IsUnfiltered ? "page" : null)">All</a></li>
+        @foreach (var category in Model.Categories)
+        {
+            <li><a asp-page="/Gallery/Index" asp-route-category="@category" aria-current="@(Model.Category == category ? "page" : null)">@category</a></li>
+        }
+    </ul>
+    @if (Model.Tag is not null)
+    {
+        <p class="filter-note">Tagged <strong>@Model.Tag</strong>. <a asp-page="/Gallery/Index">Clear filter</a></p>
+    }
+</nav>
+
+@if (Model.Entries.Count == 0)
+{
+    <p class="empty">No examples match that filter. <a asp-page="/Gallery/Index">Show all examples</a></p>
+}
+else
+{
+    <ul class="gallery">
+        @foreach (var entry in Model.Entries)
+        {
+            <li class="entry">
+                <h2><a asp-page="/Gallery/Entry" asp-route-id="@entry.Id">@entry.Name</a></h2>
+                <p class="entry-meta">
+                    <span class="grade grade-@entry.Score.Grade.ToLowerInvariant()">@entry.Score.Grade @entry.Score.Value</span>
+                    <span>@entry.FileName, @entry.Lines.Count lines</span>
+                </p>
+                <p>@entry.Description</p>
+                <ul class="tags" aria-label="Tags">
+                    @foreach (var tag in entry.Tags)
+                    {
+                        <li><a asp-page="/Gallery/Index" asp-route-tag="@tag">@tag</a></li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}

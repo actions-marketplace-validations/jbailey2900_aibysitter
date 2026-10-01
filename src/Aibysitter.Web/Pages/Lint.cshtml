@@ -16,34 +16,7 @@
 
 @if (Model.Score is not null)
 {
-    <section class="score grade-@Model.Score.Grade.ToLowerInvariant()">
-        <h2>Score</h2>
-        <p class="score-value">@Model.Score.Value / 100 — @Model.Score.Grade</p>
-        @if (Model.Score.DeductionsByRule.Count == 0)
-        {
-            <p>No deductions.</p>
-        }
-        else
-        {
-            <table>
-                <thead>
-                    <tr>
-                        <th>Rule</th>
-                        <th>Deduction</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var (ruleId, points) in Model.Score.DeductionsByRule)
-                    {
-                        <tr>
-                            <td><a asp-page="/Notes/Rule" asp-route-id="@ruleId">@ruleId</a></td>
-                            <td>−@points</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-    </section>
+    <partial name="_ScorePanel" model="Model.Score" />
 }
 
 @if (Model.Results is not null)

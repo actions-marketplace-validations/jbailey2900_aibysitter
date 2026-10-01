@@ -1,0 +1,9 @@
+{
+  "id": "flawed-example",
+  "name": "Flawed example",
+  "description": "Test-only entry with findings.",
+  "category": "Test",
+  "tags": ["Test"],
+  "file": "CLAUDE.md",
+  "license": "CC0-1.0"
+}

@@ -1,0 +1,30 @@
+@model Aibysitter.Rules.LintScore
+
+<section class="score grade-@Model.Grade.ToLowerInvariant()">
+    <h2>Score</h2>
+    <p class="score-value">@Model.Value / 100 — @Model.Grade</p>
+    @if (Model.DeductionsByRule.Count == 0)
+    {
+        <p>No deductions.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Rule</th>
+                    <th>Deduction</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (ruleId, points) in Model.DeductionsByRule)
+                {
+                    <tr>
+                        <td><a asp-page="/Notes/Rule" asp-route-id="@ruleId">@ruleId</a></td>
+                        <td>−@points</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>

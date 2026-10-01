@@ -1,0 +1,54 @@
+@page "/Gallery/{id}"
+@model Aibysitter.Web.Pages.Gallery.EntryModel
+@{
+    var e = Model.Entry;
+    ViewData["Title"] = e.Name;
+}
+
+<p><a asp-page="/Gallery/Index">All examples</a></p>
+
+<h1>@e.Name</h1>
+<p class="lede">@e.Description</p>
+
+<dl class="facts">
+    <dt>File</dt>
+    <dd>@e.FileName, @e.Lines.Count lines</dd>
+    <dt>Category</dt>
+    <dd><a asp-page="/Gallery/Index" asp-route-category="@e.Category">@e.Category</a></dd>
+    <dt>Tags</dt>
+    <dd>
+        <ul class="tags">
+            @foreach (var tag in e.Tags)
+            {
+                <li><a asp-page="/Gallery/Index" asp-route-tag="@tag">@tag</a></li>
+            }
+        </ul>
+    </dd>
+    <dt>License</dt>
+    <dd><a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 1.0</a>, public domain. No attribution needed.</dd>
+</dl>
+
+<p class="actions">
+    <a class="button primary" href="@e.DownloadPath" download="@e.FileName">Download @e.FileName</a>
+    <a class="button" asp-page="/Lint" asp-route-gallery="@e.Id">Lint a copy</a>
+</p>
+
+<partial name="_ScorePanel" model="e.Score" />
+
+<h2>@e.FileName</h2>
+<ol class="file" aria-label="@e.FileName with line numbers">
+    @for (var i = 0; i < e.Lines.Count; i++)
+    {
+        var number = i + 1;
+        var lineFindings = Model.FindingsByLine.GetValueOrDefault(number);
+        <li id="L@(number)"><code>@e.Lines[i]</code>
+            @if (lineFindings is not null)
+            {
+                foreach (var f in lineFindings)
+                {
+                    <p class="file-note sev-@f.Severity.ToString().ToLowerInvariant()"><a asp-page="/Notes/Rule" asp-route-id="@f.Finding.RuleId">@f.Finding.RuleId</a> @f.Finding.Message</p>
+                }
+            }
+        </li>
+    }
+</ol>
