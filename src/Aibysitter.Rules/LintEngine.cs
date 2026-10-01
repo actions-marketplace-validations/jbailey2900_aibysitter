@@ -30,6 +30,9 @@ public sealed class LintEngine
             .ToList();
     }
 
+    public LintScore Score(IReadOnlyList<Finding> findings) =>
+        Scorer.Score(findings, Rules.ToDictionary(r => r.Id, r => r.Severity, StringComparer.Ordinal));
+
     public static IReadOnlyList<IRule> DiscoverRules() =>
         typeof(IRule).Assembly
             .GetTypes()

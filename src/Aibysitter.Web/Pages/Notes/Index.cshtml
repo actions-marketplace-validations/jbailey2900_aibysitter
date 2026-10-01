@@ -12,16 +12,23 @@
             <th>Id</th>
             <th>Rule</th>
             <th>Severity</th>
-            <th>Flags</th>
+            <th>Summary</th>
         </tr>
     </thead>
     <tbody>
-        <tr><td>R001</td><td>RationaleProse</td><td>Info</td><td>Explanations in instruction text: "because", "so that", "in order to", "the reason", "this ensures", "this helps", "which means".</td></tr>
-        <tr><td>R002</td><td>VagueVerbs</td><td>Warning</td><td>Unmeasurable wording: "handle", "manage", "deal with", "ensure", "improve", "optimize", "clean up", "properly", "appropriate(ly)", "as needed".</td></tr>
-        <tr><td>R003</td><td>ContradictoryModals</td><td>Error</td><td>An instruction both required (always / must) and forbidden (never / must not / do not).</td></tr>
-        <tr><td>R004</td><td>FileLength</td><td>Warning</td><td>Files over 200 lines.</td></tr>
-        <tr><td>R005</td><td>DuplicateLines</td><td>Warning</td><td>Repeated lines, ignoring case, whitespace, and list markers.</td></tr>
+        @foreach (var row in Model.Rows)
+        {
+            <tr>
+                <td><a asp-page="/Notes/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a></td>
+                <td>@row.Doc.Name</td>
+                <td>@row.Severity</td>
+                <td>@row.Doc.Summary</td>
+            </tr>
+        }
     </tbody>
 </table>
+
+<h2>Scoring</h2>
+<p>Each file starts at @Aibysitter.Rules.Scorer.MaxScore. Each finding deducts by severity: Error @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Error), Warning @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Warning), Info @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Info). Deductions per rule are capped at @Aibysitter.Rules.Scorer.PerRuleCap. Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below 60.</p>
 
 <p>Fenced code blocks are excluded from all rules. Headings are excluded from R001–R003.</p>

@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Samples\sample-rules.md" LogicalName="Aibysitter.Web.Samples.sample-rules.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Aibysitter.Rules\Aibysitter.Rules.csproj" />
   </ItemGroup>
 

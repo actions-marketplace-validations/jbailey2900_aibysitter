@@ -11,7 +11,40 @@
     <textarea asp-for="RulesText" rows="20" spellcheck="false"></textarea>
     <span asp-validation-for="RulesText" class="error"></span>
     <button type="submit">Lint</button>
+    <a class="sample-link" asp-page="/Lint" asp-route-sample="true">Try a sample</a>
 </form>
+
+@if (Model.Score is not null)
+{
+    <section class="score grade-@Model.Score.Grade.ToLowerInvariant()">
+        <h2>Score</h2>
+        <p class="score-value">@Model.Score.Value / 100 — @Model.Score.Grade</p>
+        @if (Model.Score.DeductionsByRule.Count == 0)
+        {
+            <p>No deductions.</p>
+        }
+        else
+        {
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rule</th>
+                        <th>Deduction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (ruleId, points) in Model.Score.DeductionsByRule)
+                    {
+                        <tr>
+                            <td><a asp-page="/Notes/Rule" asp-route-id="@ruleId">@ruleId</a></td>
+                            <td>−@points</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+}
 
 @if (Model.Results is not null)
 {
@@ -37,7 +70,7 @@
                 {
                     <tr class="sev-@row.Severity.ToString().ToLowerInvariant()">
                         <td>@row.Finding.Line</td>
-                        <td>@row.Finding.RuleId @row.Title</td>
+                        <td><a asp-page="/Notes/Rule" asp-route-id="@row.Finding.RuleId">@row.Finding.RuleId</a> @row.Title</td>
                         <td>@row.Severity</td>
                         <td>@row.Finding.Message</td>
                         <td>@row.Finding.FixHint</td>
