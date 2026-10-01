@@ -38,6 +38,10 @@ Reviews pull requests and posts a check named `Aibysitter`, with an annotation o
 | P002 | TodoStubs | Warning |
 | P003 | AssertNothingTests (C# only) | Error |
 | P004 | OutOfScopeFiles | Error |
+| P005 | SecretsInDiff | Error |
+| P006 | SkippedTests | Error |
+| P007 | SuppressedDiagnostics | Warning |
+| P013 | CommittedArtifacts | Error |
 
 Optional repo config, `.github/aibysitter.json`, read from the pull request's head commit:
 

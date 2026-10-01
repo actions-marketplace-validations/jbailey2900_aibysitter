@@ -32,6 +32,34 @@ public static class PullRequestCheckDocs
             "Changed, renamed, or removed files whose path matches none of the \"scope\" globs. Runs only when \"scope\" is set.",
             "scope:   src/**, tests/**\nchanged: docs/notes.txt",
             "scope:   src/**, tests/**\nchanged: src/Orders/OrderService.cs"),
+        new(
+            "P005",
+            "SecretsInDiff",
+            "A change adds a credential.",
+            "Added lines in any file matching the R009 patterns: private key headers; AWS, GitHub, Slack, Anthropic, OpenAI, Stripe live and Google API keys; JSON Web Tokens; Password= and Pwd= values; credentials in URLs other than localhost. Placeholder values are ignored. Findings show a redacted prefix only.",
+            "\"ConnectionStrings\": { \"Default\": \"Server=db;User Id=app;Password=Hunter2Prod;\" }",
+            "\"ConnectionStrings\": { \"Default\": \"\" }"),
+        new(
+            "P006",
+            "SkippedTests",
+            "A change skips a test instead of fixing it.",
+            "Added lines in code files: xUnit \"Skip =\"; NUnit and MSTest [Ignore]; it / test / describe .skip, xit, xtest, xdescribe; @pytest.mark.skip, pytest.skip(), @unittest.skip; Go t.Skip(); Rust #[ignore]; JUnit @Disabled and @Ignore. Conditional skips (skipif, skipIf, skipUnless) are not flagged.",
+            "[Fact(Skip = \"flaky\")]\npublic void Total_IncludesTax()",
+            "[Fact]\npublic void Total_IncludesTax()"),
+        new(
+            "P007",
+            "SuppressedDiagnostics",
+            "A change silences a compiler or linter warning.",
+            "Added lines in code, config, and .editorconfig files: #pragma warning disable, [SuppressMessage], ReSharper disable, <NoWarn>, dotnet_diagnostic.*.severity = none; eslint-disable, @ts-ignore, @ts-nocheck; # noqa, # type: ignore, # pylint: disable, # pyright: ignore; //nolint; #[allow(...)]; @SuppressWarnings.",
+            "#pragma warning disable CS8602\nvar name = customer.Name.Trim();",
+            "var name = customer?.Name?.Trim() ?? string.Empty;"),
+        new(
+            "P013",
+            "CommittedArtifacts",
+            "A change adds build output, dependencies, caches, or an environment file.",
+            "Added, renamed, or copied files under node_modules/, bin/Debug, bin/Release, obj/Debug, obj/Release, obj restore files, __pycache__/, *.pyc, and .env or .env.* (except .env.example, .env.sample, .env.template, .env.dist). A bin/ folder of scripts is not flagged.",
+            "added: src/Api/bin/Debug/net10.0/Api.dll\nadded: .env",
+            "added: .env.example\n.gitignore: bin/, obj/, .env"),
     ];
 
     private static readonly Dictionary<string, RuleDoc> ById = All.ToDictionary(d => d.Id, StringComparer.OrdinalIgnoreCase);

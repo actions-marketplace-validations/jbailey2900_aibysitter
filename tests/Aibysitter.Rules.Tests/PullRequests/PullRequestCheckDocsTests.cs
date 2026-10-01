@@ -23,6 +23,9 @@ public class PullRequestCheckDocsTests
     [InlineData("P001")]
     [InlineData("P002")]
     [InlineData("P003")]
+    [InlineData("P005")]
+    [InlineData("P006")]
+    [InlineData("P007")]
     public void CodeExamples_BehaveAsDocumented(string id)
     {
         var doc = PullRequestCheckDocs.Find(id)!;
