@@ -1,0 +1,96 @@
+using System.Text.Json;
+
+namespace Aibysitter.Rules.PullRequests;
+
+public enum ConclusionMode
+{
+    Advisory,
+    FailOnErrors,
+}
+
+/// <summary>Parsed <c>.github/aibysitter.json</c>.</summary>
+public sealed record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMode Conclusion)
+{
+    public const string FilePath = ".github/aibysitter.json";
+
+    public static RepoConfig Default { get; } = new([], ConclusionMode.Advisory);
+
+    public bool HasScope => Scope.Count > 0;
+
+    public bool InScope(string path) => Scope.Any(g => g.IsMatch(path));
+
+    /// <summary>Parses config JSON. Invalid parts fall back to defaults and are reported in Errors.</summary>
+    public static (RepoConfig Config, IReadOnlyList<string> Errors) Parse(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return (Default, []);
+        }
+
+        var errors = new List<string>();
+        JsonDocument doc;
+        try
+        {
+            doc = JsonDocument.Parse(json, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+        }
+        catch (JsonException ex)
+        {
+            return (Default, [$"{FilePath}: invalid JSON ({ex.Message})"]);
+        }
+
+        using (doc)
+        {
+            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return (Default, [$"{FilePath}: root must be an object"]);
+            }
+
+            var scope = new List<Glob>();
+            var conclusion = ConclusionMode.Advisory;
+
+            foreach (var property in doc.RootElement.EnumerateObject())
+            {
+                switch (property.Name)
+                {
+                    case "scope" when property.Value.ValueKind == JsonValueKind.Array:
+                        foreach (var item in property.Value.EnumerateArray())
+                        {
+                            if (item.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(item.GetString()))
+                            {
+                                scope.Add(new Glob(item.GetString()!));
+                            }
+                            else
+                            {
+                                errors.Add($"{FilePath}: \"scope\" entries must be non-empty strings");
+                            }
+                        }
+
+                        break;
+                    case "scope":
+                        errors.Add($"{FilePath}: \"scope\" must be an array of path globs");
+                        break;
+                    case "conclusion":
+                        switch (property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() : null)
+                        {
+                            case "advisory":
+                                conclusion = ConclusionMode.Advisory;
+                                break;
+                            case "fail-on-errors":
+                                conclusion = ConclusionMode.FailOnErrors;
+                                break;
+                            default:
+                                errors.Add($"{FilePath}: \"conclusion\" must be \"advisory\" or \"fail-on-errors\"");
+                                break;
+                        }
+
+                        break;
+                    default:
+                        errors.Add($"{FilePath}: unknown key \"{property.Name}\"");
+                        break;
+                }
+            }
+
+            return (new RepoConfig(scope, conclusion), errors);
+        }
+    }
+}

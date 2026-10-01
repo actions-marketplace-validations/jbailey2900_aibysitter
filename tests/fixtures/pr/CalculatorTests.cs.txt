@@ -1,0 +1,65 @@
+using Xunit;
+
+namespace Demo.Tests;
+
+public class CalculatorTests
+{
+    [Fact]
+    public void Add_ReturnsSum()
+    {
+        var result = new Calculator().Add(2, 3);
+        Assert.Equal(5, result);
+    }
+
+    [Fact]
+    public void Add_DoesNotThrow()
+    {
+        var result = new Calculator().Add(2, 3);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void Square_Runs(int x)
+    {
+        new Calculator().Square(x);
+    }
+
+    [Fact]
+    public void Divide_ByZero_Throws() =>
+        Assert.Throws<DivideByZeroException>(() => new Calculator().Divide(1, 0));
+
+    [Fact]
+    public void Empty() { }
+
+    [Fact]
+    public void UsesFluent()
+    {
+        new Calculator().Add(1, 1).Should().Be(2);
+    }
+
+    [Fact]
+    public void UsesHelper()
+    {
+        AssertValid(new Calculator());
+    }
+
+    [Fact(Skip = "flaky")]
+    public void Skipped()
+    {
+    }
+
+    [Fact]
+    public void BraceInString_NoAssert()
+    {
+        var s = "{ not a block } http://example.com";
+    }
+
+    [Fact]
+    public async Task<int> AsyncGeneric_NoAssert()
+    {
+        return await Task.FromResult(1); // Assert.Equal in a comment does not count
+    }
+
+    private static void AssertValid(Calculator c) => Assert.NotNull(c);
+}

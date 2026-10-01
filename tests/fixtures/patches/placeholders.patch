@@ -1,0 +1,11 @@
+@@ -10,6 +10,9 @@ public class OrderService
+     public Order Get(int id)
+     {
+-        return _repo.Find(id);
++        var key = "YOUR_API_KEY";
++        var user = ::CURRENT_USER_ID::;
++        // added comment with an ::OLD:: placeholder is flagged too
++        return _repo.Find(id, key, user);
+     }
+ 
+     // ::CONTEXT_ONLY:: should not be flagged
