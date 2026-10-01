@@ -41,6 +41,11 @@ Reviews pull requests and posts a check named `Aibysitter`, with an annotation o
 | P005 | SecretsInDiff | Error |
 | P006 | SkippedTests | Error |
 | P007 | SuppressedDiagnostics | Warning |
+| P008 | DeletedTests (test files) | Error |
+| P009 | SwallowedExceptions | Warning |
+| P010 | NewDependencies | Warning |
+| P011 | CiConfigEdited | Info |
+| P012 | DebugLeftovers | Info |
 | P013 | CommittedArtifacts | Error |
 
 Optional repo config, `.github/aibysitter.json`, read from the pull request's head commit:
