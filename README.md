@@ -68,7 +68,7 @@ Optional repo config, `.github/aibysitter.json`, read from the pull request's he
 - `conclusion`: `advisory` (default) reports findings as neutral. `fail-on-errors` fails the check on any Error finding.
 - `disable`: check IDs to skip, and rule IDs (R001–R015) to skip inside P014.
 
-Install: coming soon. Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
+Install: [docs/installing-on-your-repos.md](docs/installing-on-your-repos.md). The App is private until launch. Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
 
 ## Gallery
 
