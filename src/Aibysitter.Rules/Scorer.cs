@@ -5,6 +5,15 @@ public static class Scorer
     public const int MaxScore = 100;
     public const int PerRuleCap = 30;
 
+    /// <summary>Total deduction cap per severity, applied after <see cref="PerRuleCap"/>.</summary>
+    public static int SeverityCap(Severity severity) => severity switch
+    {
+        Severity.Error => 40,
+        Severity.Warning => 30,
+        Severity.Info => 10,
+        _ => throw new ArgumentOutOfRangeException(nameof(severity), severity, null),
+    };
+
     public static int Weight(Severity severity) => severity switch
     {
         Severity.Error => 10,
@@ -35,7 +44,14 @@ public static class Scorer
                 g => Math.Min(PerRuleCap, g.Count() * Weight(severityByRule[g.Key])),
                 StringComparer.Ordinal);
 
-        var value = Math.Max(0, MaxScore - deductions.Values.Sum());
-        return new LintScore(value, Grade(value), deductions);
+        var bySeverity = deductions
+            .GroupBy(d => severityByRule[d.Key])
+            .OrderBy(g => g.Key)
+            .ToDictionary(
+                g => g.Key,
+                g => new SeverityDeduction(g.Sum(d => d.Value), Math.Min(SeverityCap(g.Key), g.Sum(d => d.Value))));
+
+        var value = Math.Max(0, MaxScore - bySeverity.Values.Sum(d => d.Applied));
+        return new LintScore(value, Grade(value), deductions, bySeverity);
     }
 }

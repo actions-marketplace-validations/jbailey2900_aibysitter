@@ -12,7 +12,7 @@ public sealed class DuplicateLines : IRule
 
         var firstSeen = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        foreach (var line in file.Lines.Where(l => !l.IsBlank && !l.IsInCodeFence))
+        foreach (var line in file.Lines.Where(l => !l.IsBlank && !l.IsInCodeFence && !l.IsDirective))
         {
             var key = TextNormalizer.Normalize(line.Text);
             if (key.Length == 0)

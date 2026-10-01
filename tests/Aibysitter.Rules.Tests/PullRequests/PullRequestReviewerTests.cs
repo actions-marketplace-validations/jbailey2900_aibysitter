@@ -62,4 +62,23 @@ public class PullRequestReviewerTests
         Assert.Equal("P002", Assert.Single(review.Findings).CheckId);
         Assert.Equal(ReviewConclusion.Neutral, review.Conclusion);
     }
+
+    [Fact]
+    public void DisabledCheck_DoesNotRun()
+    {
+        var (config, _) = RepoConfig.Parse("""{ "disable": ["P002"], "conclusion": "fail-on-errors" }""");
+
+        var review = reviewer.Review(Context(config, Added("src/A.cs", "// TODO later", "var k = ::KEY::;")));
+
+        Assert.Equal("P001", Assert.Single(review.Findings).CheckId);
+        Assert.Equal(ReviewConclusion.Failure, review.Conclusion);
+    }
+
+    [Fact]
+    public void AllFindingsDisabled_Succeeds()
+    {
+        var (config, _) = RepoConfig.Parse("""{ "disable": ["P002"] }""");
+
+        Assert.Equal(ReviewConclusion.Success, reviewer.Review(Context(config, Added("src/A.cs", "// TODO later"))).Conclusion);
+    }
 }

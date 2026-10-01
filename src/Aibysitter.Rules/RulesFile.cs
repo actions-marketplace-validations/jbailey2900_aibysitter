@@ -8,11 +8,14 @@ public sealed partial class RulesFile
     {
         Lines = lines;
         Sections = sections;
+        Suppressions = Suppressions.From(lines);
     }
 
     public IReadOnlyList<RulesLine> Lines { get; }
 
     public IReadOnlyList<Section> Sections { get; }
+
+    public Suppressions Suppressions { get; }
 
     public static RulesFile Parse(string text)
     {

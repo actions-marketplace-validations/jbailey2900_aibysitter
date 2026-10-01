@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Aibysitter.Rules;
 using Aibysitter.Rules.PullRequests;
@@ -50,7 +51,7 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         summary.AppendLine("|---|---|---|");
         foreach (var check in checks)
         {
-            summary.AppendLine($"| {check.Id} {check.Title} | {check.Severity} | {review.Findings.Count(f => f.CheckId == check.Id)} |");
+            summary.AppendLine($"| {check.Id} {check.Title} | {check.Severity} | {(config.IsEnabled(check.Id) ? review.Findings.Count(f => f.CheckId == check.Id).ToString(CultureInfo.InvariantCulture) : "disabled")} |");
         }
 
         var onRemoved = review.Findings.Where(f => removed.Contains(f.Path)).ToList();

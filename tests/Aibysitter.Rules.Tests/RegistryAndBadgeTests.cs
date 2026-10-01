@@ -65,7 +65,7 @@ public class RegistryAndBadgeTests(WebApplicationFactory<Program> factory)
     [InlineData(10, "F", "#b3261e")]
     public void ScoreBadge_ColorsByGrade_AndWidensWithText(int value, string grade, string color)
     {
-        var svg = XDocument.Parse(ScoreBadge.Render(new LintScore(value, grade, new Dictionary<string, int>()))).Root!;
+        var svg = XDocument.Parse(ScoreBadge.Render(new LintScore(value, grade, new Dictionary<string, int>(), new Dictionary<Severity, SeverityDeduction>()))).Root!;
 
         Assert.Contains(svg.Descendants(), e => e.Name.LocalName == "rect" && (string?)e.Attribute("fill") == color);
         Assert.True(int.Parse((string)svg.Attribute("width")!) > 90);

@@ -50,13 +50,52 @@ public class ScorerTests
     }
 
     [Fact]
-    public void Score_FloorsAtZero()
+    public void EverySeverityCapped_ScoresMinimum20()
     {
         var score = Scorer.Score([.. Many("E", 5), .. Many("W", 10), .. Many("I", 40), .. Many("X", 5)],
             new Dictionary<string, Severity>(Severities) { ["X"] = Severity.Error });
 
-        Assert.Equal(0, score.Value);
+        Assert.Equal(20, score.Value);
         Assert.Equal("F", score.Grade);
+    }
+
+    [Theory]
+    [InlineData(Severity.Error, 40)]
+    [InlineData(Severity.Warning, 30)]
+    [InlineData(Severity.Info, 10)]
+    public void SeverityCaps(Severity severity, int cap)
+    {
+        Assert.Equal(cap, Scorer.SeverityCap(severity));
+    }
+
+    [Fact]
+    public void TwoErrorRules_CappedAt40Total()
+    {
+        var score = Scorer.Score([.. Many("E", 3), .. Many("X", 3)],
+            new Dictionary<string, Severity>(Severities) { ["X"] = Severity.Error });
+
+        Assert.Equal(new SeverityDeduction(60, 40), score.DeductionsBySeverity[Severity.Error]);
+        Assert.True(score.DeductionsBySeverity[Severity.Error].IsCapped);
+        Assert.Equal(60, score.Value);
+    }
+
+    [Fact]
+    public void InfoCappedAt10_PerRuleCapStillApplies()
+    {
+        var score = Scorer.Score(Many("I", 40), Severities);
+
+        Assert.Equal(30, score.DeductionsByRule["I"]);
+        Assert.Equal(new SeverityDeduction(30, 10), score.DeductionsBySeverity[Severity.Info]);
+        Assert.Equal(90, score.Value);
+    }
+
+    [Fact]
+    public void UnderCaps_SeverityTotalsMatchRuleSums()
+    {
+        var score = Scorer.Score([.. Many("E", 2), .. Many("W", 3), .. Many("I", 4)], Severities);
+
+        Assert.All(score.DeductionsBySeverity.Values, d => Assert.False(d.IsCapped));
+        Assert.Equal(score.DeductionsByRule.Values.Sum(), score.DeductionsBySeverity.Values.Sum(d => d.Applied));
     }
 
     [Theory]

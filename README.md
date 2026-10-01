@@ -18,7 +18,9 @@ Lints `CLAUDE.md` / `AGENTS.md` files. Paste a file at [aibysitting.net/Lint](ht
 
 R006 (MissingIdentifiers) is reserved for a repo-aware mode.
 
-Score: 100, minus 10 per Error, 4 per Warning, 1 per Info. Each rule deducts at most 30. Floor 0. Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below.
+Suppress a rule with an HTML comment on its own line: `<!-- aibysitter-disable R002 -->` (whole file) or `<!-- aibysitter-disable-next-line R002 -->` (next line). Suppressed findings are listed and not scored.
+
+Score: 100, minus 10 per Error, 4 per Warning, 1 per Info. Each rule deducts at most 30. Total deductions per severity are capped: Error 40, Warning 30, Info 10. Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below.
 
 Rule notes: [aibysitting.net/Notes](https://aibysitting.net/Notes).
 
@@ -38,12 +40,14 @@ Optional repo config, `.github/aibysitter.json`, read from the pull request's he
 ```json
 {
   "scope": ["src/**", "tests/**"],
-  "conclusion": "fail-on-errors"
+  "conclusion": "fail-on-errors",
+  "disable": ["P002"]
 }
 ```
 
 - `scope`: path globs from the repo root. Turns on P004. Not set: P004 is off.
 - `conclusion`: `advisory` (default) reports findings as neutral. `fail-on-errors` fails the check on any Error finding.
+- `disable`: check IDs to skip.
 
 Install: coming soon. Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
 
