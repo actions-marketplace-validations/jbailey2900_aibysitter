@@ -1,0 +1,86 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: [self-hosted, windows, "${{ vars.RUNNER_LABEL }}"]
+    env:
+      SITE_PATH: ${{ vars.SITE_PATH }}
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - name: Check variables
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:SITE_PATH)) { throw "Repository variable SITE_PATH is not set." }
+          if (-not (Test-Path -LiteralPath $env:SITE_PATH -PathType Container)) { throw "SITE_PATH '$env:SITE_PATH' does not exist." }
+          $sdks = & dotnet --list-sdks 2>$null
+          if (-not ($sdks -match '^10\.0\.')) { throw ".NET 10 SDK not found on runner. Installed SDKs: $($sdks -join '; ')" }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Publish
+        run: |
+          $publish = Join-Path $env:RUNNER_TEMP 'aibysitter-publish'
+          if (Test-Path -LiteralPath $publish) { Remove-Item -LiteralPath $publish -Recurse -Force }
+          dotnet publish src/Aibysitter.Web/Aibysitter.Web.csproj -p:PublishProfile=FolderProfile -o $publish
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Take site offline
+        run: |
+          Set-Content -LiteralPath (Join-Path $env:SITE_PATH 'app_offline.htm') -Encoding utf8 -Value '<!DOCTYPE html><html><head><title>Aibysitter</title></head><body><p>Deploying. Back in a moment.</p></body></html>'
+          Start-Sleep -Seconds 5
+
+      - name: Mirror publish output
+        run: |
+          $publish = Join-Path $env:RUNNER_TEMP 'aibysitter-publish'
+          robocopy $publish $env:SITE_PATH /MIR /XF app_offline.htm /XD logs /R:5 /W:2 /NP /NFL /NDL
+          $code = $LASTEXITCODE
+          Write-Host "robocopy exit code: $code"
+          if ($code -ge 8) { exit $code }
+          exit 0
+
+      - name: Bring site online
+        run: |
+          $offline = Join-Path $env:SITE_PATH 'app_offline.htm'
+          if (Test-Path -LiteralPath $offline) { Remove-Item -LiteralPath $offline -Force }
+
+      - name: Health check
+        run: |
+          for ($attempt = 1; $attempt -le 5; $attempt++) {
+            $body = & curl.exe --silent --show-error --insecure --max-time 30 --resolve aibysitting.net:443:127.0.0.1 https://aibysitting.net/health
+            if ($LASTEXITCODE -eq 0 -and $body -eq 'Healthy') {
+              Write-Host "Health check passed on attempt $attempt."
+              exit 0
+            }
+            Write-Host "Attempt ${attempt}: curl exit $LASTEXITCODE, body '$body'"
+            Start-Sleep -Seconds 5
+          }
+          throw "Health check failed: /health did not return 'Healthy'."
+
+      - name: Report site left offline
+        if: failure()
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:SITE_PATH)) { exit 0 }
+          $offline = Join-Path $env:SITE_PATH 'app_offline.htm'
+          if (Test-Path -LiteralPath $offline) {
+            Write-Host "::error title=Site left offline::Deploy failed after app_offline.htm was written. $offline is still in place and the site is serving the offline page. Fix the cause and re-run this workflow."
+          }
