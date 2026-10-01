@@ -31,7 +31,7 @@ WinForms desktop app on .NET 10 (Windows only) using DevExpress WinForms control
 
 ## DevExpress
 - The DevExpress version is pinned in `Directory.Packages.props`. Feature PRs do not change it.
-- License keys stay on developer machines. Do not commit `DevExpress_License.txt` or any key.
+- License keys stay on developer machines. Do not commit `licenses.licx` or any key.
 
 ## Tests
 - Every export rule change adds a Core test with a fixture CSV in `tests/PayrollExporter.Core.Tests/Fixtures`.
