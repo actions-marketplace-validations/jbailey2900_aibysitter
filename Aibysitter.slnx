@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Aibysitter.Rules/Aibysitter.Rules.csproj" />
+    <Project Path="src/Aibysitter.Web/Aibysitter.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Aibysitter.Rules.Tests/Aibysitter.Rules.Tests.csproj" />
+  </Folder>
+</Solution>

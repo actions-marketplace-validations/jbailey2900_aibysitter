@@ -1,0 +1,49 @@
+@page
+@model LintModel
+@{
+    ViewData["Title"] = "Lint";
+}
+
+<h1>Lint a rules file</h1>
+
+<form method="post">
+    <label for="RulesText">CLAUDE.md / AGENTS.md content</label>
+    <textarea asp-for="RulesText" rows="20" spellcheck="false"></textarea>
+    <span asp-validation-for="RulesText" class="error"></span>
+    <button type="submit">Lint</button>
+</form>
+
+@if (Model.Results is not null)
+{
+    <h2>Findings (@Model.Results.Count)</h2>
+    @if (Model.Results.Count == 0)
+    {
+        <p>No findings.</p>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Line</th>
+                    <th>Rule</th>
+                    <th>Severity</th>
+                    <th>Message</th>
+                    <th>Fix</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Results)
+                {
+                    <tr class="sev-@row.Severity.ToString().ToLowerInvariant()">
+                        <td>@row.Finding.Line</td>
+                        <td>@row.Finding.RuleId @row.Title</td>
+                        <td>@row.Severity</td>
+                        <td>@row.Finding.Message</td>
+                        <td>@row.Finding.FixHint</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
