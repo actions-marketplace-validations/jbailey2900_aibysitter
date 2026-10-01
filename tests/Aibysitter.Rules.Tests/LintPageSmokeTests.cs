@@ -23,10 +23,10 @@ public partial class LintPageSmokeTests(WebApplicationFactory<Program> factory)
         });
 
         var response = await client.PostAsync("/Lint", content);
-        response.EnsureSuccessStatusCode();
         var html = await response.Content.ReadAsStringAsync();
 
-        Assert.Contains("<h2>Findings (2)</h2>", html);
+        Assert.True(response.IsSuccessStatusCode, $"POST /Lint returned {(int)response.StatusCode}: {html[..Math.Min(html.Length, 2000)]}");
+        Assert.True(html.Contains("<h2>Findings (2)</h2>"), $"Findings header missing: {html[..Math.Min(html.Length, 2000)]}");
         Assert.Equal(new[] { "8", "9" }, LineCellRegex().Matches(html).Select(m => m.Groups[1].Value));
     }
 
