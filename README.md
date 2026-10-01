@@ -6,7 +6,7 @@ Live at [aibysitting.net](https://aibysitting.net). Free, no accounts.
 
 ## Rules-file linter
 
-Lints `CLAUDE.md`, `AGENTS.md`, Cursor rules (`.cursor/rules/*.mdc`, `.cursorrules`), `.github/copilot-instructions.md`, `GEMINI.md`, and `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009 and R015. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint).
+Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`.cursor/rules/*.mdc`, root `.cursorrules`), `.github/copilot-instructions.md`, and root `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009 and R015. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint).
 
 | ID | Rule | Severity |
 |---|---|---|
@@ -52,6 +52,7 @@ Reviews pull requests and posts a check named `Aibysitter`, with an annotation o
 | P011 | CiConfigEdited | Info |
 | P012 | DebugLeftovers | Info |
 | P013 | CommittedArtifacts | Error |
+| P014 | RulesFileLint (R001–R015 on changed rules files) | Per rule |
 
 Optional repo config, `.github/aibysitter.json`, read from the pull request's head commit:
 
@@ -65,7 +66,7 @@ Optional repo config, `.github/aibysitter.json`, read from the pull request's he
 
 - `scope`: path globs from the repo root. Turns on P004. Not set: P004 is off.
 - `conclusion`: `advisory` (default) reports findings as neutral. `fail-on-errors` fails the check on any Error finding.
-- `disable`: check IDs to skip.
+- `disable`: check IDs to skip, and rule IDs (R001–R015) to skip inside P014.
 
 Install: coming soon. Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
 

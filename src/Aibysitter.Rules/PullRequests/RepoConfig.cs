@@ -16,7 +16,7 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
 
     public static RepoConfig Default { get; } = new([], ConclusionMode.Advisory);
 
-    /// <summary>Check IDs listed under <c>disable</c>. Disabled checks do not run.</summary>
+    /// <summary>Check IDs (Pnnn) and rule IDs (Rnnn) listed under <c>disable</c>. Disabled checks do not run; disabled rules are skipped by P014.</summary>
     public IReadOnlySet<string> Disabled { get; init; } = new HashSet<string>(StringComparer.Ordinal);
 
     public bool HasScope => Scope.Count > 0;
@@ -95,19 +95,19 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
                         foreach (var item in property.Value.EnumerateArray())
                         {
                             var id = item.ValueKind == JsonValueKind.String ? item.GetString()?.Trim().ToUpperInvariant() : null;
-                            if (id is not null && CheckIdRegex().IsMatch(id) && PullRequestCheckDocs.Find(id) is not null)
+                            if (id is not null && CheckIdRegex().IsMatch(id) && (PullRequestCheckDocs.Find(id) ?? RuleDocs.Find(id)) is not null)
                             {
                                 disabled.Add(id);
                             }
                             else
                             {
-                                errors.Add($"{FilePath}: \"disable\" entry {item.GetRawText()} is not a known check ID");
+                                errors.Add($"{FilePath}: \"disable\" entry {item.GetRawText()} is not a known check or rule ID");
                             }
                         }
 
                         break;
                     case "disable":
-                        errors.Add($"{FilePath}: \"disable\" must be an array of check IDs");
+                        errors.Add($"{FilePath}: \"disable\" must be an array of check or rule IDs");
                         break;
                     default:
                         errors.Add($"{FilePath}: unknown key \"{property.Name}\"");
@@ -119,6 +119,6 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
         }
     }
 
-    [GeneratedRegex(@"^P\d{3}$")]
+    [GeneratedRegex(@"^[PR]\d{3}$")]
     private static partial Regex CheckIdRegex();
 }

@@ -15,7 +15,8 @@ public sealed record GalleryEntry(
     string Content,
     IReadOnlyList<GalleryFinding> Findings,
     LintScore Score,
-    RulesFormat Format)
+    RulesFormat Format,
+    string? RepoPath = null)
 {
     public IReadOnlyList<string> Lines { get; } = Content.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
 
@@ -26,5 +27,5 @@ public sealed record GalleryEntry(
     public string FormatName => RulesFormats.DisplayName(Format);
 
     /// <summary>Where the file goes in a repository, e.g. <c>.cursor/rules/storefront.mdc</c>.</summary>
-    public string InstallPath => RulesFormats.InstallPath(Format, FileName);
+    public string InstallPath => RepoPath ?? RulesFormats.InstallPath(Format, FileName);
 }

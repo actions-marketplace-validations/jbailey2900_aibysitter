@@ -16,19 +16,19 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             var files = await gateway.GetChangedFilesAsync(pr, cancellationToken);
             var (config, configErrors) = RepoConfig.Parse(await gateway.GetFileContentAsync(pr, RepoConfig.FilePath, cancellationToken));
 
+            // Rules files are fetched first so the shared cap never starves P014.
+            var toFetch = files.Where(NeedsHeadContent)
+                .OrderBy(f => RulesFileLint.IsRulesFile(f) ? 0 : 1)
+                .Take(MaxContentFetches)
+                .Select(f => f.Path)
+                .ToHashSet(StringComparer.Ordinal);
+
             var enriched = new List<ChangedFile>(files.Count);
-            var fetched = 0;
             foreach (var file in files)
             {
-                if (NeedsHeadContent(file) && fetched < MaxContentFetches)
-                {
-                    fetched++;
-                    enriched.Add(file with { HeadContent = await gateway.GetFileContentAsync(pr, file.Path, cancellationToken) });
-                }
-                else
-                {
-                    enriched.Add(file);
-                }
+                enriched.Add(toFetch.Contains(file.Path)
+                    ? file with { HeadContent = await gateway.GetFileContentAsync(pr, file.Path, cancellationToken) }
+                    : file);
             }
 
             var review = reviewer.Review(new PullRequestContext(enriched, config));
@@ -58,7 +58,8 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
     }
 
     internal static bool NeedsHeadContent(ChangedFile file) =>
-        file.Status != FileChangeStatus.Removed
-        && file.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
-        && (file.Path.Contains("test", StringComparison.OrdinalIgnoreCase) || (file.Patch?.Contains('[') ?? false));
+        RulesFileLint.IsRulesFile(file)
+        || (file.Status != FileChangeStatus.Removed
+            && file.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
+            && (file.Path.Contains("test", StringComparison.OrdinalIgnoreCase) || (file.Patch?.Contains('[') ?? false)));
 }

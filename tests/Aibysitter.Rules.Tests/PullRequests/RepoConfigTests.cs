@@ -52,10 +52,11 @@ public class RepoConfigTests
     [InlineData("{\"conclusion\": \"strict\"}", "\"conclusion\" must be")]
     [InlineData("{\"conclusion\": true}", "\"conclusion\" must be")]
     [InlineData("{\"scopes\": []}", "unknown key \"scopes\"")]
-    [InlineData("{\"disable\": \"P002\"}", "\"disable\" must be an array of check IDs")]
-    [InlineData("{\"disable\": [\"P999\"]}", "\"disable\" entry \"P999\" is not a known check ID")]
-    [InlineData("{\"disable\": [\"R002\"]}", "\"disable\" entry \"R002\" is not a known check ID")]
-    [InlineData("{\"disable\": [2]}", "\"disable\" entry 2 is not a known check ID")]
+    [InlineData("{\"disable\": \"P002\"}", "\"disable\" must be an array of check or rule IDs")]
+    [InlineData("{\"disable\": [\"P999\"]}", "\"disable\" entry \"P999\" is not a known check or rule ID")]
+    [InlineData("{\"disable\": [\"R006\"]}", "\"disable\" entry \"R006\" is not a known check or rule ID")]
+    [InlineData("{\"disable\": [\"X002\"]}", "\"disable\" entry \"X002\" is not a known check or rule ID")]
+    [InlineData("{\"disable\": [2]}", "\"disable\" entry 2 is not a known check or rule ID")]
     public void InvalidParts_ReportErrors(string json, string expected)
     {
         var (_, errors) = RepoConfig.Parse(json);

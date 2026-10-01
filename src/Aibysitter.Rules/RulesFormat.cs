@@ -48,25 +48,39 @@ public static partial class RulesFormats
         _ => fileName,
     };
 
-    /// <summary>Format from a file name or path; null when the name is not a known rules file.</summary>
+    /// <summary>
+    /// Format from a repository-relative path; null when it is not a known rules file.
+    /// A format with a fixed location is recognised only there: <c>.github/copilot-instructions.md</c>,
+    /// <c>.cursorrules</c> and <c>.windsurfrules</c> at the root, <c>*.mdc</c> under <c>.cursor/rules/</c>.
+    /// CLAUDE.md, AGENTS.md and GEMINI.md are recognised in any directory.
+    /// </summary>
     public static RulesFormat? FromFileName(string path)
     {
         ArgumentNullException.ThrowIfNull(path);
-        var name = path.Replace('\\', '/')[(path.Replace('\\', '/').LastIndexOf('/') + 1)..];
+        var normalized = path.Replace('\\', '/').TrimStart('/');
+        if (normalized.StartsWith("./", StringComparison.Ordinal))
+        {
+            normalized = normalized[2..];
+        }
+
+        var name = normalized[(normalized.LastIndexOf('/') + 1)..];
 
         return name switch
         {
             "CLAUDE.md" => RulesFormat.ClaudeMd,
             "AGENTS.md" => RulesFormat.AgentsMd,
-            ".cursorrules" => RulesFormat.CursorRules,
-            "copilot-instructions.md" => RulesFormat.CopilotInstructions,
+            ".cursorrules" when normalized == name => RulesFormat.CursorRules,
+            "copilot-instructions.md" when normalized == ".github/copilot-instructions.md" => RulesFormat.CopilotInstructions,
             "GEMINI.md" => RulesFormat.GeminiMd,
-            ".windsurfrules" => RulesFormat.WindsurfRules,
-            _ when MdcRegex().IsMatch(name) => RulesFormat.CursorMdc,
+            ".windsurfrules" when normalized == name => RulesFormat.WindsurfRules,
+            _ when MdcRegex().IsMatch(name) && CursorRulesDirRegex().IsMatch(normalized) => RulesFormat.CursorMdc,
             _ => null,
         };
     }
 
     [GeneratedRegex(@"^[A-Za-z0-9][\w.-]*\.mdc$")]
     private static partial Regex MdcRegex();
+
+    [GeneratedRegex(@"(?:^|/)\.cursor/rules/(?:[^/]+/)*[^/]+$")]
+    private static partial Regex CursorRulesDirRegex();
 }

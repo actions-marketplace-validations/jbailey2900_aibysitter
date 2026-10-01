@@ -27,11 +27,11 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
 
         var annotations = review.Findings
             .Where(f => !removed.Contains(f.Path))
-            .Select(f => new CheckRunAnnotation(f.Path, f.Line, checkById[f.CheckId].Severity, $"{f.CheckId} {checkById[f.CheckId].Title}", f.Message, f.FixHint))
+            .Select(f => new CheckRunAnnotation(f.Path, f.Line, f.SeverityOr(checkById[f.CheckId].Severity), $"{f.CheckId} {checkById[f.CheckId].Title}", f.Message, f.FixHint))
             .ToList();
 
-        var errors = review.Findings.Count(f => checkById[f.CheckId].Severity == Severity.Error);
-        var warnings = review.Findings.Count(f => checkById[f.CheckId].Severity == Severity.Warning);
+        var errors = review.Findings.Count(f => f.SeverityOr(checkById[f.CheckId].Severity) == Severity.Error);
+        var warnings = review.Findings.Count(f => f.SeverityOr(checkById[f.CheckId].Severity) == Severity.Warning);
         var title = review.Findings.Count switch
         {
             0 => "No findings",
@@ -51,7 +51,14 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         summary.AppendLine("|---|---|---|");
         foreach (var check in checks)
         {
-            summary.AppendLine($"| {check.Id} {check.Title} | {check.Severity} | {(config.IsEnabled(check.Id) ? review.Findings.Count(f => f.CheckId == check.Id).ToString(CultureInfo.InvariantCulture) : "disabled")} |");
+            summary.AppendLine($"| {check.Id} {check.Title} | {(check is RulesFileLint ? "Per rule" : check.Severity.ToString())} | {(config.IsEnabled(check.Id) ? review.Findings.Count(f => f.CheckId == check.Id).ToString(CultureInfo.InvariantCulture) : "disabled")} |");
+        }
+
+        var disabledRules = config.Disabled.Where(id => id.StartsWith('R')).Order(StringComparer.Ordinal).ToList();
+        if (disabledRules.Count > 0 && config.IsEnabled(RulesFileLint.CheckId))
+        {
+            summary.AppendLine();
+            summary.AppendLine($"Rules disabled for P014: {string.Join(", ", disabledRules)}.");
         }
 
         var onRemoved = review.Findings.Where(f => removed.Contains(f.Path)).ToList();

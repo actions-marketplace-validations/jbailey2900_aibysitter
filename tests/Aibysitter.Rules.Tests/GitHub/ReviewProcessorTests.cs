@@ -60,7 +60,14 @@ public class ReviewProcessorTests
     [InlineData("src/A.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+var x = 1;", false)]
     [InlineData("tests/ATests.cs", FileChangeStatus.Removed, "@@ -1,1 +0,0 @@\n-x", false)]
     [InlineData("tests/a_test.py", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+[x]", false)]
-    public void NeedsHeadContent(string path, FileChangeStatus status, string patch, bool expected)
+    [InlineData("CLAUDE.md", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x", true)]
+    [InlineData("pkg/AGENTS.md", FileChangeStatus.Added, "@@ -0,0 +1,1 @@\n+x", true)]
+    [InlineData(".cursor/rules/a.mdc", FileChangeStatus.Renamed, null, true)]
+    [InlineData(".github/copilot-instructions.md", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x", true)]
+    [InlineData("docs/copilot-instructions.md", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x", false)]
+    [InlineData("docs/a.mdc", FileChangeStatus.Added, "@@ -0,0 +1,1 @@\n+x", false)]
+    [InlineData("CLAUDE.md", FileChangeStatus.Removed, "@@ -1,1 +0,0 @@\n-x", false)]
+    public void NeedsHeadContent(string path, FileChangeStatus status, string? patch, bool expected)
     {
         Assert.Equal(expected, ReviewProcessor.NeedsHeadContent(new ChangedFile(path, status, patch)));
     }
@@ -115,5 +122,25 @@ public class ReviewProcessorTests
         fake.ThrowOnFiles = new OperationCanceledException(cts.Token);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Processor(fake).ProcessAsync(Job, cts.Token));
+    }
+
+    [Fact]
+    public async Task RulesFiles_FetchedFirst_UnderTheCap()
+    {
+        var fake = new FakeGitHubGateway();
+        for (var i = 0; i < ReviewProcessor.MaxContentFetches; i++)
+        {
+            fake.Files.Add(new ChangedFile($"tests/T{i}Tests.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x"));
+        }
+
+        fake.Files.Add(new ChangedFile("CLAUDE.md", FileChangeStatus.Added, "@@ -0,0 +1,1 @@\n+- Handle errors properly."));
+        fake.Contents["CLAUDE.md"] = "- Handle errors properly.";
+
+        await Processor(fake).ProcessAsync(Job, CancellationToken.None);
+        var report = await fake.Completed.Task;
+
+        Assert.Contains("content CLAUDE.md", fake.Calls);
+        Assert.Equal(ReviewProcessor.MaxContentFetches, fake.Calls.Count(c => c.StartsWith("content ", StringComparison.Ordinal) && c != $"content {Aibysitter.Rules.PullRequests.RepoConfig.FilePath}"));
+        Assert.Contains(report.Annotations, a => a.Path == "CLAUDE.md" && a.Title == "P014 Rules file lint");
     }
 }
