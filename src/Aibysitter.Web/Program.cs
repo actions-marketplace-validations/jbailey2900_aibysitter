@@ -1,4 +1,5 @@
 using Aibysitter.Rules;
+using Aibysitter.Web.Infrastructure;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -18,8 +19,11 @@ try
     builder.Services.AddRazorPages();
     builder.Services.AddHealthChecks();
     builder.Services.AddSingleton(_ => new LintEngine());
+    builder.Services.AddAibysitterHardening(builder.Configuration);
 
     var app = builder.Build();
+
+    app.UseForwardedHeaders();
 
     if (!app.Environment.IsDevelopment())
     {
@@ -27,8 +31,10 @@ try
         app.UseHsts();
     }
 
+    app.UseSecurityHeaders();
     app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();
+    app.UseRateLimiter();
     app.UseRouting();
     app.UseAuthorization();
 
