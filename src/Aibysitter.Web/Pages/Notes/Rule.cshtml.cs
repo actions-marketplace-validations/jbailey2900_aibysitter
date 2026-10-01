@@ -23,6 +23,13 @@ public class RuleModel(LintEngine engine, PullRequestReviewer reviewer) : PageMo
             return Page();
         }
 
+        if (RuleDocs.Find(id) is { AppOnly: true } appOnlyDoc)
+        {
+            Doc = appOnlyDoc;
+            Severity = new Aibysitter.Rules.Rules.MissingIdentifiers().Severity;
+            return Page();
+        }
+
         if (PullRequestCheckDocs.Find(id) is { } checkDoc
             && reviewer.Checks.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.OrdinalIgnoreCase)) is { } check)
         {

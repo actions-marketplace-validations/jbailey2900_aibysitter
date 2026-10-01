@@ -16,7 +16,7 @@ public sealed class UnclosedCodeFence : IRule
             yield return new Finding(
                 Id,
                 line,
-                $"Code fence opened on line {line} is never closed; the remaining {file.Lines.Count - line} lines render as code.",
+                $"Code fence opened on line {line} is never closed; the remaining {file.Lines.Count - line} line{(file.Lines.Count - line == 1 ? "" : "s")} render{(file.Lines.Count - line == 1 ? "s" : "")} as code.",
                 "Close the fence with a matching ``` or ~~~ line.");
         }
     }

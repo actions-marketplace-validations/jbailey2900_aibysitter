@@ -40,6 +40,14 @@ public static class RuleDocs
             "- Run tests before commit.\n* run tests before commit.",
             "- Run tests before commit."),
         new(
+            "R006",
+            "MissingIdentifiers",
+            "A rules file names a path, script, or target that does not exist in the repository.",
+            "GitHub App only, through P014. Paths: inline code, link targets, and bare relative paths with a file extension; two or more segments, first segment present beside the rules file or at the root. Commands: npm/pnpm/yarn/bun run scripts (and npm test, and names with ':'), make targets, MSBuild -t: targets, dotnet project paths. Skipped: gitignored paths, generated folders, placeholders, example names, export subpaths under a package folder, lines that describe a file as an example, to create, forbidden, removed, or generated, and scripts in workspace repos not found beside the rules file or at the root. Changed rules files: every reference. Unchanged rules files: only references broken by paths or scripts the pull request removes or renames.",
+            "- Run `npm run check-version` before deploying.\n- Hooks live in `src/hooks/`.",
+            "- Run `npm run lint` before committing.\n- Hooks live in `src/lib/hooks/`.",
+            AppOnly: true),
+        new(
             "R007",
             "HedgedInstructions",
             "A hedge makes the instruction optional.",

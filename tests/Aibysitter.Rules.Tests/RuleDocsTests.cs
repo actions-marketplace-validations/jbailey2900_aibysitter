@@ -6,7 +6,7 @@ public class RuleDocsTests
     public void EveryRule_HasDoc_AndEveryDoc_HasRule()
     {
         var ruleIds = LintEngine.DiscoverRules().Select(r => r.Id);
-        var docIds = RuleDocs.All.Select(d => d.Id).Order(StringComparer.Ordinal);
+        var docIds = RuleDocs.All.Where(d => !d.AppOnly).Select(d => d.Id).Order(StringComparer.Ordinal);
 
         Assert.Equal(ruleIds, docIds);
     }
@@ -25,7 +25,7 @@ public class RuleDocsTests
     {
         var engine = new LintEngine();
 
-        foreach (var doc in RuleDocs.All.Where(d => d.Id != "R004"))
+        foreach (var doc in RuleDocs.All.Where(d => d.Id != "R004" && !d.AppOnly))
         {
             Assert.Contains(engine.Lint(doc.BadExample), f => f.RuleId == doc.Id);
             Assert.DoesNotContain(engine.Lint(doc.GoodExample), f => f.RuleId == doc.Id);
@@ -44,5 +44,13 @@ public class RuleDocsTests
     public void Find_UnknownId_ReturnsNull()
     {
         Assert.Null(RuleDocs.Find("R999"));
+    }
+
+    [Fact]
+    public void AppOnlyDocs_AreR006Only()
+    {
+        Assert.Equal(new[] { "R006" }, RuleDocs.All.Where(d => d.AppOnly).Select(d => d.Id));
+        Assert.Equal("MissingIdentifiers", RuleDocs.Find("R006")!.Name);
+        Assert.Equal(nameof(Aibysitter.Rules.Rules.MissingIdentifiers), RuleDocs.Find("R006")!.Name);
     }
 }

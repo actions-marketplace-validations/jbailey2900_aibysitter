@@ -14,6 +14,10 @@
     {
         <dd>Pull requests, through the <a asp-page="/GitHub">GitHub App</a></dd>
     }
+    else if (Model.Doc.AppOnly)
+    {
+        <dd>Rules files in pull requests, through P014 in the <a asp-page="/GitHub">GitHub App</a>. Not run on the lint page.</dd>
+    }
     else
     {
         <dd>@(Model.Doc.Id == "R015" ? "Cursor rules (.mdc)" : "Rules files (CLAUDE.md, AGENTS.md, .mdc, .cursorrules, Copilot instructions, GEMINI.md, .windsurfrules)")</dd>
@@ -22,6 +26,10 @@
     @if (Model.IsPullRequestCheck)
     {
         <dd>@Model.Severity@(Model.Severity == Aibysitter.Rules.Severity.Error ? " (fails the check when the repo sets fail-on-errors)" : "")</dd>
+    }
+    else if (Model.Doc.AppOnly)
+    {
+        <dd>@Model.Severity (P014 finding; not scored)</dd>
     }
     else
     {

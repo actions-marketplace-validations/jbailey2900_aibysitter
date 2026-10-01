@@ -58,6 +58,15 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
         }
     }
 
+    public async Task<IReadOnlyList<string>?> GetFilePathsAsync(PullRequestRef pr, CancellationToken cancellationToken)
+    {
+        var client = await ClientAsync(pr.InstallationId);
+        var tree = await client.Git.Tree.GetRecursive(pr.Owner, pr.Repo, pr.HeadSha);
+        return tree.Truncated
+            ? null
+            : tree.Tree.Where(i => i.Type.Value == TreeType.Blob).Select(i => i.Path).ToList();
+    }
+
     public async Task CompleteCheckRunAsync(PullRequestRef pr, long checkRunId, CheckRunReport report, CancellationToken cancellationToken)
     {
         var client = await ClientAsync(pr.InstallationId);

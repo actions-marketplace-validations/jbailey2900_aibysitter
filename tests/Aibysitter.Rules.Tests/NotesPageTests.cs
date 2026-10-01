@@ -53,7 +53,7 @@ public class NotesPageTests(WebApplicationFactory<Program> factory)
     [Theory]
     [InlineData("/Notes/R999")]
     [InlineData("/Notes/P999")]
-    [InlineData("/Notes/R006")]
+    [InlineData("/Notes/R016")]
     public async Task RulePage_UnknownId_Returns404(string path)
     {
         var response = await factory.CreateClient().GetAsync(path);
@@ -68,5 +68,17 @@ public class NotesPageTests(WebApplicationFactory<Program> factory)
 
         Assert.Contains("Error 40, Warning 30, Info 10", html);
         Assert.Contains("&lt;!-- aibysitter-disable-next-line R001, R005 --&gt;", html);
+    }
+
+    [Fact]
+    public async Task R006_ListedAsAppOnly_PageExplainsP014()
+    {
+        var client = factory.CreateClient();
+
+        Assert.Contains("Warning (GitHub App only)", await client.GetStringAsync("/Notes"));
+
+        var page = await client.GetStringAsync("/Notes/R006");
+        Assert.Contains("through P014", page);
+        Assert.Contains("Warning (P014 finding; not scored)", page);
     }
 }

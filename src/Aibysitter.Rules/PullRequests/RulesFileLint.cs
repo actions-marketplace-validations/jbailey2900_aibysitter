@@ -1,3 +1,6 @@
+using Aibysitter.Rules.Repo;
+using Aibysitter.Rules.Rules;
+
 namespace Aibysitter.Rules.PullRequests;
 
 /// <summary>
@@ -5,6 +8,8 @@ namespace Aibysitter.Rules.PullRequests;
 /// Added files: every finding. Changed files: findings on added lines, plus whole-file rules.
 /// Precedence: in-file aibysitter-disable comments, then rule IDs in config "disable", then P014 disabled.
 /// Each finding carries its rule's severity.
+/// R006 (with <see cref="PullRequestContext.Repo"/>): every reference in changed rules files; in unchanged rules files,
+/// only references broken by paths or scripts this PR removes or renames.
 /// </summary>
 public sealed class RulesFileLint : IPullRequestCheck
 {
@@ -15,6 +20,7 @@ public sealed class RulesFileLint : IPullRequestCheck
 
     private readonly LintEngine engine;
     private readonly Dictionary<string, IRule> rules;
+    private readonly MissingIdentifiers missingIdentifiers = new();
 
     public RulesFileLint()
         : this(new LintEngine())
@@ -40,9 +46,12 @@ public sealed class RulesFileLint : IPullRequestCheck
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        var checkR006 = context.Repo is not null && context.Config.IsEnabled(MissingIdentifiers.RuleId);
+
         foreach (var file in context.Files.Where(f => IsRulesFile(f) && f.HeadContent is not null))
         {
-            var result = engine.Analyze(file.HeadContent!, RulesFormats.FromFileName(file.Path)!.Value);
+            var parsed = RulesFile.Parse(file.HeadContent!, RulesFormats.FromFileName(file.Path)!.Value);
+            var result = engine.Analyze(parsed);
             var added = file.AddedLines.Select(l => l.NewLine!.Value).ToHashSet();
             var isNew = file.Status == FileChangeStatus.Added;
 
@@ -54,14 +63,39 @@ public sealed class RulesFileLint : IPullRequestCheck
                 }
 
                 var rule = rules[finding.RuleId];
-                yield return new PullRequestFinding(
-                    Id,
-                    file.Path,
-                    finding.Line,
-                    $"{finding.RuleId} {rule.Title}: {finding.Message}",
-                    finding.FixHint,
-                    rule.Severity);
+                yield return ToFinding(file.Path, finding, rule.Title, rule.Severity);
+            }
+
+            if (checkR006)
+            {
+                foreach (var finding in missingIdentifiers.Evaluate(parsed, file.Path, context.Repo!).Where(f => !parsed.Suppressions.IsSuppressed(f)))
+                {
+                    yield return ToFinding(file.Path, finding, missingIdentifiers.Title, missingIdentifiers.Severity);
+                }
+            }
+        }
+
+        if (!checkR006 || context.UnchangedRulesFiles is not { Count: > 0 } unchanged)
+        {
+            yield break;
+        }
+
+        var removed = RemovedIdentifiers.From(context.Files);
+        if (!removed.Any)
+        {
+            yield break;
+        }
+
+        foreach (var file in unchanged.Where(f => f.HeadContent is not null && RulesFormats.FromFileName(f.Path) is not null))
+        {
+            var parsed = RulesFile.Parse(file.HeadContent!, RulesFormats.FromFileName(file.Path)!.Value);
+            foreach (var finding in missingIdentifiers.Evaluate(parsed, file.Path, context.Repo!, removed).Where(f => !parsed.Suppressions.IsSuppressed(f)))
+            {
+                yield return ToFinding(file.Path, finding, missingIdentifiers.Title, missingIdentifiers.Severity);
             }
         }
     }
+
+    private PullRequestFinding ToFinding(string path, Finding finding, string title, Severity severity) =>
+        new(Id, path, finding.Line, $"{finding.RuleId} {title}: {finding.Message}", finding.FixHint, severity);
 }

@@ -13,5 +13,8 @@ public interface IGitHubGateway
     /// <summary>File text at the PR head commit, or null when the file does not exist.</summary>
     Task<string?> GetFileContentAsync(PullRequestRef pr, string path, CancellationToken cancellationToken);
 
+    /// <summary>Every file path at the PR head commit, or null when GitHub truncates the listing.</summary>
+    Task<IReadOnlyList<string>?> GetFilePathsAsync(PullRequestRef pr, CancellationToken cancellationToken);
+
     Task CompleteCheckRunAsync(PullRequestRef pr, long checkRunId, CheckRunReport report, CancellationToken cancellationToken);
 }
