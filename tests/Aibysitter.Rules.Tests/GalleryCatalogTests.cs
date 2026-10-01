@@ -14,6 +14,14 @@ public class GalleryCatalogTests
     }
 
     [Fact]
+    public void GalleryLicenseFile_IsNotEmbedded()
+    {
+        var names = typeof(GalleryCatalog).Assembly.GetManifestResourceNames().Select(n => n.Replace('\\', '/'));
+
+        Assert.DoesNotContain(names, n => n.StartsWith(GalleryCatalog.ResourcePrefix + "LICENSE", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void EveryEntry_HasCompleteMetadata_AndCc0License()
     {
         Assert.All(Catalog.All, e =>
