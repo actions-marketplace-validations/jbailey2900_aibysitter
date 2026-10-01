@@ -33,7 +33,7 @@ public class LintPageScoringTests(WebApplicationFactory<Program> factory)
     public async Task SeverityCap_ShownWhenApplied()
     {
         // R002: 8 × 4 = 32, per-rule cap 30. R005: 2 × 4 = 8. Warning total 38, cap 30.
-        var text = "# Rules\n\n" + string.Join("\n", Enumerable.Range(1, 8).Select(n => $"- Handle case {n}.")) + "\n- Use tabs.\n- Use tabs.\n- Use tabs.\n";
+        var text = "# Rules\n\n" + string.Join("\n", Enumerable.Range(1, 8).Select(n => $"- Handle case {n}.")) + "\n- Use tabs for indentation.\n- Use tabs for indentation.\n- Use tabs for indentation.\n";
 
         var html = await (await LintClient.PostAsync(factory.CreateClient(), text)).Content.ReadAsStringAsync();
 

@@ -21,4 +21,41 @@ public class VagueVerbsTests
     {
         Assert.Empty(_rule.Evaluate(Fixtures.Load("clean.md")));
     }
+
+    [Theory]
+    [InlineData("- Handle errors properly.")]
+    [InlineData("- Always handle edge cases.")]
+    [InlineData("- **Errors**: Handle them.")]
+    [InlineData("- Ensure good performance.")]
+    [InlineData("- Use appropriate log levels.")]
+    [InlineData("- Add or update tests as needed.")]
+    [InlineData("1. Clean up after yourself.")]
+    [InlineData("Run the suite. Then manage the cache.")]
+    public void Flags_InstructionPosition(string line)
+    {
+        Assert.Single(_rule.Evaluate(RulesFile.Parse(line)));
+    }
+
+    [Theory]
+    [InlineData("Commands handle npm package publishing.")]
+    [InlineData("**Model Management** (`core/manage/`):")]
+    [InlineData("| Handle | Owner |")]
+    [InlineData("- Ensure tests pass (`npx gulp test`).")]
+    [InlineData("- Extend appropriate error classes (ChainError, ValidationFailedError).")]
+    [InlineData("- Ensure American English spelling, e.g. behavior.")]
+    [InlineData("- Clean up files, external resources, and environment changes.")]
+    [InlineData("- Use appropriate log levels:")]
+    [InlineData("- Ensure the key is set.")]
+    [InlineData("- Ensure no uncommitted changes.")]
+    [InlineData("- Use React.memo when appropriate.")]
+    [InlineData("- Keep dependencies workspace-appropriate.")]
+    [InlineData("- Optimize for fast delivery.")]
+    [InlineData("5. **Clean up** - Clear stashes, prune remote branches.")]
+    [InlineData("- Add guidance to the appropriate AGENTS.md.")]
+    [InlineData("Claude Code tool restrictions are not working properly.")]
+    [InlineData("- Test script selects appropriate compose file.")]
+    public void Skips_NonInstructionsAndConcreteTargets(string line)
+    {
+        Assert.Empty(_rule.Evaluate(RulesFile.Parse(line)));
+    }
 }

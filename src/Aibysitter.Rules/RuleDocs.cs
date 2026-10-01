@@ -15,7 +15,7 @@ public static class RuleDocs
             "R002",
             "VagueVerbs",
             "Instructions use verbs with no checkable outcome.",
-            "\"handle\", \"manage\", \"deal with\", \"ensure\", \"improve\", \"optimize\", \"clean up\", \"properly\", \"appropriate(ly)\", \"as needed\".",
+            "\"handle\", \"manage\", \"deal with\", \"ensure\", \"improve\", \"optimize\", \"clean up\" opening an instruction, optionally after always / must / should / never / do not. \"properly\", \"appropriate(ly)\", \"as needed\" in an instruction. Skipped: table rows; inline code, links, paths, file names; a term followed by code, a path, a parenthesized list, \"e.g.\", three or more listed items, or a colon; \"ensure\" followed by a checkable statement; \"optimize for\"; \"where / when / if / as appropriate\".",
             "- Handle errors properly.",
             "- Return 400 with a ProblemDetails body when validation fails."),
         new(
@@ -36,7 +36,7 @@ public static class RuleDocs
             "R005",
             "DuplicateLines",
             "The same line appears more than once.",
-            "Repeated non-blank lines, ignoring case, whitespace, and list markers. Code blocks excluded.",
+            "Repeated lines of four or more words, ignoring case, whitespace, and list markers. A heading repeats only under the same parent heading. Excluded: code blocks, horizontal rules, table rows.",
             "- Run tests before commit.\n* run tests before commit.",
             "- Run tests before commit."),
     ];
