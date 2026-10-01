@@ -1,0 +1,50 @@
+using Microsoft.Net.Http.Headers;
+
+namespace Aibysitter.Web.Gallery;
+
+public static class RegistryEndpoints
+{
+    public const int SchemaVersion = 1;
+
+    public static IEndpointRouteBuilder MapRegistry(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet("/registry.json", (HttpContext http, GalleryCatalog catalog) =>
+        {
+            var origin = $"{http.Request.Scheme}://{http.Request.Host}";
+            http.Response.Headers[HeaderNames.CacheControl] = "public, max-age=300";
+            return Results.Json(new
+            {
+                schemaVersion = SchemaVersion,
+                entries = catalog.All.Select(e => new
+                {
+                    id = e.Id,
+                    name = e.Name,
+                    description = e.Description,
+                    category = e.Category,
+                    tags = e.Tags,
+                    file = e.FileName,
+                    license = e.License,
+                    lines = e.Lines.Count,
+                    score = e.Score.Value,
+                    grade = e.Score.Grade,
+                    pageUrl = $"{origin}/Gallery/{e.Id}",
+                    downloadUrl = $"{origin}{e.DownloadPath}",
+                    badgeUrl = $"{origin}{e.BadgePath}",
+                }),
+            });
+        });
+
+        endpoints.MapGet("/gallery/{id}/badge.svg", (string id, HttpContext http, GalleryCatalog catalog) =>
+        {
+            if (catalog.Find(id) is not { } entry)
+            {
+                return Results.NotFound();
+            }
+
+            http.Response.Headers[HeaderNames.CacheControl] = "public, max-age=3600";
+            return Results.Text(ScoreBadge.Render(entry.Score), "image/svg+xml; charset=utf-8");
+        });
+
+        return endpoints;
+    }
+}

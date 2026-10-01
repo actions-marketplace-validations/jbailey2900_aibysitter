@@ -19,4 +19,6 @@ public sealed record GalleryEntry(
     public IReadOnlyList<string> Lines { get; } = Content.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
 
     public string DownloadPath => $"/gallery/{Id}/{FileName}";
+
+    public string BadgePath => $"/gallery/{Id}/badge.svg";
 }

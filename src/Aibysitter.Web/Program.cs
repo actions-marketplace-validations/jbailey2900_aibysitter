@@ -48,6 +48,7 @@ try
     app.MapRazorPages().WithStaticAssets();
     app.MapHealthChecks("/health");
     app.MapGitHubWebhook();
+    app.MapRegistry();
     app.MapGalleryDownloads();
 
     app.Run();

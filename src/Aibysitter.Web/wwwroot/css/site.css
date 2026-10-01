@@ -165,6 +165,7 @@ main,
 }
 
 .wordmark {
+    white-space: nowrap;
     color: var(--ink);
     font-weight: 700;
     text-decoration: none;
@@ -411,7 +412,9 @@ dd { margin: 0; max-width: var(--measure); }
 @media (max-width: 700px) {
     :root { --space-section: 64px; --text-display: 1.75rem; }
     .columns { grid-template-columns: 1fr; }
-    .nav-links { gap: var(--space-lg); }
+    .nav { flex-wrap: wrap; row-gap: 0; }
+    .wordmark { font-size: var(--text-md); }
+    .nav-links { gap: var(--space-md); font-size: var(--text-sm); }
     .stack thead {
         position: absolute;
         width: 1px;
@@ -569,3 +572,16 @@ dd { margin: 0; max-width: var(--measure); }
     .facts { grid-template-columns: 1fr; row-gap: 0; }
     .facts dd { margin-bottom: var(--space-md); }
 }
+
+/* GitHub page */
+
+.install-status {
+    display: inline-block;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px dashed var(--hairline-strong);
+    border-radius: var(--radius);
+    font-size: var(--text-sm);
+}
+
+main code { background: var(--surface); padding: 0 3px; border-radius: 2px; }
+main pre code, .terminal code { background: none; padding: 0; }

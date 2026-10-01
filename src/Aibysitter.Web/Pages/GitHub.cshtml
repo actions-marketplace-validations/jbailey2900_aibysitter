@@ -1,0 +1,67 @@
+@page
+@model GitHubModel
+@{
+    ViewData["Title"] = "GitHub App";
+}
+
+<section class="hero">
+    <h1>Review agent pull requests.</h1>
+    <p class="lede">The Aibysitter GitHub App reads every pull request in a repository where it is installed. It posts a check named Aibysitter, with an annotation on each line it flags.</p>
+    <p class="install-status"><strong>Install coming soon.</strong> The App is in testing.</p>
+</section>
+
+<section class="section">
+    <h2>What it flags</h2>
+    <ul class="marks">
+        @foreach (var row in Model.Checks)
+        {
+            <li><a asp-page="/Notes/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a> @row.Doc.Summary <span class="note">@row.Severity</span></li>
+        }
+    </ul>
+</section>
+
+<figure class="terminal" aria-label="Example check run">
+    <pre><code><span class="t-prompt">check</span> Aibysitter  <span class="t-prompt">conclusion</span> neutral
+<span class="t-sum">4 findings (3 errors, 1 warning)</span>
+<span class="t-loc">docs/notes.txt:1           </span> <span class="t-sev t-error">failure</span> <span class="t-rule">P004</span>  Outside declared scope (added): docs/notes.txt
+<span class="t-loc">src/OrderService.cs:5      </span> <span class="t-sev t-error">failure</span> <span class="t-rule">P001</span>  Placeholder left in change: "YOUR_API_KEY"
+<span class="t-loc">src/OrderService.cs:9      </span> <span class="t-sev t-warning">warning</span> <span class="t-rule">P002</span>  Stub left in change: "throw new NotImplementedException("
+<span class="t-loc">tests/CalculatorTests.cs:14</span> <span class="t-sev t-error">failure</span> <span class="t-rule">P003</span>  Test "Multiply_Works" has no assertion.</code></pre>
+    <figcaption>Check run from a test pull request seeded with one example of each check, under the advisory setting.</figcaption>
+</figure>
+
+<section class="section">
+    <h2>Configuration</h2>
+    <p>Optional. Add <code>.github/aibysitter.json</code> to the repository. The App reads it from the pull request's head commit.</p>
+    <pre><code>{
+  "scope": ["src/**", "tests/**"],
+  "conclusion": "fail-on-errors"
+}</code></pre>
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Values</th>
+                <th>Default</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>scope</code></td>
+                <td>Path globs from the repository root. <code>**</code> matches any number of folders, <code>*</code> and <code>?</code> match within one folder. Case-sensitive. Turns on P004.</td>
+                <td>Not set; P004 is off</td>
+            </tr>
+            <tr>
+                <td><code>conclusion</code></td>
+                <td><code>advisory</code> reports findings as neutral. <code>fail-on-errors</code> fails the check when any Error finding exists.</td>
+                <td><code>advisory</code></td>
+            </tr>
+        </tbody>
+    </table>
+    <p>The config file is itself a changed file: a pull request that edits it outside the declared scope gets a P004 finding. Invalid entries fall back to their defaults and are listed in the check summary.</p>
+</section>
+
+<section class="section">
+    <h2>Install</h2>
+    <p>Install coming soon. Until then, the same rules-file checks are available on the <a asp-page="/Lint">lint page</a>.</p>
+</section>
