@@ -13,10 +13,10 @@ namespace Aibysitter.Rules.Tests.GitHub;
 public class GitHubWebhookTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
-    private (HttpClient Client, IServiceProvider Services) Create(FakeGitHubGateway fake, bool runWorker)
+    private (HttpClient Client, IServiceProvider Services) Create(FakeGitHubGateway fake, bool runWorker, string appId = "1")
     {
         var app = factory.WithWebHostBuilder(b => b
-            .UseSetting("GitHub:AppId", "1")
+            .UseSetting("GitHub:AppId", appId)
             .UseSetting("GitHub:WebhookSecret", Secret)
             .UseSetting("GitHub:PrivateKeyPath", "unused.pem")
             .ConfigureServices(s =>
@@ -70,6 +70,16 @@ public class GitHubWebhookTests(WebApplicationFactory<Program> factory)
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Empty(fake.Calls);
+    }
+
+    [Theory]
+    [InlineData("5152568")]
+    [InlineData("Iv23liExampleClient")]
+    public async Task Ping_WithAppIdOrClientId_Returns200(string appId)
+    {
+        var (client, _) = Create(new FakeGitHubGateway(), runWorker: false, appId);
+
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(Request("ping", "{}"))).StatusCode);
     }
 
     [Fact]
