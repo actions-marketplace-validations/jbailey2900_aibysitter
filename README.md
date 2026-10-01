@@ -18,7 +18,11 @@ Lints `CLAUDE.md` / `AGENTS.md` files. Paste a file at [aibysitting.net/Lint](ht
 | R007 | HedgedInstructions | Warning |
 | R008 | EmphasisInflation (over 3 per 100 lines) | Warning |
 | R009 | SecretsInRulesFile | Error |
+| R010 | PersonaPreamble | Info |
+| R011 | EmptySections | Warning |
 | R012 | UnclosedCodeFence | Error |
+| R013 | ProseParagraph (over 80 words) | Info |
+| R014 | UnverifiableCrossReference | Info |
 
 R006 (MissingIdentifiers) is reserved for a repo-aware mode.
 
