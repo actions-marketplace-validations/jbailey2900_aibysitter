@@ -42,10 +42,10 @@
             <ul class="marks">
                 @foreach (var check in Model.PullRequestChecks)
                 {
-                    <li><span class="id">@check.Id</span> @check.Title</li>
+                    <li><a asp-page="/Notes/Rule" asp-route-id="@check.Id">@check.Id</a> @check.Title</li>
                 }
             </ul>
-            <p class="note">Pull request checks run through the Aibysitter GitHub App, currently in testing.</p>
+            <p class="note">Pull request checks run through the <a asp-page="/GitHub">Aibysitter GitHub App</a>, currently in testing.</p>
         </div>
     </div>
 </section>

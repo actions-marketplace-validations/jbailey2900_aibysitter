@@ -9,8 +9,24 @@
 <h1>@Model.Doc.Id @Model.Doc.Name</h1>
 
 <dl>
+    <dt>Applies to</dt>
+    @if (Model.IsPullRequestCheck)
+    {
+        <dd>Pull requests, through the <a asp-page="/GitHub">GitHub App</a></dd>
+    }
+    else
+    {
+        <dd>Rules files (CLAUDE.md, AGENTS.md)</dd>
+    }
     <dt>Severity</dt>
-    <dd>@Model.Severity (−@Aibysitter.Rules.Scorer.Weight(Model.Severity) per finding, max −@Aibysitter.Rules.Scorer.PerRuleCap)</dd>
+    @if (Model.IsPullRequestCheck)
+    {
+        <dd>@Model.Severity@(Model.Severity == Aibysitter.Rules.Severity.Error ? " (fails the check when the repo sets fail-on-errors)" : "")</dd>
+    }
+    else
+    {
+        <dd>@Model.Severity (−@Aibysitter.Rules.Scorer.Weight(Model.Severity) per finding, max −@Aibysitter.Rules.Scorer.PerRuleCap)</dd>
+    }
     <dt>Summary</dt>
     <dd>@Model.Doc.Summary</dd>
     <dt>Flags</dt>

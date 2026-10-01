@@ -37,7 +37,7 @@ public class HomePageTests(WebApplicationFactory<Program> factory)
 
         foreach (var check in PullRequestReviewer.DiscoverChecks())
         {
-            Assert.Contains($"<span class=\"id\">{check.Id}</span> {check.Title}", html);
+            Assert.Contains($"<a href=\"/Notes/{check.Id}\">{check.Id}</a> {check.Title}", html);
         }
     }
 

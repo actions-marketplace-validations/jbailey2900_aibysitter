@@ -28,8 +28,31 @@ public class NotesPageTests(WebApplicationFactory<Program> factory)
         Assert.Contains("- Never use tabs.", html);
     }
 
+    [Fact]
+    public async Task Index_ListsPullRequestChecks()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Notes");
+
+        foreach (var doc in Aibysitter.Rules.PullRequests.PullRequestCheckDocs.All)
+        {
+            Assert.Contains($"href=\"/Notes/{doc.Id}\"", html);
+        }
+    }
+
+    [Fact]
+    public async Task CheckPage_RendersPullRequestDoc()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Notes/P003");
+
+        Assert.Contains("<h1>P003 AssertNothingTests</h1>", html);
+        Assert.Contains("Pull requests, through the", html);
+        Assert.Contains("fails the check when the repo sets fail-on-errors", html);
+        Assert.DoesNotContain("per finding", html);
+    }
+
     [Theory]
     [InlineData("/Notes/R999")]
+    [InlineData("/Notes/P999")]
     [InlineData("/Notes/R006")]
     public async Task RulePage_UnknownId_Returns404(string path)
     {

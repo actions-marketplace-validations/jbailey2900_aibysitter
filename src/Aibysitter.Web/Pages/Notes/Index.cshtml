@@ -1,34 +1,19 @@
 @page
 @model Aibysitter.Web.Pages.Notes.IndexModel
 @{
-    ViewData["Title"] = "Notes";
+    ViewData["Title"] = "Rules";
 }
 
-<h1>Rule notes</h1>
+<h1>Rules</h1>
 
-<table class="rules-table stack">
-    <thead>
-        <tr>
-            <th>Id</th>
-            <th>Rule</th>
-            <th>Severity</th>
-            <th>Summary</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var row in Model.Rows)
-        {
-            <tr>
-                <td><a asp-page="/Notes/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a></td>
-                <td>@row.Doc.Name</td>
-                <td>@row.Severity</td>
-                <td>@row.Doc.Summary</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<h2>Rules files</h2>
+<p>Checked by the <a asp-page="/Lint">lint page</a> against a CLAUDE.md or AGENTS.md.</p>
+<partial name="_RulesTable" model="Model.Rows" />
 
 <h2>Scoring</h2>
 <p>Each file starts at @Aibysitter.Rules.Scorer.MaxScore. Each finding deducts by severity: Error @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Error), Warning @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Warning), Info @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Info). Deductions per rule are capped at @Aibysitter.Rules.Scorer.PerRuleCap. Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below 60.</p>
-
 <p>Fenced code blocks are excluded from all rules. Headings are excluded from R001–R003.</p>
+
+<h2>Pull request checks</h2>
+<p>Run by the <a asp-page="/GitHub">GitHub App</a> on every pull request in an installed repository.</p>
+<partial name="_RulesTable" model="Model.CheckRows" />

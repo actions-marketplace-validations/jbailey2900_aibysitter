@@ -1,0 +1,23 @@
+@model IReadOnlyList<Aibysitter.Web.Pages.Notes.IndexModel.RuleRow>
+
+<table class="rules-table stack">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Rule</th>
+            <th>Severity</th>
+            <th>Summary</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in Model)
+        {
+            <tr>
+                <td><a asp-page="/Notes/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a></td>
+                <td>@row.Doc.Name</td>
+                <td>@row.Severity</td>
+                <td>@row.Doc.Summary</td>
+            </tr>
+        }
+    </tbody>
+</table>

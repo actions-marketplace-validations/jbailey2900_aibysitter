@@ -35,6 +35,11 @@
 
 <partial name="_ScorePanel" model="e.Score" />
 
+<h2>Badge</h2>
+<p><img src="@e.BadgePath" alt="aibysitter @e.Score.Grade @e.Score.Value" height="20" /></p>
+<p>Markdown for a README:</p>
+<pre><code>@Model.BadgeMarkdown</code></pre>
+
 <h2>@e.FileName</h2>
 <ol class="file" aria-label="@e.FileName with line numbers">
     @for (var i = 0; i < e.Lines.Count; i++)
