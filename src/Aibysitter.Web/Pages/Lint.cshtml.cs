@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Aibysitter.Rules;
+using Aibysitter.Web.Samples;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -16,8 +17,14 @@ public class LintModel(LintEngine engine, ILogger<LintModel> logger) : PageModel
 
     public IReadOnlyList<ResultRow>? Results { get; private set; }
 
-    public void OnGet()
+    public LintScore? Score { get; private set; }
+
+    public void OnGet(bool sample = false)
     {
+        if (sample)
+        {
+            RulesText = SampleRules.Text;
+        }
     }
 
     public IActionResult OnPost()
@@ -34,7 +41,9 @@ public class LintModel(LintEngine engine, ILogger<LintModel> logger) : PageModel
             .Select(f => new ResultRow(f, rules[f.RuleId].Title, rules[f.RuleId].Severity))
             .ToList();
 
-        logger.LogInformation("Linted {Length} chars, {FindingCount} findings", RulesText!.Length, Results.Count);
+        Score = engine.Score(findings);
+
+        logger.LogInformation("Linted {Length} chars, {FindingCount} findings, score {Score}", RulesText!.Length, Results.Count, Score.Value);
 
         return Page();
     }
