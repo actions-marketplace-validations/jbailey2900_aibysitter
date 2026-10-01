@@ -20,6 +20,7 @@ try
     builder.Services.AddRazorPages();
     builder.Services.AddHealthChecks();
     builder.Services.AddSingleton(_ => new LintEngine());
+    builder.Services.AddSingleton<Aibysitter.Web.Samples.LintDemo>();
     builder.Services.AddAibysitterHardening(builder.Configuration);
     builder.Services.AddAibysitterDataProtection(builder.Configuration);
     builder.Services.AddAibysitterGitHubApp(builder.Configuration);
