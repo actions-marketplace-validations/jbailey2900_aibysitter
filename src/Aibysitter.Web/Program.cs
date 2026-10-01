@@ -1,4 +1,5 @@
 using Aibysitter.Rules;
+using Aibysitter.Web.GitHub;
 using Aibysitter.Web.Infrastructure;
 using Serilog;
 
@@ -20,6 +21,7 @@ try
     builder.Services.AddHealthChecks();
     builder.Services.AddSingleton(_ => new LintEngine());
     builder.Services.AddAibysitterHardening(builder.Configuration);
+    builder.Services.AddAibysitterGitHubApp(builder.Configuration);
 
     var app = builder.Build();
 
@@ -41,6 +43,7 @@ try
     app.MapStaticAssets();
     app.MapRazorPages().WithStaticAssets();
     app.MapHealthChecks("/health");
+    app.MapGitHubWebhook();
 
     app.Run();
 }
