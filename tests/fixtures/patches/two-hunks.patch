@@ -1,0 +1,13 @@
+@@ -1,4 +1,5 @@
+ namespace Demo;
+ 
+-public class Old { }
++public class New
++{
+ // end
+@@ -20,3 +21,4 @@ public class Other
+ line20
++line22-added
+ line21
+-line22-removed
+\ No newline at end of file
