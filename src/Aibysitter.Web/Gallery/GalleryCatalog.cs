@@ -61,7 +61,7 @@ public sealed partial class GalleryCatalog
             }
 
             var content = Read(assembly, fileResource);
-            var format = RulesFormats.FromFileName(manifest.File!)!.Value;
+            var format = RulesFormats.FromFileName(manifest.Path ?? manifest.File!)!.Value;
             var findings = engine.Lint(content, format);
             list.Add(new GalleryEntry(
                 manifest.Id!,
@@ -74,7 +74,8 @@ public sealed partial class GalleryCatalog
                 content,
                 findings.Select(f => new GalleryFinding(f, severities[f.RuleId].Severity, severities[f.RuleId].Title)).ToList(),
                 engine.Score(findings),
-                format));
+                format,
+                manifest.Path));
         }
 
         return list.OrderBy(e => e.Category, StringComparer.OrdinalIgnoreCase).ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList();
@@ -96,7 +97,8 @@ public sealed partial class GalleryCatalog
         Require(!string.IsNullOrWhiteSpace(m.Description), "description is required");
         Require(!string.IsNullOrWhiteSpace(m.Category), "category is required");
         Require(m.Tags is { Count: > 0 } && m.Tags.All(t => !string.IsNullOrWhiteSpace(t)), "at least one non-empty tag is required");
-        Require(m.File is not null && RulesFormats.FromFileName(m.File) is not null, "file must be a known rules file name (CLAUDE.md, AGENTS.md, *.mdc, .cursorrules, copilot-instructions.md, GEMINI.md, .windsurfrules)");
+        Require(m.File is not null && RulesFormats.FromFileName(m.Path ?? m.File) is not null, "file (or path) must be a known rules file (CLAUDE.md, AGENTS.md, .cursor/rules/*.mdc, .cursorrules, copilot-instructions.md, GEMINI.md, .windsurfrules)");
+        Require(m.Path is null || m.Path.Replace('\\', '/').EndsWith("/" + m.File, StringComparison.Ordinal), "path must end with the file name");
         Require(!string.IsNullOrWhiteSpace(m.License), "license is required");
     }
 
@@ -109,7 +111,8 @@ public sealed partial class GalleryCatalog
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private sealed record Manifest(string? Id, string? Name, string? Description, string? Category, List<string>? Tags, string? File, string? License);
+    /// <param name="Path">Repository path when the file name alone does not identify the format (.mdc under .cursor/rules/).</param>
+    private sealed record Manifest(string? Id, string? Name, string? Description, string? Category, List<string>? Tags, string? File, string? License, string? Path = null);
 
     [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$")]
     private static partial Regex IdRegex();

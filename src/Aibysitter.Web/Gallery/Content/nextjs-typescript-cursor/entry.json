@@ -5,5 +5,6 @@
   "category": "JavaScript",
   "tags": ["TypeScript", "Next.js", "React", "Tailwind CSS", "pnpm", "Cursor"],
   "file": "storefront.mdc",
+  "path": ".cursor/rules/storefront.mdc",
   "license": "CC0-1.0"
 }

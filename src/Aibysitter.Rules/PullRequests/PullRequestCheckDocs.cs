@@ -95,6 +95,13 @@ public static class PullRequestCheckDocs
             "Added, renamed, or copied files under node_modules/, bin/Debug, bin/Release, obj/Debug, obj/Release, obj restore files, __pycache__/, *.pyc, and .env or .env.* (except .env.example, .env.sample, .env.template, .env.dist). A bin/ folder of scripts is not flagged.",
             "added: src/Api/bin/Debug/net10.0/Api.dll\nadded: .env",
             "added: .env.example\n.gitignore: bin/, obj/, .env"),
+        new(
+            "P014",
+            "RulesFileLint",
+            "A change adds or edits a rules file that has rule findings.",
+            "Runs R001–R015 on rules files the pull request adds or changes (CLAUDE.md, AGENTS.md, .cursor/rules/*.mdc, .cursorrules, copilot-instructions.md, GEMINI.md, .windsurfrules), using the head content. Added files: every finding. Changed files: findings on added lines, plus R004, R008, R012, R015. Severity follows the rule. aibysitter-disable comments in the file apply; rule IDs in \"disable\" skip those rules.",
+            "added: CLAUDE.md\n- Handle errors properly.",
+            "added: CLAUDE.md\n- Return 400 with a ProblemDetails body when validation fails."),
     ];
 
     private static readonly Dictionary<string, RuleDoc> ById = All.ToDictionary(d => d.Id, StringComparer.OrdinalIgnoreCase);

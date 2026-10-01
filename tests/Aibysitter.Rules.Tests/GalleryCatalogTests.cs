@@ -26,7 +26,7 @@ public class GalleryCatalogTests
     {
         Assert.All(Catalog.All, e =>
         {
-            Assert.Equal(e.Format, RulesFormats.FromFileName(e.FileName));
+            Assert.Equal(e.Format, RulesFormats.FromFileName(e.InstallPath));
             Assert.Equal("CC0-1.0", e.License);
             Assert.NotEmpty(e.Tags);
             Assert.False(string.IsNullOrWhiteSpace(e.Description));

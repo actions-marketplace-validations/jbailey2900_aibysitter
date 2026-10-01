@@ -50,8 +50,8 @@ public sealed class PullRequestReviewer
 
         if (config.Conclusion == ConclusionMode.FailOnErrors)
         {
-            var errorChecks = Checks.Where(c => c.Severity == Severity.Error).Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
-            if (findings.Any(f => errorChecks.Contains(f.CheckId)))
+            var severityByCheck = Checks.ToDictionary(c => c.Id, c => c.Severity, StringComparer.Ordinal);
+            if (findings.Any(f => f.SeverityOr(severityByCheck[f.CheckId]) == Severity.Error))
             {
                 return ReviewConclusion.Failure;
             }
