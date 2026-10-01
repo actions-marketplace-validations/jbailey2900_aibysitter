@@ -25,6 +25,9 @@ internal static partial class InstructionText
         return s.Trim();
     }
 
+    /// <summary>Line text with inline code replaced by <c>␣CODE␣</c>; nothing else removed.</summary>
+    public static string WithoutCode(string text) => CodeSpanRegex().Replace(text, " CODE ");
+
     /// <summary>Content split into sentence and clause units.</summary>
     public static IEnumerable<string> Clauses(string text) =>
         ClauseSplitRegex().Split(Content(text)).Select(c => c.Trim()).Where(c => c.Length > 0);
