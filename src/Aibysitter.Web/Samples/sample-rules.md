@@ -9,7 +9,7 @@
 - Run tests before commit.
 - Never run the formatter before commit.
 - Keep test names descriptive so that failures are easy to read.
-- Ensure coverage stays high.
+- Ensure good test coverage.
 - run tests before commit.
 
 ## Code
