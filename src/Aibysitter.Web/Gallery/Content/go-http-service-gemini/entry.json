@@ -1,0 +1,9 @@
+{
+  "id": "go-http-service-gemini",
+  "name": "Go HTTP service, GEMINI.md",
+  "description": "The notify service rules as a Gemini CLI context file: same content.",
+  "category": "Go",
+  "tags": ["Go", "net/http", "PostgreSQL", "sqlc", "slog", "Gemini CLI"],
+  "file": "GEMINI.md",
+  "license": "CC0-1.0"
+}

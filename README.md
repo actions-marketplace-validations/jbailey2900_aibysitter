@@ -6,7 +6,7 @@ Live at [aibysitting.net](https://aibysitting.net). Free, no accounts.
 
 ## Rules-file linter
 
-Lints `CLAUDE.md` / `AGENTS.md` files. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint).
+Lints `CLAUDE.md`, `AGENTS.md`, Cursor rules (`.cursor/rules/*.mdc`, `.cursorrules`), `.github/copilot-instructions.md`, `GEMINI.md`, and `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009 and R015. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint).
 
 | ID | Rule | Severity |
 |---|---|---|
@@ -23,6 +23,7 @@ Lints `CLAUDE.md` / `AGENTS.md` files. Paste a file at [aibysitting.net/Lint](ht
 | R012 | UnclosedCodeFence | Error |
 | R013 | ProseParagraph (over 80 words) | Info |
 | R014 | UnverifiableCrossReference | Info |
+| R015 | FrontmatterFields (Cursor .mdc only) | Warning |
 
 R006 (MissingIdentifiers) is reserved for a repo-aware mode.
 

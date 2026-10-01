@@ -4,6 +4,7 @@ using Aibysitter.Web.Gallery;
 using Aibysitter.Web.Samples;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Aibysitter.Web.Pages;
 
@@ -15,6 +16,15 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
     [Required(ErrorMessage = "Paste a rules file to lint.")]
     [StringLength(MaxContentLength, ErrorMessage = "Input is limited to 100,000 characters.")]
     public string? RulesText { get; set; }
+
+    [BindProperty]
+    public RulesFormat Format { get; set; } = RulesFormat.Auto;
+
+    /// <summary>Format the last lint ran as (Auto resolved).</summary>
+    public RulesFormat? LintedFormat { get; private set; }
+
+    public IEnumerable<SelectListItem> FormatOptions =>
+        RulesFormats.Selectable.Select(f => new SelectListItem(RulesFormats.DisplayName(f), f.ToString(), f == Format));
 
     public IReadOnlyList<ResultRow>? Results { get; private set; }
 
@@ -32,6 +42,7 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
         else if (gallery is not null && galleryCatalog.Find(gallery) is { } entry)
         {
             RulesText = entry.Content;
+            Format = entry.Format;
         }
     }
 
@@ -43,7 +54,8 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
         }
 
         var rules = engine.Rules.ToDictionary(r => r.Id);
-        var result = engine.Analyze(RulesText!);
+        var result = engine.Analyze(RulesText!, Format);
+        LintedFormat = result.Format;
 
         Results = result.Findings
             .Select(f => new ResultRow(f, rules[f.RuleId].Title, rules[f.RuleId].Severity))
@@ -55,7 +67,7 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
 
         Score = engine.Score(result.Findings);
 
-        logger.LogInformation("Linted {Length} chars, {FindingCount} findings, {SuppressedCount} suppressed, score {Score}", RulesText!.Length, Results.Count, Suppressed.Count, Score.Value);
+        logger.LogInformation("Linted {Length} chars as {Format}, {FindingCount} findings, {SuppressedCount} suppressed, score {Score}", RulesText!.Length, result.Format, Results.Count, Suppressed.Count, Score.Value);
 
         return Page();
     }

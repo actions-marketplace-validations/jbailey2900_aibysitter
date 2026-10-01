@@ -12,7 +12,6 @@ namespace Aibysitter.Web.Gallery;
 public sealed partial class GalleryCatalog
 {
     public const string ResourcePrefix = "gallery/";
-    public static readonly IReadOnlySet<string> AllowedFileNames = new HashSet<string>(StringComparer.Ordinal) { "CLAUDE.md", "AGENTS.md" };
 
     private readonly Lazy<IReadOnlyList<GalleryEntry>> entries;
 
@@ -62,7 +61,8 @@ public sealed partial class GalleryCatalog
             }
 
             var content = Read(assembly, fileResource);
-            var findings = engine.Lint(content);
+            var format = RulesFormats.FromFileName(manifest.File!)!.Value;
+            var findings = engine.Lint(content, format);
             list.Add(new GalleryEntry(
                 manifest.Id!,
                 manifest.Name!,
@@ -73,7 +73,8 @@ public sealed partial class GalleryCatalog
                 manifest.License!,
                 content,
                 findings.Select(f => new GalleryFinding(f, severities[f.RuleId].Severity, severities[f.RuleId].Title)).ToList(),
-                engine.Score(findings)));
+                engine.Score(findings),
+                format));
         }
 
         return list.OrderBy(e => e.Category, StringComparer.OrdinalIgnoreCase).ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList();
@@ -95,7 +96,7 @@ public sealed partial class GalleryCatalog
         Require(!string.IsNullOrWhiteSpace(m.Description), "description is required");
         Require(!string.IsNullOrWhiteSpace(m.Category), "category is required");
         Require(m.Tags is { Count: > 0 } && m.Tags.All(t => !string.IsNullOrWhiteSpace(t)), "at least one non-empty tag is required");
-        Require(m.File is not null && AllowedFileNames.Contains(m.File), "file must be CLAUDE.md or AGENTS.md");
+        Require(m.File is not null && RulesFormats.FromFileName(m.File) is not null, "file must be a known rules file name (CLAUDE.md, AGENTS.md, *.mdc, .cursorrules, copilot-instructions.md, GEMINI.md, .windsurfrules)");
         Require(!string.IsNullOrWhiteSpace(m.License), "license is required");
     }
 

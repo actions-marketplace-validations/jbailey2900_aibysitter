@@ -1,0 +1,9 @@
+{
+  "id": "nextjs-typescript-cursor",
+  "name": "Next.js app (TypeScript), Cursor rule",
+  "description": "The Next.js storefront rules as a Cursor .mdc rule: same content, with frontmatter that applies it to every request.",
+  "category": "JavaScript",
+  "tags": ["TypeScript", "Next.js", "React", "Tailwind CSS", "pnpm", "Cursor"],
+  "file": "storefront.mdc",
+  "license": "CC0-1.0"
+}

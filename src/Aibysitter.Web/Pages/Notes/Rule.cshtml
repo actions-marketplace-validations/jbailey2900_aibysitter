@@ -16,7 +16,7 @@
     }
     else
     {
-        <dd>Rules files (CLAUDE.md, AGENTS.md)</dd>
+        <dd>@(Model.Doc.Id == "R015" ? "Cursor rules (.mdc)" : "Rules files (CLAUDE.md, AGENTS.md, .mdc, .cursorrules, Copilot instructions, GEMINI.md, .windsurfrules)")</dd>
     }
     <dt>Severity</dt>
     @if (Model.IsPullRequestCheck)

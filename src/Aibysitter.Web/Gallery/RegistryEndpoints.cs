@@ -23,6 +23,8 @@ public static class RegistryEndpoints
                     category = e.Category,
                     tags = e.Tags,
                     file = e.FileName,
+                    format = e.FormatName,
+                    installPath = e.InstallPath,
                     license = e.License,
                     lines = e.Lines.Count,
                     score = e.Score.Value,

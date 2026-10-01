@@ -349,6 +349,20 @@ textarea {
 
 textarea:focus { background: var(--paper); }
 
+select {
+    display: block;
+    max-width: 100%;
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--hairline-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    font: 400 var(--text-sm)/1.6 var(--font);
+}
+
+select:focus { background: var(--paper); }
+
 form button { margin-top: var(--space-md); }
 
 .sample-link { margin-left: var(--space-lg); }

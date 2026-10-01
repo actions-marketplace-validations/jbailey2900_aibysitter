@@ -1,0 +1,9 @@
+{
+  "id": "aspnet-web-api-copilot",
+  "name": "ASP.NET Core Web API, Copilot instructions",
+  "description": "The inventory API rules as GitHub Copilot repository instructions: same content.",
+  "category": ".NET",
+  "tags": ["C#", "Web API", "PostgreSQL", "OpenAPI", "xUnit", "GitHub Copilot"],
+  "file": "copilot-instructions.md",
+  "license": "CC0-1.0"
+}

@@ -21,7 +21,7 @@ public sealed partial class DuplicateLines : IRule
         var firstSeen = new Dictionary<string, int>(StringComparer.Ordinal);
         var headingPath = new List<(int Level, string Key)>();
 
-        foreach (var line in file.Lines.Where(l => !l.IsBlank && !l.IsInCodeFence && !l.IsDirective))
+        foreach (var line in file.Lines.Where(l => !l.IsBlank && !l.IsInCodeFence && !l.IsFrontmatter && !l.IsDirective))
         {
             var key = TextNormalizer.Normalize(line.Text);
 

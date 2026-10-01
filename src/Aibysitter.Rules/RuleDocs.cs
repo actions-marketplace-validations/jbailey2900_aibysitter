@@ -95,6 +95,13 @@ public static class RuleDocs
             "\"as mentioned / discussed / described / noted above, below, earlier, previously\", \"see above / below\", \"the usual way / approach / pattern / process / style\", \"the way we always / usually\", \"like before\". Not flagged when the line has a link, inline code, a quoted name, or a bold name.",
             "- Format dates the usual way.",
             "- Format dates as ISO 8601 (`yyyy-MM-dd`)."),
+        new(
+            "R015",
+            "FrontmatterFields",
+            "A Cursor rule's frontmatter is missing, unknown, or never applies the rule.",
+            "Cursor .mdc rules only: no frontmatter; keys other than description, globs, alwaysApply; alwaysApply not true or false; alwaysApply not true with empty globs and empty description (the rule applies only when mentioned by name).",
+            "---\ndescription:\nglobs:\nalwaysApply: false\n---\n- Use tabs.",
+            "---\ndescription: Formatting rules for C# files\nglobs: **/*.cs\nalwaysApply: false\n---\n- Use tabs."),
     ];
 
     private static readonly Dictionary<string, RuleDoc> ById = All.ToDictionary(d => d.Id, StringComparer.OrdinalIgnoreCase);
