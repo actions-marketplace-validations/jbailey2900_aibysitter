@@ -61,12 +61,40 @@ public static class RuleDocs
             "- Connect with Server=db;User Id=app;Password=Hunter2Prod;",
             "- Read the connection string from the ConnectionStrings__Default environment variable."),
         new(
+            "R010",
+            "PersonaPreamble",
+            "The file assigns the agent a persona instead of stating facts.",
+            "\"You are / You're / Act as / Behave as / Pretend to be / Imagine you are\" followed by a, an, or the and expert, senior, principal, staff, lead, world-class, seasoned, experienced, veteran, elite, 10x, genius, master, guru, ninja, or rockstar within four words. Quoted text and inline code are skipped.",
+            "You are a senior .NET engineer who writes clean code.",
+            "This is a .NET 10 Razor Pages app. Run `dotnet test` before commit."),
+        new(
+            "R011",
+            "EmptySections",
+            "A heading has no content.",
+            "A heading followed by a heading of the same or higher level, or end of file, with only blank lines or comments between. The file's first heading is exempt when it is level 1.",
+            "# Rules\n## Testing\n## Style\n- Use tabs.",
+            "# Rules\n## Testing\n- Run `dotnet test`.\n## Style\n- Use tabs."),
+        new(
             "R012",
             "UnclosedCodeFence",
             "A code fence is opened and never closed.",
             "A ``` or ~~~ fence with no matching closing fence before end of file. Reported at the opening line. Every line after it is treated as code and skipped by other rules.",
             "Run:\n```\ndotnet test\n- Use tabs.",
             "Run:\n```\ndotnet test\n```\n- Use tabs."),
+        new(
+            "R013",
+            "ProseParagraph",
+            "Instructions are written as a long paragraph.",
+            "A paragraph over 80 words. Paragraph: consecutive prose lines that are not list items, list-item continuation lines, table rows, or block quotes. Reported at the first line.",
+            string.Join(" ", Enumerable.Repeat("Run the tests before you commit and keep the build green.", 9)),
+            "- Run `dotnet test` before commit.\n- Keep the build green."),
+        new(
+            "R014",
+            "UnverifiableCrossReference",
+            "A line refers to something elsewhere without naming it.",
+            "\"as mentioned / discussed / described / noted above, below, earlier, previously\", \"see above / below\", \"the usual way / approach / pattern / process / style\", \"the way we always / usually\", \"like before\". Not flagged when the line has a link, inline code, a quoted name, or a bold name.",
+            "- Format dates the usual way.",
+            "- Format dates as ISO 8601 (`yyyy-MM-dd`)."),
     ];
 
     private static readonly Dictionary<string, RuleDoc> ById = All.ToDictionary(d => d.Id, StringComparer.OrdinalIgnoreCase);
