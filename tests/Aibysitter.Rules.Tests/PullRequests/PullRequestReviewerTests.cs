@@ -10,7 +10,7 @@ public class PullRequestReviewerTests
     [Fact]
     public void DiscoverChecks_FindsEveryCheck()
     {
-        Assert.Equal(new[] { "P001", "P002", "P003", "P004", "P005", "P006", "P007", "P013" }, PullRequestReviewer.DiscoverChecks().Select(c => c.Id));
+        Assert.Equal(new[] { "P001", "P002", "P003", "P004", "P005", "P006", "P007", "P008", "P009", "P010", "P011", "P012", "P013" }, PullRequestReviewer.DiscoverChecks().Select(c => c.Id));
     }
 
     [Fact]

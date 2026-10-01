@@ -2,7 +2,10 @@ using System.Text.RegularExpressions;
 
 namespace Aibysitter.Rules.PullRequests;
 
-/// <summary>Base for checks that flag added lines matching a pattern. One finding per line.</summary>
+/// <summary>
+/// Base for checks that flag added lines matching a pattern. One finding per line.
+/// The message quotes the named group "m" when the pattern defines it, otherwise the whole match.
+/// </summary>
 public abstract class AddedLinePatternCheck : IPullRequestCheck
 {
     public abstract string Id { get; }
@@ -23,7 +26,7 @@ public abstract class AddedLinePatternCheck : IPullRequestCheck
         {
             foreach (var line in file.AddedLines)
             {
-                var matches = Pattern.Matches(line.Text).Select(m => m.Value.Trim()).Distinct().ToList();
+                var matches = Pattern.Matches(line.Text).Select(m => (m.Groups["m"].Success ? m.Groups["m"].Value : m.Value).Trim()).Distinct().ToList();
                 if (matches.Count > 0)
                 {
                     yield return new PullRequestFinding(
