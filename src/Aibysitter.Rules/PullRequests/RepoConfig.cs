@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Aibysitter.Rules.PullRequests;
 
@@ -9,13 +10,18 @@ public enum ConclusionMode
 }
 
 /// <summary>Parsed <c>.github/aibysitter.json</c>.</summary>
-public sealed record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMode Conclusion)
+public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMode Conclusion)
 {
     public const string FilePath = ".github/aibysitter.json";
 
     public static RepoConfig Default { get; } = new([], ConclusionMode.Advisory);
 
+    /// <summary>Check IDs listed under <c>disable</c>. Disabled checks do not run.</summary>
+    public IReadOnlySet<string> Disabled { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     public bool HasScope => Scope.Count > 0;
+
+    public bool IsEnabled(string checkId) => !Disabled.Contains(checkId);
 
     public bool InScope(string path) => Scope.Any(g => g.IsMatch(path));
 
@@ -47,6 +53,7 @@ public sealed record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMode Conclu
 
             var scope = new List<Glob>();
             var conclusion = ConclusionMode.Advisory;
+            var disabled = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var property in doc.RootElement.EnumerateObject())
             {
@@ -84,13 +91,34 @@ public sealed record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMode Conclu
                         }
 
                         break;
+                    case "disable" when property.Value.ValueKind == JsonValueKind.Array:
+                        foreach (var item in property.Value.EnumerateArray())
+                        {
+                            var id = item.ValueKind == JsonValueKind.String ? item.GetString()?.Trim().ToUpperInvariant() : null;
+                            if (id is not null && CheckIdRegex().IsMatch(id) && PullRequestCheckDocs.Find(id) is not null)
+                            {
+                                disabled.Add(id);
+                            }
+                            else
+                            {
+                                errors.Add($"{FilePath}: \"disable\" entry {item.GetRawText()} is not a known check ID");
+                            }
+                        }
+
+                        break;
+                    case "disable":
+                        errors.Add($"{FilePath}: \"disable\" must be an array of check IDs");
+                        break;
                     default:
                         errors.Add($"{FilePath}: unknown key \"{property.Name}\"");
                         break;
                 }
             }
 
-            return (new RepoConfig(scope, conclusion), errors);
+            return (new RepoConfig(scope, conclusion) { Disabled = disabled }, errors);
         }
     }
+
+    [GeneratedRegex(@"^P\d{3}$")]
+    private static partial Regex CheckIdRegex();
 }

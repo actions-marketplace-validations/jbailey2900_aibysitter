@@ -20,6 +20,29 @@ public class LintPageScoringTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task SuppressedFindings_ListedSeparately_NotScored()
+    {
+        var html = await (await LintClient.PostAsync(factory.CreateClient(), "<!-- aibysitter-disable R002 -->\n- Handle errors.\n")).Content.ReadAsStringAsync();
+
+        Assert.Contains("100 / 100 — A", html);
+        Assert.Contains("<h2>Findings (0)</h2>", html);
+        Assert.Contains("<h2>Suppressed (1)</h2>", html);
+    }
+
+    [Fact]
+    public async Task SeverityCap_ShownWhenApplied()
+    {
+        // R002: 8 × 4 = 32, per-rule cap 30. R005: 2 × 4 = 8. Warning total 38, cap 30.
+        var text = "# Rules\n\n" + string.Join("\n", Enumerable.Range(1, 8).Select(n => $"- Handle case {n}.")) + "\n- Use tabs.\n- Use tabs.\n- Use tabs.\n";
+
+        var html = await (await LintClient.PostAsync(factory.CreateClient(), text)).Content.ReadAsStringAsync();
+
+        Assert.Contains("<td>Warning cap</td>", html);
+        Assert.Contains("<td>−30 (of −38)</td>", html);
+        Assert.Contains("70 / 100 — C", html);
+    }
+
+    [Fact]
     public async Task PostClean_Scores100_NoDeductions()
     {
         var html = await (await LintClient.PostAsync(factory.CreateClient(), "# Rules\n\n- Use tabs.\n")).Content.ReadAsStringAsync();

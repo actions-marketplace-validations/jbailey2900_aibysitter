@@ -53,3 +53,28 @@
         </table>
     }
 }
+
+@if (Model.Suppressed is { Count: > 0 })
+{
+    <h2>Suppressed (@Model.Suppressed.Count)</h2>
+    <p class="note">Matched by an <code>aibysitter-disable</code> comment. Not scored.</p>
+    <table class="findings stack">
+        <thead>
+            <tr>
+                <th>Line</th>
+                <th>Rule</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Suppressed)
+            {
+                <tr>
+                    <td>@row.Finding.Line</td>
+                    <td><a asp-page="/Notes/Rule" asp-route-id="@row.Finding.RuleId">@row.Finding.RuleId</a> @row.Title</td>
+                    <td>@row.Finding.Message</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -20,6 +20,8 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
 
     public LintScore? Score { get; private set; }
 
+    public IReadOnlyList<ResultRow>? Suppressed { get; private set; }
+
     /// <summary>Prefills the textarea from the sample (<c>?sample=true</c>) or a gallery entry (<c>?gallery=&lt;id&gt;</c>).</summary>
     public void OnGet(bool sample = false, string? gallery = null)
     {
@@ -41,15 +43,19 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
         }
 
         var rules = engine.Rules.ToDictionary(r => r.Id);
-        var findings = engine.Lint(RulesText!);
+        var result = engine.Analyze(RulesText!);
 
-        Results = findings
+        Results = result.Findings
             .Select(f => new ResultRow(f, rules[f.RuleId].Title, rules[f.RuleId].Severity))
             .ToList();
 
-        Score = engine.Score(findings);
+        Suppressed = result.Suppressed
+            .Select(f => new ResultRow(f, rules[f.RuleId].Title, rules[f.RuleId].Severity))
+            .ToList();
 
-        logger.LogInformation("Linted {Length} chars, {FindingCount} findings, score {Score}", RulesText!.Length, Results.Count, Score.Value);
+        Score = engine.Score(result.Findings);
+
+        logger.LogInformation("Linted {Length} chars, {FindingCount} findings, {SuppressedCount} suppressed, score {Score}", RulesText!.Length, Results.Count, Suppressed.Count, Score.Value);
 
         return Page();
     }

@@ -31,6 +31,7 @@ public sealed class PullRequestReviewer
         ArgumentNullException.ThrowIfNull(context);
 
         var findings = Checks
+            .Where(c => context.Config.IsEnabled(c.Id))
             .SelectMany(c => c.Evaluate(context))
             .OrderBy(f => f.Path, StringComparer.Ordinal)
             .ThenBy(f => f.Line)

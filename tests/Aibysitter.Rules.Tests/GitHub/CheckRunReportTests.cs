@@ -111,4 +111,15 @@ public class CheckRunReportTests
     {
         Assert.Equal(expected, OctokitGitHubGateway.MapStatus(status));
     }
+
+    [Fact]
+    public void DisabledCheck_ShownAsDisabled()
+    {
+        var (config, errors) = RepoConfig.Parse("""{ "disable": ["P002"] }""");
+
+        var report = Build(config, errors, Added("src/A.cs", "// TODO later"));
+
+        Assert.Contains("| P002 TODO stubs | Warning | disabled |", report.Summary);
+        Assert.Empty(report.Annotations);
+    }
 }

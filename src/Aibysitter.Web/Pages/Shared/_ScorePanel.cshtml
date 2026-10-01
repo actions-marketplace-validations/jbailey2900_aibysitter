@@ -25,6 +25,18 @@
                     </tr>
                 }
             </tbody>
+            @if (Model.DeductionsBySeverity.Any(d => d.Value.IsCapped))
+            {
+                <tfoot>
+                    @foreach (var (severity, deduction) in Model.DeductionsBySeverity.Where(d => d.Value.IsCapped))
+                    {
+                        <tr>
+                            <td>@severity cap</td>
+                            <td>−@deduction.Applied (of −@deduction.Total)</td>
+                        </tr>
+                    }
+                </tfoot>
+            }
         </table>
     }
 </section>

@@ -60,4 +60,13 @@ public class NotesPageTests(WebApplicationFactory<Program> factory)
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Index_DocumentsSeverityCapsAndSuppression()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Notes");
+
+        Assert.Contains("Error 40, Warning 30, Info 10", html);
+        Assert.Contains("&lt;!-- aibysitter-disable-next-line R001, R005 --&gt;", html);
+    }
 }

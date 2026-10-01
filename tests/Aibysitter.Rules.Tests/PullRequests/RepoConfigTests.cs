@@ -52,6 +52,10 @@ public class RepoConfigTests
     [InlineData("{\"conclusion\": \"strict\"}", "\"conclusion\" must be")]
     [InlineData("{\"conclusion\": true}", "\"conclusion\" must be")]
     [InlineData("{\"scopes\": []}", "unknown key \"scopes\"")]
+    [InlineData("{\"disable\": \"P002\"}", "\"disable\" must be an array of check IDs")]
+    [InlineData("{\"disable\": [\"P999\"]}", "\"disable\" entry \"P999\" is not a known check ID")]
+    [InlineData("{\"disable\": [\"R002\"]}", "\"disable\" entry \"R002\" is not a known check ID")]
+    [InlineData("{\"disable\": [2]}", "\"disable\" entry 2 is not a known check ID")]
     public void InvalidParts_ReportErrors(string json, string expected)
     {
         var (_, errors) = RepoConfig.Parse(json);
@@ -67,5 +71,22 @@ public class RepoConfigTests
         Assert.Single(errors);
         Assert.True(config.HasScope);
         Assert.Equal(ConclusionMode.Advisory, config.Conclusion);
+    }
+
+    [Fact]
+    public void Disable_ParsesKnownIds_CaseInsensitive()
+    {
+        var (config, errors) = RepoConfig.Parse("""{ "disable": ["P002", " p001 ", "P999"] }""");
+
+        Assert.Equal(new[] { "P001", "P002" }, config.Disabled.Order());
+        Assert.False(config.IsEnabled("P002"));
+        Assert.True(config.IsEnabled("P003"));
+        Assert.Single(errors);
+    }
+
+    [Fact]
+    public void Default_DisablesNothing()
+    {
+        Assert.Empty(RepoConfig.Default.Disabled);
     }
 }

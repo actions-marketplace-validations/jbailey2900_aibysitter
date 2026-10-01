@@ -35,4 +35,12 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
     {
         Assert.Contains("href=\"/GitHub\">github</a>", await factory.CreateClient().GetStringAsync("/"));
     }
+
+    [Fact]
+    public async Task Configuration_DocumentsDisable()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/GitHub");
+
+        Assert.Contains("<td><code>disable</code></td>", html);
+    }
 }
