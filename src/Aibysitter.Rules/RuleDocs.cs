@@ -39,6 +39,34 @@ public static class RuleDocs
             "Repeated lines of four or more words, ignoring case, whitespace, and list markers. A heading repeats only under the same parent heading. Excluded: code blocks, horizontal rules, table rows.",
             "- Run tests before commit.\n* run tests before commit.",
             "- Run tests before commit."),
+        new(
+            "R007",
+            "HedgedInstructions",
+            "A hedge makes the instruction optional.",
+            "\"try to\", \"if possible\", \"ideally\", \"where / when / whenever possible\", \"consider\", \"prefer to\", \"where / when / if / as appropriate\". Skipped: table rows; inline code, links, paths, quoted text; \"try to\" after not / never / don't; \"consider\" unless it opens a clause or follows you can / could / may / should; \"consider whether / if / how\"; clauses opening with a third-person or plural subject.",
+            "- Try to keep functions short.",
+            "- Keep functions under 40 lines."),
+        new(
+            "R008",
+            "EmphasisInflation",
+            "Emphasis is on so many lines that none of it stands out.",
+            "Lines with IMPORTANT, CRITICAL, MUST, NEVER, ALWAYS, DO NOT, MANDATORY or REQUIRED in capitals, or \"!!\". Limit: 3 per 100 lines, minimum 3. Code blocks excluded. Reported once, at the first line over the limit.",
+            "- ALWAYS run tests.\n- NEVER skip lint.\n- You MUST format.\n- IMPORTANT: commit often.",
+            "- Run tests.\n- Run lint before commit.\n- NEVER push to main."),
+        new(
+            "R009",
+            "SecretsInRulesFile",
+            "The file contains a credential.",
+            "Private key headers; AWS, GitHub, Slack, Anthropic, OpenAI, Stripe live and Google API keys; JSON Web Tokens; Password= and Pwd= values; credentials in URLs other than localhost. Code blocks included. Values with placeholder markers (xxxx, ..., <, >, {, }, $, *, your, example, changeme) are ignored. Findings show a redacted prefix only.",
+            "- Connect with Server=db;User Id=app;Password=Hunter2Prod;",
+            "- Read the connection string from the ConnectionStrings__Default environment variable."),
+        new(
+            "R012",
+            "UnclosedCodeFence",
+            "A code fence is opened and never closed.",
+            "A ``` or ~~~ fence with no matching closing fence before end of file. Reported at the opening line. Every line after it is treated as code and skipped by other rules.",
+            "Run:\n```\ndotnet test\n- Use tabs.",
+            "Run:\n```\ndotnet test\n```\n- Use tabs."),
     ];
 
     private static readonly Dictionary<string, RuleDoc> ById = All.ToDictionary(d => d.Id, StringComparer.OrdinalIgnoreCase);

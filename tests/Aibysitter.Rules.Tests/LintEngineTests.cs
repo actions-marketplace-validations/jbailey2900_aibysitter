@@ -3,11 +3,11 @@ namespace Aibysitter.Rules.Tests;
 public class LintEngineTests
 {
     [Fact]
-    public void DiscoverRules_FindsR001ThroughR005()
+    public void DiscoverRules_FindsEveryRule()
     {
         var ids = LintEngine.DiscoverRules().Select(r => r.Id);
 
-        Assert.Equal(new[] { "R001", "R002", "R003", "R004", "R005" }, ids);
+        Assert.Equal(new[] { "R001", "R002", "R003", "R004", "R005", "R007", "R008", "R009", "R012" }, ids);
     }
 
     [Fact]

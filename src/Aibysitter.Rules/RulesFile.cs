@@ -4,10 +4,11 @@ namespace Aibysitter.Rules;
 
 public sealed partial class RulesFile
 {
-    private RulesFile(IReadOnlyList<RulesLine> lines, IReadOnlyList<Section> sections)
+    private RulesFile(IReadOnlyList<RulesLine> lines, IReadOnlyList<Section> sections, int? unclosedFenceLine)
     {
         Lines = lines;
         Sections = sections;
+        UnclosedFenceLine = unclosedFenceLine;
         Suppressions = Suppressions.From(lines);
     }
 
@@ -16,6 +17,9 @@ public sealed partial class RulesFile
     public IReadOnlyList<Section> Sections { get; }
 
     public Suppressions Suppressions { get; }
+
+    /// <summary>Line of a code fence that is still open at end of file; null when every fence closes.</summary>
+    public int? UnclosedFenceLine { get; }
 
     public static RulesFile Parse(string text)
     {
@@ -31,6 +35,7 @@ public sealed partial class RulesFile
         var lines = new List<RulesLine>(count);
         var sections = new List<Section>();
         var inFence = false;
+        var fenceOpenLine = 0;
         string? fenceMarker = null;
         var sectionHeading = string.Empty;
         var sectionLevel = 0;
@@ -42,11 +47,12 @@ public sealed partial class RulesFile
             var lineText = raw[i];
             var fence = FenceRegex().Match(lineText);
 
-            if (fence.Success && (!inFence || fence.Groups[1].Value.StartsWith(fenceMarker!, StringComparison.Ordinal)))
+            if (fence.Success && (!inFence || ClosesFence(fence, lineText, fenceMarker!)))
             {
                 if (!inFence)
                 {
-                    fenceMarker = fence.Groups[1].Value[..3];
+                    fenceMarker = fence.Groups[1].Value;
+                    fenceOpenLine = number;
                 }
 
                 inFence = !inFence;
@@ -83,8 +89,14 @@ public sealed partial class RulesFile
             sections.Add(new Section(sectionHeading, sectionLevel, sectionStart, count));
         }
 
-        return new RulesFile(lines, sections);
+        return new RulesFile(lines, sections, inFence ? fenceOpenLine : null);
     }
+
+    /// <summary>A closing fence uses the opening character, is at least as long, and has nothing after it.</summary>
+    private static bool ClosesFence(Match fence, string lineText, string opening) =>
+        fence.Groups[1].Value[0] == opening[0]
+        && fence.Groups[1].Value.Length >= opening.Length
+        && string.IsNullOrWhiteSpace(lineText[(fence.Index + fence.Length)..]);
 
     [GeneratedRegex(@"^\s{0,3}(`{3,}|~{3,})")]
     private static partial Regex FenceRegex();
