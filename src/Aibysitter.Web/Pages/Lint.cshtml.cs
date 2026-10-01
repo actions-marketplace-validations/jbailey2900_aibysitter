@@ -1,12 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using Aibysitter.Rules;
+using Aibysitter.Web.Gallery;
 using Aibysitter.Web.Samples;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Aibysitter.Web.Pages;
 
-public class LintModel(LintEngine engine, ILogger<LintModel> logger) : PageModel
+public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger<LintModel> logger) : PageModel
 {
     public const int MaxContentLength = 100_000;
 
@@ -19,11 +20,16 @@ public class LintModel(LintEngine engine, ILogger<LintModel> logger) : PageModel
 
     public LintScore? Score { get; private set; }
 
-    public void OnGet(bool sample = false)
+    /// <summary>Prefills the textarea from the sample (<c>?sample=true</c>) or a gallery entry (<c>?gallery=&lt;id&gt;</c>).</summary>
+    public void OnGet(bool sample = false, string? gallery = null)
     {
         if (sample)
         {
             RulesText = SampleRules.Text;
+        }
+        else if (gallery is not null && galleryCatalog.Find(gallery) is { } entry)
+        {
+            RulesText = entry.Content;
         }
     }
 

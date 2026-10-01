@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Samples\sample-rules.md" LogicalName="Aibysitter.Web.Samples.sample-rules.md" />
+    <EmbeddedResource Include="Gallery\Content\**\*" LogicalName="gallery/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

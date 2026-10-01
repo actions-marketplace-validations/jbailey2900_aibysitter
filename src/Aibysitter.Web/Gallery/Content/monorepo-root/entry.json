@@ -1,0 +1,9 @@
+{
+  "id": "monorepo-root",
+  "name": "Monorepo root",
+  "description": "Root AGENTS.md for a pnpm and Turborepo workspace: commands, package boundaries, scope limits, and Changesets.",
+  "category": "General",
+  "tags": ["Monorepo", "pnpm", "Turborepo", "Changesets"],
+  "file": "AGENTS.md",
+  "license": "CC0-1.0"
+}
