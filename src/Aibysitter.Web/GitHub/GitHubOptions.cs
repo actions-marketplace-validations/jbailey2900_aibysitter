@@ -7,12 +7,13 @@ public sealed class GitHubOptions
 
     public const string CheckRunName = "Aibysitter";
 
-    public long AppId { get; set; }
+    /// <summary>Numeric App ID or the Client ID (Iv…); GitHub accepts either as the JWT issuer.</summary>
+    public string? AppId { get; set; }
 
     public string? WebhookSecret { get; set; }
 
     public string? PrivateKeyPath { get; set; }
 
     public bool IsConfigured =>
-        AppId > 0 && !string.IsNullOrWhiteSpace(WebhookSecret) && !string.IsNullOrWhiteSpace(PrivateKeyPath);
+        !string.IsNullOrWhiteSpace(AppId) && !string.IsNullOrWhiteSpace(WebhookSecret) && !string.IsNullOrWhiteSpace(PrivateKeyPath);
 }

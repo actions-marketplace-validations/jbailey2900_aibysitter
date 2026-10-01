@@ -7,8 +7,9 @@ namespace Aibysitter.Web.GitHub;
 /// <summary>GitHub App JWT (RS256). Valid from now-60s to now+9min (GitHub maximum is 10 min).</summary>
 public static class AppJwt
 {
-    public static string Create(long appId, RSA privateKey, DateTimeOffset now)
+    public static string Create(string issuer, RSA privateKey, DateTimeOffset now)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(issuer);
         ArgumentNullException.ThrowIfNull(privateKey);
 
         var header = Base64Url(JsonSerializer.SerializeToUtf8Bytes(new { alg = "RS256", typ = "JWT" }));
@@ -16,7 +17,7 @@ public static class AppJwt
         {
             iat = now.AddSeconds(-60).ToUnixTimeSeconds(),
             exp = now.AddMinutes(9).ToUnixTimeSeconds(),
-            iss = appId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            iss = issuer.Trim(),
         }));
 
         var signingInput = $"{header}.{payload}";

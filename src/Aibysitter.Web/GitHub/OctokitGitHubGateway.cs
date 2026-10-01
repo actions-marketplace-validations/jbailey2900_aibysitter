@@ -13,7 +13,8 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
     private static readonly ProductHeaderValue Product = new("Aibysitter");
     private static readonly TimeSpan TokenRefreshMargin = TimeSpan.FromMinutes(5);
 
-    private readonly Lazy<RSA> privateKey = new(() => AppJwt.LoadPrivateKey(options.Value.PrivateKeyPath!));
+    // PublicationOnly: a failed load (missing or empty PEM) is not cached, so fixing the file takes effect without a recycle.
+    private readonly Lazy<RSA> privateKey = new(() => AppJwt.LoadPrivateKey(options.Value.PrivateKeyPath!), LazyThreadSafetyMode.PublicationOnly);
     private readonly ConcurrentDictionary<long, AccessToken> tokens = new();
 
     public async Task<long> CreateQueuedCheckRunAsync(PullRequestRef pr, CancellationToken cancellationToken)
@@ -87,6 +88,8 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
         }
     }
 
+    internal RSA PrivateKey => privateKey.Value;
+
     public void Dispose()
     {
         if (privateKey.IsValueCreated)
@@ -101,7 +104,7 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
         {
             var appClient = new GitHubClient(Product)
             {
-                Credentials = new Credentials(AppJwt.Create(options.Value.AppId, privateKey.Value, time.GetUtcNow()), AuthenticationType.Bearer),
+                Credentials = new Credentials(AppJwt.Create(options.Value.AppId!, privateKey.Value, time.GetUtcNow()), AuthenticationType.Bearer),
             };
             token = await appClient.GitHubApps.CreateInstallationToken(installationId);
             tokens[installationId] = token;

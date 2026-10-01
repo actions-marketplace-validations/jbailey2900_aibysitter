@@ -20,7 +20,7 @@ public class AppJwtTests
     {
         using var rsa = RSA.Create(2048);
 
-        var parts = AppJwt.Create(12345, rsa, Now).Split('.');
+        var parts = AppJwt.Create("12345", rsa, Now).Split('.');
 
         Assert.Equal(3, parts.Length);
         using var header = JsonDocument.Parse(FromBase64Url(parts[0]));
@@ -33,6 +33,30 @@ public class AppJwtTests
         Assert.DoesNotContain('=', string.Concat(parts));
     }
 
+    [Theory]
+    [InlineData("5152568", "5152568")]
+    [InlineData("Iv23liExampleClient", "Iv23liExampleClient")]
+    [InlineData(" 5152568 ", "5152568")]
+    public void Create_IssuerIsAppIdOrClientId_Trimmed(string issuer, string expected)
+    {
+        using var rsa = RSA.Create(2048);
+
+        var payload = AppJwt.Create(issuer, rsa, Now).Split('.')[1];
+
+        using var doc = JsonDocument.Parse(FromBase64Url(payload));
+        Assert.Equal(expected, doc.RootElement.GetProperty("iss").GetString());
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Create_BlankIssuer_Throws(string issuer)
+    {
+        using var rsa = RSA.Create(2048);
+
+        Assert.ThrowsAny<ArgumentException>(() => AppJwt.Create(issuer, rsa, Now));
+    }
+
     [Fact]
     public void LoadPrivateKey_ReadsPkcs1Pem()
     {
@@ -42,7 +66,7 @@ public class AppJwtTests
         try
         {
             using var loaded = AppJwt.LoadPrivateKey(path);
-            var token = AppJwt.Create(1, loaded, Now).Split('.');
+            var token = AppJwt.Create("1", loaded, Now).Split('.');
 
             Assert.True(source.VerifyData(Encoding.ASCII.GetBytes($"{token[0]}.{token[1]}"), FromBase64Url(token[2]), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1));
         }
