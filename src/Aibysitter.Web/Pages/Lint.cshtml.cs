@@ -1,0 +1,43 @@
+using System.ComponentModel.DataAnnotations;
+using Aibysitter.Rules;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace Aibysitter.Web.Pages;
+
+public class LintModel(LintEngine engine, ILogger<LintModel> logger) : PageModel
+{
+    public const int MaxContentLength = 100_000;
+
+    [BindProperty]
+    [Required(ErrorMessage = "Paste a rules file to lint.")]
+    [StringLength(MaxContentLength, ErrorMessage = "Input is limited to 100,000 characters.")]
+    public string? RulesText { get; set; }
+
+    public IReadOnlyList<ResultRow>? Results { get; private set; }
+
+    public void OnGet()
+    {
+    }
+
+    public IActionResult OnPost()
+    {
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
+
+        var rules = engine.Rules.ToDictionary(r => r.Id);
+        var findings = engine.Lint(RulesText!);
+
+        Results = findings
+            .Select(f => new ResultRow(f, rules[f.RuleId].Title, rules[f.RuleId].Severity))
+            .ToList();
+
+        logger.LogInformation("Linted {Length} chars, {FindingCount} findings", RulesText!.Length, Results.Count);
+
+        return Page();
+    }
+
+    public sealed record ResultRow(Finding Finding, string Title, Severity Severity);
+}
