@@ -42,6 +42,7 @@ public static class PatternExport
         var engine = new LintEngine();
         var data = new
         {
+            rulesetVersion = RulesetVersion.Current,
             patterns = Patterns().ToDictionary(p => p.Key, p => new { source = p.Value.Source, flags = p.Value.Flags }),
             rules = engine.Rules.Select(r => new { id = r.Id, title = r.Title, severity = r.Severity.ToString() }),
             scoring = new

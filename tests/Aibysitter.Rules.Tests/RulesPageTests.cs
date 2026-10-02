@@ -53,7 +53,7 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     [Theory]
     [InlineData("/Rules/R999")]
     [InlineData("/Rules/P999")]
-    [InlineData("/Rules/R016")]
+    [InlineData("/Rules/R099")]
     public async Task RulePage_UnknownId_Returns404(string path)
     {
         var response = await factory.CreateClient().GetAsync(path);
@@ -143,7 +143,7 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
         var html = await factory.CreateClient().GetStringAsync("/Rules/Methodology");
 
         Assert.Contains("<td>R003, R009, R012</td>", html);
-        Assert.Contains("<td>R001, R010, R013, R014</td>", html);
+        Assert.Contains("<td>R001, R010, R013, R014, R016</td>", html);
         Assert.Contains("More than 200 lines", html);
         Assert.Contains("129 of 336 (38.4%)", html);
         Assert.Contains("The lowest possible score is 20.", html);

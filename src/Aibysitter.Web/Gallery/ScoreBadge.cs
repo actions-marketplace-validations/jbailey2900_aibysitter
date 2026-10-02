@@ -29,8 +29,8 @@ public static class ScoreBadge
         };
 
         return string.Create(CultureInfo.InvariantCulture, $"""
-            <svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="{Height}" role="img" aria-label="{Title}: {Escape(value)}">
-              <title>{Title}: {Escape(value)}</title>
+            <svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="{Height}" role="img" aria-label="{Title}: {Escape(value)} (ruleset v{RulesetVersion.Current})">
+              <title>{Title}: {Escape(value)} (ruleset v{RulesetVersion.Current})</title>
               <rect width="{left}" height="{Height}" fill="#1d1c1a"/>
               <rect x="{left}" width="{right}" height="{Height}" fill="{color}"/>
               <g fill="#fbfaf8" font-family="'JetBrains Mono','DejaVu Sans Mono',Menlo,Consolas,monospace" font-size="11">

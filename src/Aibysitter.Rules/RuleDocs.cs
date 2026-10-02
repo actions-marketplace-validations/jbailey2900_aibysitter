@@ -106,8 +106,15 @@ public static class RuleDocs
         new(
             "R015",
             "FrontmatterFields",
-            "A Cursor rule's frontmatter is missing, unknown, or never applies the rule.",
-            "Cursor .mdc rules only: no frontmatter; keys other than description, globs, alwaysApply; alwaysApply not true or false; alwaysApply not true with empty globs and empty description (the rule applies only when mentioned by name).",
+            "A Cursor rule's frontmatter is missing, has unknown keys, or has an invalid alwaysApply.",
+            "Cursor .mdc rules only: no frontmatter; keys other than description, globs, alwaysApply; alwaysApply not true or false. Manual-mode rules are R016.",
+            "---\ndescriptoin: Formatting rules for C# files\nglobs: **/*.cs\nalwaysApply: maybe\n---\n- Use tabs.",
+            "---\ndescription: Formatting rules for C# files\nglobs: **/*.cs\nalwaysApply: false\n---\n- Use tabs."),
+        new(
+            "R016",
+            "ManualCursorRule",
+            "A Cursor rule is in Apply Manually mode and is included only when @-mentioned.",
+            "Cursor .mdc rules only: frontmatter present, alwaysApply not true, globs empty, description empty.",
             "---\ndescription:\nglobs:\nalwaysApply: false\n---\n- Use tabs.",
             "---\ndescription: Formatting rules for C# files\nglobs: **/*.cs\nalwaysApply: false\n---\n- Use tabs."),
     ];

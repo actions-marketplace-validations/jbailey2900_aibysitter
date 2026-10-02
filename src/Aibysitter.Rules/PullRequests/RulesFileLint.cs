@@ -4,7 +4,7 @@ using Aibysitter.Rules.Rules;
 namespace Aibysitter.Rules.PullRequests;
 
 /// <summary>
-/// Runs the rules-file rules (R001–R015) on rules files the pull request adds or changes, using head content.
+/// Runs the rules-file rules (R001–R016) on rules files the pull request adds or changes, using head content.
 /// Added files: every finding. Changed files: findings on added lines, plus whole-file rules.
 /// Precedence: in-file aibysitter-disable comments, then rule IDs in config "disable", then P014 disabled.
 /// Each finding carries its rule's severity.
@@ -16,7 +16,7 @@ public sealed class RulesFileLint : IPullRequestCheck
     public const string CheckId = "P014";
 
     /// <summary>Rules whose finding describes the whole file; reported for changed files regardless of the line.</summary>
-    public static readonly IReadOnlySet<string> WholeFileRules = new HashSet<string>(StringComparer.Ordinal) { "R004", "R008", "R012", "R015" };
+    public static readonly IReadOnlySet<string> WholeFileRules = new HashSet<string>(StringComparer.Ordinal) { "R004", "R008", "R012", "R015", "R016" };
 
     private readonly LintEngine engine;
     private readonly Dictionary<string, IRule> rules;

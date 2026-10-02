@@ -1,8 +1,7 @@
 namespace Aibysitter.Rules.Rules;
 
 /// <summary>
-/// Cursor .mdc rules only: frontmatter present, known keys, boolean alwaysApply, and at least one way for the rule
-/// to apply (alwaysApply: true, globs, or a description).
+/// Cursor .mdc rules only: frontmatter present, known keys, boolean alwaysApply. Manual-mode rules are <see cref="ManualCursorRule"/>.
 /// </summary>
 public sealed class FrontmatterFields : IRule
 {
@@ -36,14 +35,5 @@ public sealed class FrontmatterFields : IRule
             yield return new Finding(Id, fm.LineOf("alwaysApply"), "alwaysApply must be true or false.", "Set alwaysApply: true or alwaysApply: false.");
         }
 
-        var alwaysOn = always is ["true"];
-        if (!alwaysOn && fm.Values("globs").Count == 0 && fm.Values("description").Count == 0)
-        {
-            yield return new Finding(
-                Id,
-                1,
-                "Rule never applies automatically: alwaysApply is not true, globs is empty, and description is empty.",
-                "Set alwaysApply: true, add globs, or add a description the agent can match.");
-        }
     }
 }

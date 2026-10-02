@@ -3,6 +3,7 @@
 <section class="score grade-@Model.Grade.ToLowerInvariant()">
     <h2>Aibysitter lint score</h2>
     <p class="score-value">@Model.Value / 100 — @Model.Grade</p>
+    <p class="note">Ruleset <a asp-page="/Rules/Changelog">v@(Aibysitter.Rules.RulesetVersion.Current)</a></p>
     @if (Model.DeductionsByRule.Count == 0)
     {
         <p>No deductions.</p>

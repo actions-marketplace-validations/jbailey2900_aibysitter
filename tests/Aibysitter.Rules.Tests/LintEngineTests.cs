@@ -7,7 +7,7 @@ public class LintEngineTests
     {
         var ids = LintEngine.DiscoverRules().Select(r => r.Id);
 
-        Assert.Equal(new[] { "R001", "R002", "R003", "R004", "R005", "R007", "R008", "R009", "R010", "R011", "R012", "R013", "R014", "R015" }, ids);
+        Assert.Equal(new[] { "R001", "R002", "R003", "R004", "R005", "R007", "R008", "R009", "R010", "R011", "R012", "R013", "R014", "R015", "R016" }, ids);
     }
 
     [Fact]

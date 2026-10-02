@@ -99,7 +99,7 @@ public static class PullRequestCheckDocs
             "P014",
             "RulesFileLint",
             "A change adds or edits a rules file that has rule findings.",
-            "Runs R001–R015 on rules files the pull request adds or changes (CLAUDE.md, AGENTS.md, .cursor/rules/*.mdc, .cursorrules, copilot-instructions.md, GEMINI.md, .windsurfrules), using the head content. Added files: every finding. Changed files: findings on added lines, plus R004, R008, R012, R015. Severity follows the rule. aibysitter-disable comments in the file apply; rule IDs in \"disable\" skip those rules. R006 checks every reference in changed rules files, and references in unchanged rules files broken by paths or scripts the pull request removes or renames.",
+            "Runs R001–R016 on rules files the pull request adds or changes (CLAUDE.md, AGENTS.md, .cursor/rules/*.mdc, .cursorrules, copilot-instructions.md, GEMINI.md, .windsurfrules), using the head content. Added files: every finding. Changed files: findings on added lines, plus R004, R008, R012, R015, R016. Severity follows the rule. aibysitter-disable comments in the file apply; rule IDs in \"disable\" skip those rules. R006 checks every reference in changed rules files, and references in unchanged rules files broken by paths or scripts the pull request removes or renames.",
             "added: CLAUDE.md\n- Handle errors properly.",
             "added: CLAUDE.md\n- Return 400 with a ProblemDetails body when validation fails."),
     ];

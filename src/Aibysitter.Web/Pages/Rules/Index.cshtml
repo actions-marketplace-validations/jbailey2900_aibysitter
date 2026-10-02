@@ -7,9 +7,9 @@
 <h1>Rules</h1>
 
 <h2>Rules files</h2>
-<p>Checked by the <a asp-page="/Lint">lint page</a> against CLAUDE.md, AGENTS.md, Cursor rules (.mdc and .cursorrules), Copilot instructions, GEMINI.md, and .windsurfrules. Frontmatter is skipped by every rule except R009 and R015. R015 applies to Cursor .mdc rules only.</p>
+<p>Checked by the <a asp-page="/Lint">lint page</a> against CLAUDE.md, AGENTS.md, Cursor rules (.mdc and .cursorrules), Copilot instructions, GEMINI.md, and .windsurfrules. Frontmatter is skipped by every rule except R009, R015 and R016. R015 and R016 apply to Cursor .mdc rules only.</p>
 <partial name="_RulesTable" model="Model.Rows" />
-<p><a asp-page="/Rules/Methodology">How rules are chosen and scored</a></p>
+<p><a asp-page="/Rules/Methodology">How rules are chosen and scored</a> · <a asp-page="/Rules/Changelog">Changelog (ruleset v@(Aibysitter.Rules.RulesetVersion.Current))</a></p>
 
 <h2>Aibysitter lint score</h2>
 <partial name="_Scoring" />

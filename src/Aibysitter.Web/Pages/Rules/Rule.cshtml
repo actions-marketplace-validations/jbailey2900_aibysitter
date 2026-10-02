@@ -20,7 +20,7 @@
     }
     else
     {
-        <dd>@(Model.Doc.Id == "R015" ? "Cursor rules (.mdc)" : "Rules files (CLAUDE.md, AGENTS.md, .mdc, .cursorrules, Copilot instructions, GEMINI.md, .windsurfrules)")</dd>
+        <dd>@(Model.Doc.Id is "R015" or "R016" ? "Cursor rules (.mdc)" : "Rules files (CLAUDE.md, AGENTS.md, .mdc, .cursorrules, Copilot instructions, GEMINI.md, .windsurfrules)")</dd>
     }
     <dt>Severity</dt>
     @if (Model.IsPullRequestCheck)
@@ -47,7 +47,7 @@
 <h2>Passes</h2>
 <pre><code>@Model.Doc.GoodExample</code></pre>
 
-@if (Model.Doc.Id == "R015")
+@if (Model.Doc.Id is "R015" or "R016")
 {
     <partial name="_CursorModes" />
 }

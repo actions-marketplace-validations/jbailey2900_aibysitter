@@ -115,13 +115,10 @@ public class FrontmatterFieldsTests
     [InlineData("---\ndescription: Rules for API handlers\nglobs:\nalwaysApply: false\n---\n- a\n")]
     public void Valid_NoFindings(string text) => Assert.Empty(Lint(text));
 
-    [Fact]
-    public void NeverApplies_Flagged() =>
-        Assert.Contains("never applies", Assert.Single(Lint("---\ndescription:\nglobs:\nalwaysApply: false\n---\n- a\n")).Message);
-
-    [Fact]
-    public void MissingAlwaysApply_NoGlobsNoDescription_Flagged() =>
-        Assert.Single(Lint("---\nglobs:\n---\n- a\n"));
+    [Theory]
+    [InlineData("---\ndescription:\nglobs:\nalwaysApply: false\n---\n- a\n")]
+    [InlineData("---\nglobs:\n---\n- a\n")]
+    public void ManualMode_NotR015(string text) => Assert.Empty(Lint(text));
 
     [Fact]
     public void UnknownKey_FlaggedAtItsLine()
@@ -161,12 +158,13 @@ public class FormatWebTests(WebApplicationFactory<Program> factory) : IClassFixt
     }
 
     [Fact]
-    public async Task Post_Auto_ShowsDetectedFormat_AndRunsR015()
+    public async Task Post_Auto_ShowsDetectedFormat_AndRunsR016()
     {
         var html = await (await LintClient.PostAsync(factory.CreateClient(), "---\ndescription:\nglobs:\nalwaysApply: false\n---\n- Use tabs.\n")).Content.ReadAsStringAsync();
 
         Assert.Contains("Linted as Cursor rule (.mdc) (detected).", html);
-        Assert.Contains("<a href=\"/Rules/R015\">R015</a>", html);
+        Assert.Contains("<a href=\"/Rules/R016\">R016</a>", html);
+        Assert.DoesNotContain("<a href=\"/Rules/R015\">R015</a>", html);
     }
 
     [Fact]
@@ -207,3 +205,36 @@ public class FormatWebTests(WebApplicationFactory<Program> factory) : IClassFixt
         Assert.Contains("\"installPath\":\".github/copilot-instructions.md\"", json);
     }
 }
+
+public class ManualCursorRuleTests
+{
+    private readonly ManualCursorRule _rule = new();
+
+    private IReadOnlyList<Finding> Lint(string text, RulesFormat format = RulesFormat.Auto) => _rule.Evaluate(RulesFile.Parse(text, format)).ToList();
+
+    [Theory]
+    [InlineData("---\ndescription:\nglobs:\nalwaysApply: false\n---\n- a\n")]
+    [InlineData("---\nglobs:\n---\n- a\n")]
+    [InlineData("---\nalwaysApply: maybe\n---\n- a\n")]
+    public void ManualMode_FlaggedAtLine1_AsInfo(string text)
+    {
+        var finding = Assert.Single(Lint(text, RulesFormat.CursorMdc));
+
+        Assert.Equal(1, finding.Line);
+        Assert.Equal("Manual rule: Cursor includes it only when @-mentioned.", finding.Message);
+        Assert.Equal(Severity.Info, _rule.Severity);
+    }
+
+    [Theory]
+    [InlineData("---\ndescription: x\nglobs:\nalwaysApply: false\n---\n- a\n")]
+    [InlineData("---\ndescription:\nglobs: src/**\nalwaysApply: false\n---\n- a\n")]
+    [InlineData("---\ndescription:\nglobs:\nalwaysApply: true\n---\n- a\n")]
+    public void AutomaticModes_NotFlagged(string text) => Assert.Empty(Lint(text, RulesFormat.CursorMdc));
+
+    [Fact]
+    public void NoFrontmatter_LeftToR015() => Assert.Empty(Lint("# Rules\n- a\n", RulesFormat.CursorMdc));
+
+    [Fact]
+    public void NotCursorFormat_NotFlagged() => Assert.Empty(Lint("---\nglobs:\n---\n- a\n", RulesFormat.ClaudeMd));
+}
+

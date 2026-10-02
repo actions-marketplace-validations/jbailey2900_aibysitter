@@ -1,6 +1,6 @@
 // Lint page: runs the browser engine on submit and renders the same markup as Lint.cshtml.
 // Invalid input, or any engine error, falls through to the server post.
-import { analyze, score, ruleInfo, formatName } from "./lint-engine.mjs";
+import { analyze, score, ruleInfo, formatName, rulesetVersion } from "./lint-engine.mjs";
 
 const MAX_LENGTH = 100000;
 
@@ -17,7 +17,8 @@ const head = (...names) => el("thead", null, el("tr", null, ...names.map((n) => 
 
 function scorePanel(s) {
   const section = el("section", { class: "score grade-" + s.grade.toLowerCase() }, el("h2", null, "Aibysitter lint score"),
-    el("p", { class: "score-value" }, `${s.value} / 100 — ${s.grade}`));
+    el("p", { class: "score-value" }, `${s.value} / 100 — ${s.grade}`),
+    el("p", { class: "note" }, "Ruleset ", el("a", { href: "/Rules/Changelog" }, "v" + rulesetVersion)));
   if (s.deductionsByRule.length === 0) {
     section.append(el("p", null, "No deductions."));
     return section;

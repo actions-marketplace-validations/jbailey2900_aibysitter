@@ -1,9 +1,9 @@
-// Browser port of Aibysitter.Rules (LintEngine, RulesFile, Scorer, R001-R005, R007-R015).
+// Browser port of Aibysitter.Rules (LintEngine, RulesFile, Scorer, R001-R005, R007-R016).
 // Patterns, rule metadata, scoring, and limits come from generated/rules-patterns.mjs, built from the C# definitions.
 // RulesParityTests asserts this file and the C# engine produce identical results.
 import gen from "./generated/rules-patterns.mjs";
 
-const { patterns, rules, scoring, formats, limits } = gen;
+const { rulesetVersion, patterns, rules, scoring, formats, limits } = gen;
 const ruleById = new Map(rules.map((r) => [r.id, r]));
 const cache = new Map();
 
@@ -461,16 +461,21 @@ function r015(file) {
   if (fm.has("alwaysApply") && !(always.length === 1 && (always[0] === "true" || always[0] === "false"))) {
     out.push(finding("R015", fm.lineOf("alwaysApply"), "alwaysApply must be true or false.", "Set alwaysApply: true or alwaysApply: false."));
   }
-  const alwaysOn = always.length === 1 && always[0] === "true";
-  if (!alwaysOn && fm.values("globs").length === 0 && fm.values("description").length === 0) {
-    out.push(finding("R015", 1,
-      "Rule never applies automatically: alwaysApply is not true, globs is empty, and description is empty.",
-      "Set alwaysApply: true, add globs, or add a description the agent can match."));
-  }
   return out;
 }
 
-const EVALUATORS = { R001: r001, R002: r002, R003: r003, R004: r004, R005: r005, R007: r007, R008: r008, R009: r009, R010: r010, R011: r011, R012: r012, R013: r013, R014: r014, R015: r015 };
+function r016(file) {
+  const fm = file.frontmatter;
+  if (file.format !== "CursorMdc" || !fm) return [];
+  const always = fm.values("alwaysApply");
+  const alwaysOn = always.length === 1 && always[0] === "true";
+  return !alwaysOn && fm.values("globs").length === 0 && fm.values("description").length === 0
+    ? [finding("R016", 1, "Manual rule: Cursor includes it only when @-mentioned.",
+      "To apply it automatically, set alwaysApply: true, add globs, or add a description.")]
+    : [];
+}
+
+const EVALUATORS = { R001: r001, R002: r002, R003: r003, R004: r004, R005: r005, R007: r007, R008: r008, R009: r009, R010: r010, R011: r011, R012: r012, R013: r013, R014: r014, R015: r015, R016: r016 };
 
 for (const r of rules) {
   if (!EVALUATORS[r.id]) throw new Error(`No browser implementation for ${r.id}`);
@@ -513,4 +518,5 @@ export function score(findings) {
 }
 
 export const ruleInfo = (id) => ruleById.get(id);
+export { rulesetVersion };
 export const formatName = (format) => formats.names[format];

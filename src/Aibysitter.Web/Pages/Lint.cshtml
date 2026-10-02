@@ -10,7 +10,7 @@
 <form method="post" id="lint-form">
     <label for="Format">Format</label>
     <select asp-for="Format" asp-items="Model.FormatOptions" aria-describedby="format-help"></select>
-    <p class="note" id="format-help">Auto-detect picks Cursor rule (.mdc) when the frontmatter has description, globs, or alwaysApply. The format only changes whether R015 runs.</p>
+    <p class="note" id="format-help">Auto-detect picks Cursor rule (.mdc) when the frontmatter has description, globs, or alwaysApply. The format only changes whether R015 and R016 run.</p>
     <label for="RulesText">Rules file content</label>
     <textarea asp-for="RulesText" rows="20" spellcheck="false" aria-describedby="text-help"></textarea>
     <p class="note" id="text-help">Linted in your browser; the text is not sent. Without JavaScript, the server lints it and does not store or log the text. <a asp-page="/Privacy">Privacy</a></p>

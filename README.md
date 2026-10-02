@@ -6,7 +6,7 @@ Live at [aibysitting.net](https://aibysitting.net). Free, no accounts.
 
 ## Rules-file linter
 
-Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`.cursor/rules/*.mdc`, root `.cursorrules`), `.github/copilot-instructions.md`, and root `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009 and R015. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint). With JavaScript on, the file is linted in the browser and not sent; without it, the server lints it.
+Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`.cursor/rules/*.mdc`, root `.cursorrules`), `.github/copilot-instructions.md`, and root `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009, R015 and R016. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint). With JavaScript on, the file is linted in the browser and not sent; without it, the server lints it.
 
 | ID | Rule | Severity |
 |---|---|---|
@@ -24,6 +24,7 @@ Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`
 | R013 | ProseParagraph (over 80 words) | Info |
 | R014 | UnverifiableCrossReference | Info |
 | R015 | FrontmatterFields (Cursor .mdc only) | Warning |
+| R016 | ManualCursorRule (Cursor .mdc only) | Info |
 
 R006 (MissingIdentifiers, Warning) is App-only and runs through P014: it checks that paths, package scripts, make targets, and MSBuild targets a rules file names exist in the repository.
 
@@ -31,7 +32,7 @@ Suppress a rule with an HTML comment on its own line: `<!-- aibysitter-disable R
 
 Aibysitter lint score: 100, minus 10 per Error, 4 per Warning, 1 per Info. Each rule deducts at most 30. Total deductions per severity are capped: Error 40, Warning 30, Info 10, so the lowest possible score is 20. Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below.
 
-Rules: [aibysitting.net/Rules](https://aibysitting.net/Rules). Methodology: [aibysitting.net/Rules/Methodology](https://aibysitting.net/Rules/Methodology).
+Rules: [aibysitting.net/Rules](https://aibysitting.net/Rules). Ruleset version and changes: [aibysitting.net/Rules/Changelog](https://aibysitting.net/Rules/Changelog). Methodology: [aibysitting.net/Rules/Methodology](https://aibysitting.net/Rules/Methodology).
 
 ## GitHub App
 
@@ -52,7 +53,7 @@ Reviews pull requests and posts a check named `Aibysitter`, with an annotation o
 | P011 | CiConfigEdited | Info |
 | P012 | DebugLeftovers | Info |
 | P013 | CommittedArtifacts | Error |
-| P014 | RulesFileLint (R001–R015 on changed rules files) | Per rule |
+| P014 | RulesFileLint (R001–R016 on changed rules files) | Per rule |
 
 Optional repo config, `.github/aibysitter.json`, read from the pull request's head commit:
 
@@ -66,7 +67,7 @@ Optional repo config, `.github/aibysitter.json`, read from the pull request's he
 
 - `scope`: path globs from the repo root. Turns on P004. Not set: P004 is off.
 - `conclusion`: `advisory` (default) reports findings as neutral. `fail-on-errors` fails the check on any Error finding.
-- `disable`: check IDs to skip, and rule IDs (R001–R015) to skip inside P014.
+- `disable`: check IDs to skip, and rule IDs (R001–R016) to skip inside P014.
 
 Install: [docs/installing-on-your-repos.md](docs/installing-on-your-repos.md). The App is private until launch. Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
 
