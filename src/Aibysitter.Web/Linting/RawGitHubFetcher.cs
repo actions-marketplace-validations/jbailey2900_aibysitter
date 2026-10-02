@@ -10,11 +10,19 @@ public enum FetchStatus
     TooLarge,
     TimedOut,
     Unreachable,
+
+    /// <summary>The file is a link whose target is missing.</summary>
+    LinkTargetMissing,
+
+    /// <summary>The file links to another link; links are followed one level.</summary>
+    LinkTooDeep,
 }
 
-/// <param name="FileName">The file linted, when <see cref="Status"/> is Found or TooLarge.</param>
+/// <param name="FileName">The supported file chosen, when one was found.</param>
 /// <param name="OtherFiles">Other supported files present on the default branch, in fixed order.</param>
-public sealed record FetchResult(FetchStatus Status, string? FileName, string? Content, IReadOnlyList<string> OtherFiles);
+/// <param name="LinkTarget">When <see cref="FileName"/> is a symlink: the repository path it points to, whose content is <see cref="Content"/>.</param>
+/// <param name="NextLink">For <see cref="FetchStatus.LinkTooDeep"/>: where the target itself points.</param>
+public sealed record FetchResult(FetchStatus Status, string? FileName, string? Content, IReadOnlyList<string> OtherFiles, string? LinkTarget = null, string? NextLink = null);
 
 /// <summary>
 /// Reads a rules file from raw.githubusercontent.com, default branch only. Every supported name is probed in parallel;
@@ -52,7 +60,26 @@ public sealed class RawGitHubFetcher(HttpClient http)
         budget.CancelAfter(Timeout);
         var probes = await Task.WhenAll(FileNames.Select(name => ProbeAsync(RawUrl(repo, name), name, budget.Token)));
         cancellationToken.ThrowIfCancellationRequested();
-        return Choose(probes, preferred);
+        var chosen = Choose(probes, preferred);
+        return chosen.Status == FetchStatus.Found && LinkPath.TryResolve(chosen.FileName!, chosen.Content!, out var target)
+            ? await FollowAsync(repo, chosen, target, budget.Token)
+            : chosen;
+    }
+
+    /// <summary>Fetches a symlink's target once, inside the same time budget. A target that is itself a link is not followed.</summary>
+    private async Task<FetchResult> FollowAsync(RepoRef repo, FetchResult link, string target, CancellationToken cancellationToken)
+    {
+        var probe = await ProbeAsync(RawUrl(repo, target), target, cancellationToken);
+        var result = link with { Content = null, LinkTarget = target };
+        return probe.State switch
+        {
+            ProbeState.Found when LinkPath.TryResolve(target, probe.Content!, out var next) => result with { Status = FetchStatus.LinkTooDeep, NextLink = next },
+            ProbeState.Found => result with { Content = probe.Content },
+            ProbeState.TooLarge => result with { Status = FetchStatus.TooLarge },
+            ProbeState.TimedOut => result with { Status = FetchStatus.TimedOut },
+            ProbeState.Failed => result with { Status = FetchStatus.Unreachable },
+            _ => result with { Status = FetchStatus.LinkTargetMissing },
+        };
     }
 
     private static FetchResult Choose(Probe[] probes, string? preferred)

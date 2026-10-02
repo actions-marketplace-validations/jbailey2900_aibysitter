@@ -5,7 +5,14 @@
 }
 else
 {
-    <p class="note">Linted <code>@Model.FileName</code> from @Model.Repo, default branch. <a href="@Model.RawUrl">Raw file</a></p>
+    @if (Model.LinkTarget is null)
+    {
+        <p class="note">Linted <code>@Model.FileName</code> from @Model.Repo, default branch. <a href="@Model.RawUrl">Raw file</a></p>
+    }
+    else
+    {
+        <p class="note">Linted <code>@Model.LinkTarget</code> from @Model.Repo, default branch: <code>@Model.FileName</code> links to it. <a href="@Model.RawUrl">Raw file</a></p>
+    }
     @if (Model.Repo!.HasExtraPath)
     {
         <p class="note">The URL named a branch or path; the default branch was linted.</p>

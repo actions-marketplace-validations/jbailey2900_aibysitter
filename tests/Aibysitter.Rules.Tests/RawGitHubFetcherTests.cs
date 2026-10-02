@@ -200,4 +200,77 @@ public class RawGitHubFetcherTests
         response.Headers.Location = new Uri(location);
         return response;
     }
+
+    private static void Raw(FakeRaw raw, string path, string content) =>
+        raw.Routes[$"https://raw.githubusercontent.com/o/r/HEAD/{path}"] = () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) };
+
+    [Fact]
+    public async Task Symlink_IsFollowedOnce()
+    {
+        var raw = new FakeRaw();
+        raw.File("CLAUDE.md", ".ai/AGENTS.md");
+        Raw(raw, ".ai/AGENTS.md", "# Rules\n- Use tabs.");
+
+        var result = await Fetcher(raw).FetchAsync(Repo, null, CancellationToken.None);
+
+        Assert.Equal(FetchStatus.Found, result.Status);
+        Assert.Equal("CLAUDE.md", result.FileName);
+        Assert.Equal(".ai/AGENTS.md", result.LinkTarget);
+        Assert.Equal("# Rules\n- Use tabs.", result.Content);
+        Assert.Equal(7, raw.Requested.Count);
+    }
+
+    [Fact]
+    public async Task LinkToLink_IsNotFollowed()
+    {
+        var raw = new FakeRaw();
+        raw.File("CLAUDE.md", ".ai/AGENTS.md");
+        Raw(raw, ".ai/AGENTS.md", "../shared/AGENTS.md");
+        Raw(raw, "shared/AGENTS.md", "# Rules");
+
+        var result = await Fetcher(raw).FetchAsync(Repo, null, CancellationToken.None);
+
+        Assert.Equal(FetchStatus.LinkTooDeep, result.Status);
+        Assert.Equal("shared/AGENTS.md", result.NextLink);
+        Assert.Null(result.Content);
+        Assert.DoesNotContain(raw.Requested, u => u.EndsWith("/HEAD/shared/AGENTS.md", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task LinkTargetMissing_IsReported()
+    {
+        var raw = new FakeRaw();
+        raw.File("CLAUDE.md", "docs/missing.md");
+
+        var result = await Fetcher(raw).FetchAsync(Repo, null, CancellationToken.None);
+
+        Assert.Equal(FetchStatus.LinkTargetMissing, result.Status);
+        Assert.Equal("docs/missing.md", result.LinkTarget);
+    }
+
+    [Fact]
+    public async Task LinkTargetOverCap_IsTooLarge()
+    {
+        var raw = new FakeRaw();
+        raw.File("CLAUDE.md", "big.md");
+        Raw(raw, "big.md", new string('x', RawGitHubFetcher.MaxBytes + 1));
+
+        var result = await Fetcher(raw).FetchAsync(Repo, null, CancellationToken.None);
+
+        Assert.Equal(FetchStatus.TooLarge, result.Status);
+        Assert.Equal("big.md", result.LinkTarget);
+    }
+
+    [Fact]
+    public async Task LinkEscapingRepo_IsLintedAsText()
+    {
+        var raw = new FakeRaw();
+        raw.File("CLAUDE.md", "../outside.md");
+
+        var result = await Fetcher(raw).FetchAsync(Repo, null, CancellationToken.None);
+
+        Assert.Equal(FetchStatus.Found, result.Status);
+        Assert.Null(result.LinkTarget);
+        Assert.Equal(6, raw.Requested.Count);
+    }
 }

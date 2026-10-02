@@ -109,4 +109,31 @@ public class LintByUrlPageTests(WebApplicationFactory<Program> factory)
         Assert.Contains($"<p class=\"error\" role=\"alert\">{message}</p>", html);
         Assert.DoesNotContain("<h2>Findings", html);
     }
+
+    [Fact]
+    public async Task Symlink_LintsTarget_NamesLink_KeepsLinkFormat()
+    {
+        var (html, _) = await Post(raw =>
+        {
+            raw.File("CLAUDE.md", ".ai/AGENTS.md");
+            raw.Routes["https://raw.githubusercontent.com/o/r/HEAD/.ai/AGENTS.md"] = () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("# Rules\n- Always use tabs.\n- Never use tabs.") };
+        });
+
+        Assert.Contains("Linted <code>.ai/AGENTS.md</code> from o/r, default branch: <code>CLAUDE.md</code> links to it. <a href=\"https://raw.githubusercontent.com/o/r/HEAD/.ai/AGENTS.md\">Raw file</a>", html);
+        Assert.Contains("<h2>Findings (1)</h2>", html);
+        Assert.Contains("<option selected=\"selected\" value=\"ClaudeMd\">", html);
+    }
+
+    [Fact]
+    public async Task LinkToLink_ShowsMessage()
+    {
+        var (html, _) = await Post(raw =>
+        {
+            raw.File("CLAUDE.md", ".ai/AGENTS.md");
+            raw.Routes["https://raw.githubusercontent.com/o/r/HEAD/.ai/AGENTS.md"] = () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("../shared/AGENTS.md") };
+        });
+
+        Assert.Contains("<p class=\"error\" role=\"alert\">CLAUDE.md links to .ai/AGENTS.md, which looks like a link to shared/AGENTS.md. Links are followed one level.</p>", html);
+        Assert.DoesNotContain("<h2>Findings", html);
+    }
 }
