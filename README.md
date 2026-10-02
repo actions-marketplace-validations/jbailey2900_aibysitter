@@ -6,7 +6,7 @@ Live at [aibysitting.net](https://aibysitting.net). Free, no accounts.
 
 ## Rules-file linter
 
-Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`.cursor/rules/*.mdc`, root `.cursorrules`), `.github/copilot-instructions.md`, and root `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009 and R015. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint).
+Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`.cursor/rules/*.mdc`, root `.cursorrules`), `.github/copilot-instructions.md`, and root `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009 and R015. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint). With JavaScript on, the file is linted in the browser and not sent; without it, the server lints it.
 
 | ID | Rule | Severity |
 |---|---|---|
@@ -85,10 +85,11 @@ Entries live in [`src/Aibysitter.Web/Gallery/Content/`](src/Aibysitter.Web/Galle
 | Path | Contents |
 |---|---|
 | `src/Aibysitter.Rules` | Lint rules, scoring, pull request checks |
-| `src/Aibysitter.Web` | ASP.NET Core Razor Pages site, GitHub App webhook, gallery |
+| `src/Aibysitter.Rules.Browser` | Build-time exporter: rule patterns and constants for the browser lint engine |
+| `src/Aibysitter.Web` | ASP.NET Core Razor Pages site, GitHub App webhook, gallery; browser lint engine in `wwwroot/js` |
 | `tests/Aibysitter.Rules.Tests` | xUnit tests; fixtures in `tests/fixtures` |
 
-Requires the .NET 10 SDK. Build and test: `dotnet test Aibysitter.slnx`.
+Requires the .NET 10 SDK. Build and test: `dotnet test Aibysitter.slnx`. The browser parity tests need Node.js on PATH: without it they pass with a SKIPPED message locally and fail when `CI` is set.
 
 ## Self-hosting
 

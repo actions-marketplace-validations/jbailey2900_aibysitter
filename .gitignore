@@ -481,3 +481,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Browser lint patterns, generated at build time by Aibysitter.Rules.Browser
+src/Aibysitter.Web/wwwroot/js/generated/
