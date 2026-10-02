@@ -23,6 +23,9 @@ jobs:
     env:
       SITE_PATH: ${{ vars.SITE_PATH }}
       DB_CONNECTION: ${{ vars.DB_CONNECTION }}
+      PREVIOUS_PATH: ${{ vars.PREVIOUS_PATH }}
+      HEALTH_URL: https://aibysitting.net/health
+      HEALTH_RESOLVE: aibysitting.net:443:127.0.0.1
     defaults:
       run:
         shell: powershell
@@ -32,6 +35,12 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($env:SITE_PATH)) { throw "Repository variable SITE_PATH is not set." }
           if (-not (Test-Path -LiteralPath $env:SITE_PATH -PathType Container)) { throw "SITE_PATH '$env:SITE_PATH' does not exist." }
           if ([string]::IsNullOrWhiteSpace($env:DB_CONNECTION)) { throw "Repository variable DB_CONNECTION is not set." }
+          if ([string]::IsNullOrWhiteSpace($env:PREVIOUS_PATH)) { throw "Repository variable PREVIOUS_PATH is not set." }
+          if (-not (Test-Path -LiteralPath $env:PREVIOUS_PATH -PathType Container)) { throw "PREVIOUS_PATH '$env:PREVIOUS_PATH' does not exist." }
+          if ((Resolve-Path -LiteralPath $env:PREVIOUS_PATH).Path.TrimEnd('\') -eq (Resolve-Path -LiteralPath $env:SITE_PATH).Path.TrimEnd('\')) { throw "PREVIOUS_PATH must differ from SITE_PATH." }
+          $probe = Join-Path $env:PREVIOUS_PATH ".write-check-$([guid]::NewGuid())"
+          try { Set-Content -LiteralPath $probe -Value '' -ErrorAction Stop; Remove-Item -LiteralPath $probe -Force -ErrorAction Stop }
+          catch { throw "The runner account cannot write to PREVIOUS_PATH '$env:PREVIOUS_PATH': $($_.Exception.Message)" }
           $sdks = & dotnet --list-sdks 2>$null
           if (-not ($sdks -match '^10\.0\.')) { throw ".NET 10 SDK not found on runner. Installed SDKs: $($sdks -join '; ')" }
 
@@ -60,6 +69,13 @@ jobs:
           dotnet ef migrations bundle --project src/Aibysitter.Web --configuration Release --no-build --verbose --output (Join-Path $bundleDir 'efbundle.exe') --force
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      # Refreshed only from a healthy live site.
+      - name: Snapshot current site
+        id: snapshot
+        run: |
+          & .github/scripts/deploy-snapshot.ps1 -SitePath $env:SITE_PATH -PreviousPath $env:PREVIOUS_PATH -HealthUrl $env:HEALTH_URL -Resolve $env:HEALTH_RESOLVE
+          exit $LASTEXITCODE
+
       # Before the site goes offline: a failed migration leaves the current site serving. Migrations must be additive.
       - name: Apply database migrations
         run: |
@@ -72,6 +88,7 @@ jobs:
           Start-Sleep -Seconds 5
 
       - name: Mirror publish output
+        id: mirror
         run: |
           $publish = Join-Path $env:RUNNER_TEMP 'aibysitter-publish'
           robocopy $publish $env:SITE_PATH /MIR /XF app_offline.htm /XD logs /R:5 /W:2 /NP /NFL /NDL
@@ -81,22 +98,25 @@ jobs:
           exit 0
 
       - name: Bring site online
+        id: online
         run: |
           $offline = Join-Path $env:SITE_PATH 'app_offline.htm'
           if (Test-Path -LiteralPath $offline) { Remove-Item -LiteralPath $offline -Force }
 
       - name: Health check
+        id: health
         run: |
-          for ($attempt = 1; $attempt -le 5; $attempt++) {
-            $body = & curl.exe --silent --show-error --insecure --max-time 30 --resolve aibysitting.net:443:127.0.0.1 https://aibysitting.net/health
-            if ($LASTEXITCODE -eq 0 -and $body -eq 'Healthy') {
-              Write-Host "Health check passed on attempt $attempt."
-              exit 0
-            }
-            Write-Host "Attempt ${attempt}: curl exit $LASTEXITCODE, body '$body'"
-            Start-Sleep -Seconds 5
-          }
-          throw "Health check failed: /health did not return 'Healthy'."
+          & .github/scripts/health-check.ps1 -Url $env:HEALTH_URL -Resolve $env:HEALTH_RESOLVE
+          exit $LASTEXITCODE
+
+      # The job stays failed; this restores service only.
+      - name: Roll back
+        if: >-
+          failure() && steps.snapshot.outputs.available == 'true' &&
+          (steps.mirror.outcome == 'failure' || steps.online.outcome == 'failure' || steps.health.outcome == 'failure')
+        run: |
+          & .github/scripts/deploy-rollback.ps1 -SitePath $env:SITE_PATH -PreviousPath $env:PREVIOUS_PATH -HealthUrl $env:HEALTH_URL -Resolve $env:HEALTH_RESOLVE
+          exit $LASTEXITCODE
 
       - name: Report site left offline
         if: failure()

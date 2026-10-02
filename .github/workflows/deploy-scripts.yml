@@ -1,0 +1,34 @@
+name: Deploy scripts
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/scripts/health-check.ps1
+      - .github/scripts/deploy-*.ps1
+      - .github/workflows/deploy.yml
+      - .github/workflows/deploy-scripts.yml
+      - tests/deploy/**
+  push:
+    branches: [main]
+    paths:
+      - .github/scripts/health-check.ps1
+      - .github/scripts/deploy-*.ps1
+      - .github/workflows/deploy.yml
+      - .github/workflows/deploy-scripts.yml
+      - tests/deploy/**
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Snapshot, health check and rollback
+        shell: powershell
+        run: |
+          & tests/deploy/deploy-scripts.tests.ps1
+          exit $LASTEXITCODE
