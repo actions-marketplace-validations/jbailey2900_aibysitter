@@ -1,4 +1,4 @@
-@model IReadOnlyList<Aibysitter.Web.Pages.Notes.IndexModel.RuleRow>
+@model IReadOnlyList<Aibysitter.Web.Pages.Rules.IndexModel.RuleRow>
 
 <table class="rules-table stack">
     <thead>
@@ -13,9 +13,9 @@
         @foreach (var row in Model)
         {
             <tr>
-                <td><a asp-page="/Notes/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a></td>
+                <td><a asp-page="/Rules/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a></td>
                 <td>@row.Doc.Name</td>
-                <td>@row.Severity@(row.Doc.AppOnly ? " (GitHub App only)" : "")</td>
+                <td>@row.Severity@(row.Doc.AppOnly ? " (App-only)" : "")</td>
                 <td>@row.Doc.Summary</td>
             </tr>
         }

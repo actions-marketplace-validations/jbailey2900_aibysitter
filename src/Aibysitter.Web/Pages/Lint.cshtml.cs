@@ -32,12 +32,17 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
 
     public IReadOnlyList<ResultRow>? Suppressed { get; private set; }
 
+    /// <summary>True when the page shows the built-in sample's results on load.</summary>
+    public bool IsSample { get; private set; }
+
     /// <summary>Prefills the textarea from the sample (<c>?sample=true</c>) or a gallery entry (<c>?gallery=&lt;id&gt;</c>).</summary>
     public void OnGet(bool sample = false, string? gallery = null)
     {
         if (sample)
         {
             RulesText = SampleRules.Text;
+            IsSample = true;
+            Lint();
         }
         else if (gallery is not null && galleryCatalog.Find(gallery) is { } entry)
         {
@@ -53,6 +58,12 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
             return Page();
         }
 
+        Lint();
+        return Page();
+    }
+
+    private void Lint()
+    {
         var rules = engine.Rules.ToDictionary(r => r.Id);
         var result = engine.Analyze(RulesText!, Format);
         LintedFormat = result.Format;
@@ -68,8 +79,6 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
         Score = engine.Score(result.Findings);
 
         logger.LogInformation("Linted {Length} chars as {Format}, {FindingCount} findings, {SuppressedCount} suppressed, score {Score}", RulesText!.Length, result.Format, Results.Count, Suppressed.Count, Score.Value);
-
-        return Page();
     }
 
     public sealed record ResultRow(Finding Finding, string Title, Severity Severity);

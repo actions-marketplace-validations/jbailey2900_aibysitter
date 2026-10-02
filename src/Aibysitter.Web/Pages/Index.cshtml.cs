@@ -10,7 +10,9 @@ public class IndexModel(LintDemo demo, PullRequestReviewer reviewer, GalleryCata
 {
     public LintDemoResult Demo => demo.Result;
 
-    public IReadOnlyList<RuleDoc> RuleDocs => Aibysitter.Rules.RuleDocs.All;
+    public IReadOnlyList<RuleDoc> LintRuleDocs => RuleDocs.All.Where(d => !d.AppOnly).ToList();
+
+    public IReadOnlyList<RuleDoc> AppOnlyRuleDocs => RuleDocs.All.Where(d => d.AppOnly).ToList();
 
     public IReadOnlyList<IPullRequestCheck> PullRequestChecks => reviewer.Checks;
 

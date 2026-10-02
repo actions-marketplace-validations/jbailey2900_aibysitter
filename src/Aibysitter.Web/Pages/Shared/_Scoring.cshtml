@@ -1,0 +1,5 @@
+@using Aibysitter.Rules
+@{
+    var floor = Scorer.MaxScore - Enum.GetValues<Severity>().Sum(Scorer.SeverityCap);
+}
+<p>Every file starts at @Scorer.MaxScore. Each finding costs points by severity: Error @Scorer.Weight(Severity.Error), Warning @Scorer.Weight(Severity.Warning), Info @Scorer.Weight(Severity.Info). One rule costs at most @Scorer.PerRuleCap. Total costs per severity are capped: Error @Scorer.SeverityCap(Severity.Error), Warning @Scorer.SeverityCap(Severity.Warning), Info @Scorer.SeverityCap(Severity.Info). The lowest possible score is @floor. Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below 60.</p>

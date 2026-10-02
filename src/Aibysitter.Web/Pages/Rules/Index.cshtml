@@ -1,0 +1,26 @@
+@page
+@model Aibysitter.Web.Pages.Rules.IndexModel
+@{
+    ViewData["Title"] = "Rules";
+}
+
+<h1>Rules</h1>
+
+<h2>Rules files</h2>
+<p>Checked by the <a asp-page="/Lint">lint page</a> against CLAUDE.md, AGENTS.md, Cursor rules (.mdc and .cursorrules), Copilot instructions, GEMINI.md, and .windsurfrules. Frontmatter is skipped by every rule except R009 and R015. R015 applies to Cursor .mdc rules only.</p>
+<partial name="_RulesTable" model="Model.Rows" />
+<p><a asp-page="/Rules/Methodology">How rules are chosen and scored</a></p>
+
+<h2>Aibysitter lint score</h2>
+<partial name="_Scoring" />
+<p>Fenced code blocks are excluded from all rules. Headings are excluded from R001–R003.</p>
+
+<h2>Suppressing a rule</h2>
+<p>An HTML comment on its own line. IDs are required; separate several with commas. Suppressed findings are listed on the lint page and not scored.</p>
+<p>Suppression comments live in the rules file itself: the agent reads them and they cost tokens on every run. For the GitHub App, prefer <code>disable</code> in <code>.github/aibysitter.json</code>.</p>
+<pre><code>&lt;!-- aibysitter-disable R002 --&gt;            whole file
+&lt;!-- aibysitter-disable-next-line R001, R005 --&gt;   the next line only</code></pre>
+
+<h2>Pull request checks</h2>
+<p>Run by the <a asp-page="/GitHub">GitHub App</a> on every pull request in an installed repository.</p>
+<partial name="_RulesTable" model="Model.CheckRows" />

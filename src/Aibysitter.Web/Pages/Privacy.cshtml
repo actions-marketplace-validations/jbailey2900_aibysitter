@@ -1,0 +1,60 @@
+@page
+@{
+    ViewData["Title"] = "Privacy";
+}
+
+<h1>Privacy</h1>
+
+<h2>Lint page</h2>
+<ul>
+    <li>With JavaScript on, the file is linted in your browser. The text is not sent.</li>
+    <li>With JavaScript off, the server lints it. The text is never stored or logged. Request logs record IP address, path and status for 14 days.</li>
+    <li>One cookie: the lint form's anti-forgery token. No analytics, no tracking scripts.</li>
+</ul>
+
+<h2>GitHub App</h2>
+<ul>
+    <li>Reads, at the pull request's head commit: the changed files and their diff, rules files, and <code>.github/aibysitter.json</code>. For R006 it also reads the repository file list and the manifests a rules file refers to (<code>package.json</code>, Makefiles, <code>.gitignore</code>, MSBuild files).</li>
+    <li>Holds a queue file for the duration of a review: repository, pull request number, commit, check run ID and delivery ID. It is deleted when the review completes.</li>
+    <li>Stores nothing else. Logs record repository, pull request number, commit, delivery ID and finding count for 14 days. No file contents are logged.</li>
+    <li>Results are posted to GitHub as a check run on the pull request.</li>
+</ul>
+
+<h3>Permissions</h3>
+<table class="stack">
+    <thead>
+        <tr>
+            <th>Permission</th>
+            <th>Access</th>
+            <th>Used for</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Checks</td>
+            <td>Read and write</td>
+            <td>Creating and completing the Aibysitter check run</td>
+        </tr>
+        <tr>
+            <td>Pull requests</td>
+            <td>Read</td>
+            <td>Listing changed files and diffs</td>
+        </tr>
+        <tr>
+            <td>Contents</td>
+            <td>Read</td>
+            <td>Reading files at the head commit</td>
+        </tr>
+        <tr>
+            <td>Metadata</td>
+            <td>Read</td>
+            <td>Required by GitHub for every App</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Uninstall</h3>
+<p>Personal account: <strong>Settings → Applications → Installed GitHub Apps → Aibysitter → Configure → Uninstall</strong>. Organization: <strong>Settings → GitHub Apps</strong>, then the same. Reviews stop at once; check runs already posted stay on their pull requests.</p>
+
+<h2>Hosting</h2>
+<p>The site is served through Cloudflare, which processes requests under its own privacy policy.</p>

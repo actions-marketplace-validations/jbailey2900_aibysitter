@@ -9,15 +9,21 @@
 
 <form method="post" id="lint-form">
     <label for="Format">Format</label>
-    <select asp-for="Format" asp-items="Model.FormatOptions"></select>
+    <select asp-for="Format" asp-items="Model.FormatOptions" aria-describedby="format-help"></select>
+    <p class="note" id="format-help">Auto-detect picks Cursor rule (.mdc) when the frontmatter has description, globs, or alwaysApply. The format only changes whether R015 runs.</p>
     <label for="RulesText">Rules file content</label>
-    <textarea asp-for="RulesText" rows="20" spellcheck="false"></textarea>
+    <textarea asp-for="RulesText" rows="20" spellcheck="false" aria-describedby="text-help"></textarea>
+    <p class="note" id="text-help">Linted in your browser; the text is not sent. Without JavaScript, the server lints it and does not store or log the text. <a asp-page="/Privacy">Privacy</a></p>
     <span asp-validation-for="RulesText" class="error"></span>
     <button type="submit">Lint</button>
     <a class="sample-link" asp-page="/Lint" asp-route-sample="true">Try a sample</a>
 </form>
 
 <div id="lint-results" aria-live="polite">
+@if (Model.IsSample)
+{
+    <p class="note">This sample intentionally triggers six findings.</p>
+}
 @if (Model.LintedFormat is { } linted)
 {
     <p class="note">Linted as @RulesFormats.DisplayName(linted)@(Model.Format == RulesFormat.Auto ? " (detected)" : "").</p>
@@ -52,7 +58,7 @@
                 {
                     <tr class="sev-@row.Severity.ToString().ToLowerInvariant()">
                         <td>@row.Finding.Line</td>
-                        <td><a asp-page="/Notes/Rule" asp-route-id="@row.Finding.RuleId">@row.Finding.RuleId</a> @row.Title</td>
+                        <td><a asp-page="/Rules/Rule" asp-route-id="@row.Finding.RuleId">@row.Finding.RuleId</a> @row.Title</td>
                         <td>@row.Severity</td>
                         <td>@row.Finding.Message</td>
                         <td>@row.Finding.FixHint</td>
@@ -80,7 +86,7 @@
             {
                 <tr>
                     <td>@row.Finding.Line</td>
-                    <td><a asp-page="/Notes/Rule" asp-route-id="@row.Finding.RuleId">@row.Finding.RuleId</a> @row.Title</td>
+                    <td><a asp-page="/Rules/Rule" asp-route-id="@row.Finding.RuleId">@row.Finding.RuleId</a> @row.Title</td>
                     <td>@row.Finding.Message</td>
                 </tr>
             }

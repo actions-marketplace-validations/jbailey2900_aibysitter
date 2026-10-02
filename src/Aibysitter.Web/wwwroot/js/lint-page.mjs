@@ -11,12 +11,12 @@ function el(tag, attrs, ...children) {
   return node;
 }
 
-const ruleLink = (id) => el("a", { href: "/Notes/" + encodeURIComponent(id) }, id);
+const ruleLink = (id) => el("a", { href: "/Rules/" + encodeURIComponent(id) }, id);
 const row = (...cells) => el("tr", null, ...cells.map((c) => el("td", null, ...[].concat(c))));
 const head = (...names) => el("thead", null, el("tr", null, ...names.map((n) => el("th", null, n))));
 
 function scorePanel(s) {
-  const section = el("section", { class: "score grade-" + s.grade.toLowerCase() }, el("h2", null, "Score"),
+  const section = el("section", { class: "score grade-" + s.grade.toLowerCase() }, el("h2", null, "Aibysitter lint score"),
     el("p", { class: "score-value" }, `${s.value} / 100 — ${s.grade}`));
   if (s.deductionsByRule.length === 0) {
     section.append(el("p", null, "No deductions."));

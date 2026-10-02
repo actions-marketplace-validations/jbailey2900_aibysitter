@@ -49,6 +49,21 @@ public class RegistryAndBadgeTests(WebApplicationFactory<Program> factory)
         var svg = XDocument.Parse(body).Root!;
         Assert.Equal("svg", svg.Name.LocalName);
         Assert.Contains(svg.Descendants(), e => e.Name.LocalName == "text" && e.Value == "A 100");
+        Assert.Contains(svg.Descendants(), e => e.Name.LocalName == "text" && e.Value == "aibysitter");
+        Assert.Equal("Aibysitter lint score: A 100", svg.Attribute("aria-label")?.Value);
+        Assert.Equal("Aibysitter lint score: A 100", svg.Descendants().Single(e => e.Name.LocalName == "title").Value);
+    }
+
+    [Theory]
+    [InlineData("/Gallery", "<span class=\"score-label\">Aibysitter lint score</span>")]
+    [InlineData("/Gallery/python-fastapi", "<h2>Aibysitter lint score</h2>")]
+    [InlineData("/Gallery/python-fastapi", "alt=\"Aibysitter lint score: A 100\"")]
+    [InlineData("/Rules", "<h2>Aibysitter lint score</h2>")]
+    public async Task Scores_AreLabelled(string path, string expected)
+    {
+        var html = await factory.CreateClient().GetStringAsync(path);
+
+        Assert.Contains(expected, html);
     }
 
     [Fact]
@@ -77,6 +92,6 @@ public class RegistryAndBadgeTests(WebApplicationFactory<Program> factory)
         var html = await factory.CreateClient().GetStringAsync("/Gallery/monorepo-root");
 
         Assert.Contains("<img src=\"/gallery/monorepo-root/badge.svg\"", html);
-        Assert.Contains("[![aibysitter A 100](http://localhost/gallery/monorepo-root/badge.svg)](http://localhost/Gallery/monorepo-root)", html);
+        Assert.Contains("[![Aibysitter lint score: A 100](http://localhost/gallery/monorepo-root/badge.svg)](http://localhost/Gallery/monorepo-root)", html);
     }
 }

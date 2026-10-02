@@ -3,7 +3,7 @@ using Aibysitter.Rules.PullRequests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace Aibysitter.Web.Pages.Notes;
+namespace Aibysitter.Web.Pages.Rules;
 
 public class RuleModel(LintEngine engine, PullRequestReviewer reviewer) : PageModel
 {

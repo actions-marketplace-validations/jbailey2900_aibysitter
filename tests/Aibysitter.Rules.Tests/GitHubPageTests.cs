@@ -13,7 +13,7 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
 
         foreach (var doc in PullRequestCheckDocs.All)
         {
-            Assert.Contains($"<a href=\"/Notes/{doc.Id}\">{doc.Id}</a>", html);
+            Assert.Contains($"<a href=\"/Rules/{doc.Id}\">{doc.Id}</a>", html);
         }
 
         Assert.Contains("Install coming soon.", html);

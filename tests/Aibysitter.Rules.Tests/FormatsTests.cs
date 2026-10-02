@@ -166,7 +166,7 @@ public class FormatWebTests(WebApplicationFactory<Program> factory) : IClassFixt
         var html = await (await LintClient.PostAsync(factory.CreateClient(), "---\ndescription:\nglobs:\nalwaysApply: false\n---\n- Use tabs.\n")).Content.ReadAsStringAsync();
 
         Assert.Contains("Linted as Cursor rule (.mdc) (detected).", html);
-        Assert.Contains("<a href=\"/Notes/R015\">R015</a>", html);
+        Assert.Contains("<a href=\"/Rules/R015\">R015</a>", html);
     }
 
     [Fact]

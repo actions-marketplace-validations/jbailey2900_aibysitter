@@ -12,16 +12,20 @@
         <a class="button primary" asp-page="/Lint">Lint a file</a>
         <a class="button" asp-page="/Lint" asp-route-sample="true">Open the sample</a>
     </p>
+    <ul class="status" aria-label="Status">
+        <li><a asp-page="/Lint">Browser linter</a> <span>Available now</span></li>
+        <li><a asp-page="/GitHub">GitHub App</a> <span>In testing</span></li>
+        <li>CLI and Action <span>Planned</span></li>
+    </ul>
 </section>
 
-<figure class="terminal" aria-label="Example lint run">
-    <pre><code><span class="t-prompt">$</span> aibysitter lint @demo.FileName
+<figure class="terminal" aria-label="Example lint result">
+    <pre><code><span class="t-prompt">Lint result:</span> @demo.FileName
 @foreach (var line in demo.Lines)
 {
 @:<span class="t-loc">@demo.FileName:@line.Line.ToString().PadRight(3)</span> <span class="t-sev t-@line.Severity.ToString().ToLowerInvariant()">@line.Severity.ToString().ToLowerInvariant().PadRight(7)</span> <span class="t-rule">@line.RuleId</span>  @line.Message
 }
-<span class="t-sum">@demo.Lines.Count findings, score @demo.Score.Value/100 (@demo.Score.Grade)</span>
-<span class="t-prompt">$</span> <span class="cursor" aria-hidden="true"></span></code></pre>
+<span class="t-sum">@demo.Lines.Count findings, Aibysitter lint score @demo.Score.Value/100 (@demo.Score.Grade)</span></code></pre>
     <figcaption>Output from the embedded sample, linted by the same engine as the <a asp-page="/Lint">lint page</a>.</figcaption>
 </figure>
 
@@ -29,20 +33,24 @@
     <h2>What it checks</h2>
     <div class="columns">
         <div>
-            <h3>Rules files</h3>
+            <h3>Rules files, available now</h3>
             <ul class="marks">
-                @foreach (var doc in Model.RuleDocs)
+                @foreach (var doc in Model.LintRuleDocs)
                 {
-                    <li><a asp-page="/Notes/Rule" asp-route-id="@doc.Id">@doc.Id</a> @doc.Summary</li>
+                    <li><a asp-page="/Rules/Rule" asp-route-id="@doc.Id">@doc.Id</a> @doc.Summary</li>
                 }
             </ul>
         </div>
         <div>
-            <h3>Pull requests</h3>
+            <h3>Pull requests, GitHub App in testing</h3>
             <ul class="marks">
                 @foreach (var check in Model.PullRequestChecks)
                 {
-                    <li><a asp-page="/Notes/Rule" asp-route-id="@check.Id">@check.Id</a> @check.Title</li>
+                    <li><a asp-page="/Rules/Rule" asp-route-id="@check.Id">@check.Id</a> @check.Title</li>
+                }
+                @foreach (var doc in Model.AppOnlyRuleDocs)
+                {
+                    <li><a asp-page="/Rules/Rule" asp-route-id="@doc.Id">@doc.Id</a> @doc.Summary <span class="note">App-only</span></li>
                 }
             </ul>
             <p class="note">Pull request checks run through the <a asp-page="/GitHub">Aibysitter GitHub App</a>, currently in testing.</p>
@@ -63,7 +71,8 @@
 </section>
 
 <section class="section">
-    <h2>How scoring works</h2>
-    <p>Every file starts at 100. Each error costs 10 points, each warning 4 and each info 1, and no single rule can cost more than 30. A is 90 and up; F is below 60. Code blocks are ignored.</p>
-    <p><a asp-page="/Notes/Index">Read the rules</a></p>
+    <h2>How the Aibysitter lint score works</h2>
+    <partial name="_Scoring" />
+    <p>Code blocks are ignored.</p>
+    <p><a asp-page="/Rules/Index">Read the rules</a></p>
 </section>

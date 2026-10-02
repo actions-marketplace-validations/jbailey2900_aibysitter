@@ -17,8 +17,9 @@ public class HomePageTests(WebApplicationFactory<Program> factory)
         var findings = engine.Lint(SampleRules.Text);
         var score = engine.Score(findings);
 
-        Assert.Contains("aibysitter lint CLAUDE.md", html);
-        Assert.Contains($"{findings.Count} findings, score {score.Value}/100 ({score.Grade})", html);
+        Assert.Contains("Lint result:</span> CLAUDE.md", html);
+        Assert.DoesNotContain("aibysitter lint", html);
+        Assert.Contains($"{findings.Count} findings, Aibysitter lint score {score.Value}/100 ({score.Grade})", html);
         foreach (var finding in findings)
         {
             Assert.Contains($"CLAUDE.md:{finding.Line}", html);
@@ -32,13 +33,53 @@ public class HomePageTests(WebApplicationFactory<Program> factory)
 
         foreach (var doc in RuleDocs.All)
         {
-            Assert.Contains($"href=\"/Notes/{doc.Id}\"", html);
+            Assert.Contains($"href=\"/Rules/{doc.Id}\"", html);
         }
 
         foreach (var check in PullRequestReviewer.DiscoverChecks())
         {
-            Assert.Contains($"<a href=\"/Notes/{check.Id}\">{check.Id}</a> {check.Title}", html);
+            Assert.Contains($"<a href=\"/Rules/{check.Id}\">{check.Id}</a> {check.Title}", html);
         }
+    }
+
+    [Fact]
+    public async Task Home_HasStatusStrip()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/");
+
+        Assert.Contains(@"<a href=""/Lint"">Browser linter</a> <span>Available now</span>", html);
+        Assert.Contains(@"<a href=""/GitHub"">GitHub App</a> <span>In testing</span>", html);
+        Assert.Contains("CLI and Action <span>Planned</span>", html);
+    }
+
+    [Fact]
+    public async Task Home_SplitsChecks_R006UnderTheApp()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/");
+        var rules = Section(html, "Rules files, available now", "Pull requests, GitHub App in testing");
+        var app = Section(html, "Pull requests, GitHub App in testing", "</ul>");
+
+        Assert.DoesNotContain("/Rules/R006", rules);
+        Assert.Contains("/Rules/R001", rules);
+        Assert.Contains(@"<a href=""/Rules/R006"">R006</a>", app);
+        Assert.Contains("App-only", app);
+    }
+
+    [Fact]
+    public async Task Home_ScoringCopy_MatchesModel()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/");
+
+        Assert.Contains("How the Aibysitter lint score works", html);
+        Assert.Contains("Error 10, Warning 4, Info 1. One rule costs at most 30.", html);
+        Assert.Contains("Error 40, Warning 30, Info 10. The lowest possible score is 20.", html);
+    }
+
+    private static string Section(string html, string start, string end)
+    {
+        var from = html.IndexOf(start, StringComparison.Ordinal);
+        var to = html.IndexOf(end, from + start.Length, StringComparison.Ordinal);
+        return html[from..to];
     }
 
     [Fact]

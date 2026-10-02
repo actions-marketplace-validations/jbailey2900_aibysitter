@@ -57,7 +57,7 @@ public partial class GalleryPageTests(WebApplicationFactory<Program> factory)
     {
         var entry = factory.Services.GetRequiredService<GalleryCatalog>().Find("go-http-service")!;
 
-        var html = await factory.CreateClient().GetStringAsync("/Gallery/go-http-service");
+        var html = await factory.CreateClient().GetStringAsync("/Gallery/go-http-service/source");
 
         Assert.Contains("<h1>Go HTTP service</h1>", html);
         Assert.Equal(entry.Lines.Count, Regex.Matches(html, "<li id=\"L\\d+\">").Count);
@@ -120,13 +120,80 @@ public partial class GalleryPageTests(WebApplicationFactory<Program> factory)
             s.AddSingleton(_ => new GalleryCatalog(new LintEngine(), typeof(GalleryPageTests).Assembly));
         })).CreateClient();
 
-        var html = await client.GetStringAsync("/Gallery/flawed-example");
+        var html = await client.GetStringAsync("/Gallery/flawed-example/source");
 
-        Assert.Matches("<li id=\"L3\">.*?<p class=\"file-note sev-warning\"><a href=\"/Notes/R002\">R002</a> Vague wording", Regex.Replace(html, "\\s+", " "));
-        Assert.Matches("<li id=\"L4\">.*?<p class=\"file-note sev-info\"><a href=\"/Notes/R001\">R001</a> Rationale prose", Regex.Replace(html, "\\s+", " "));
+        Assert.Matches("<li id=\"L3\">.*?<p class=\"file-note sev-warning\"><a href=\"/Rules/R002\">R002</a> Vague wording", Regex.Replace(html, "\\s+", " "));
+        Assert.Matches("<li id=\"L4\">.*?<p class=\"file-note sev-info\"><a href=\"/Rules/R001\">R001</a> Rationale prose", Regex.Replace(html, "\\s+", " "));
         Assert.DoesNotContain("100 / 100", html);
     }
 
     [GeneratedRegex("<li class=\"entry\">")]
     private static partial Regex EntryRegex();
+
+    [Fact]
+    public async Task Entry_RendersMarkdownByDefault_WithSourceLinkAndCopyButton()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Gallery/go-http-service");
+
+        Assert.Contains("<div class=\"rendered\">", html);
+        Assert.DoesNotContain("<ol class=\"file\"", html);
+        Assert.Contains("href=\"/Gallery/go-http-service/source\">View source</a>", html);
+        Assert.Contains("<button type=\"button\" class=\"button\" data-copy=\"raw-file\" data-copy-status=\"copy-status\" hidden>", html);
+        Assert.Matches(@"<script type=""module"" src=""/js/copy(\.\w+)?\.mjs", html);
+        Assert.Matches("<h3[^>]*>", html);
+        Assert.Equal(1, html.Split("<h1").Length - 1);
+    }
+
+    [Fact]
+    public async Task SourceView_LinksBackToRendered()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Gallery/go-http-service/source");
+
+        Assert.Contains("href=\"/Gallery/go-http-service\">View rendered</a>", html);
+        Assert.DoesNotContain("<div class=\"rendered\">", html);
+    }
+
+    [Fact]
+    public async Task UnknownView_Returns404()
+    {
+        var response = await factory.CreateClient().GetAsync("/Gallery/go-http-service/raw");
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CursorEntry_ShowsFrontmatterAboveRenderedBody()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Gallery/nextjs-typescript-cursor");
+
+        Assert.Matches(@"<pre class=""frontmatter""><code>---(\n|&#xA;)description:", html);
+    }
+
+    private const string Provenance = "Written for this site, CC0, scored by this linter, not tested against any agent.";
+
+    [Fact]
+    public async Task Provenance_OnIndexAndEveryEntry()
+    {
+        var client = factory.CreateClient();
+
+        Assert.Contains(Provenance, await client.GetStringAsync("/Gallery"));
+        foreach (var entry in new GalleryCatalog(new LintEngine()).All)
+        {
+            Assert.Contains(Provenance, await client.GetStringAsync($"/Gallery/{entry.Id}"));
+        }
+    }
+
+    [Fact]
+    public async Task LegacyBadge_OnlyOnCursorrulesAndWindsurfrules()
+    {
+        var client = factory.CreateClient();
+        var index = await client.GetStringAsync("/Gallery");
+
+        Assert.Equal(2, index.Split("<span class=\"legacy\">Legacy format</span>").Length - 1);
+        foreach (var entry in new GalleryCatalog(new LintEngine()).All)
+        {
+            var html = await client.GetStringAsync($"/Gallery/{entry.Id}");
+            Assert.Equal(entry.Format is RulesFormat.CursorRules or RulesFormat.WindsurfRules, html.Contains("Legacy format", StringComparison.Ordinal));
+        }
+    }
 }

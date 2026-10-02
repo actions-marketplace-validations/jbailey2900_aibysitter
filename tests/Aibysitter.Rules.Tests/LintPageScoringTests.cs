@@ -58,11 +58,11 @@ public class LintPageScoringTests(WebApplicationFactory<Program> factory)
 
         var html = await (await LintClient.PostAsync(factory.CreateClient(), fixture)).Content.ReadAsStringAsync();
 
-        Assert.Contains("<a href=\"/Notes/R003\">R003</a> Contradictory modals", html);
+        Assert.Contains("<a href=\"/Rules/R003\">R003</a> Contradictory modals", html);
     }
 
     [Fact]
-    public async Task SampleLink_PrefillsTextarea()
+    public async Task SampleLink_PrefillsTextarea_AndScores()
     {
         var client = factory.CreateClient();
 
@@ -73,7 +73,7 @@ public class LintPageScoringTests(WebApplicationFactory<Program> factory)
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("- Always run the formatter before commit.", html);
-        Assert.DoesNotContain("class=\"score", html);
+        Assert.Contains("class=\"score grade-c\"", html);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class LintPageScoringTests(WebApplicationFactory<Program> factory)
 
         foreach (var id in new[] { "R001", "R002", "R003", "R005" })
         {
-            Assert.Contains($"<a href=\"/Notes/{id}\">{id}</a>", html);
+            Assert.Contains($"<a href=\"/Rules/{id}\">{id}</a>", html);
         }
 
         Assert.True(html.Contains("76 / 100 — C"), $"Score missing: {LintClient.Snippet(html)}");
