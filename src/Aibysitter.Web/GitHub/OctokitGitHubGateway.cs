@@ -16,6 +16,7 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
     // PublicationOnly: a failed load (missing or empty PEM) is not cached, so fixing the file takes effect without a recycle.
     private readonly Lazy<RSA> privateKey = new(() => AppJwt.LoadPrivateKey(options.Value.PrivateKeyPath!), LazyThreadSafetyMode.PublicationOnly);
     private readonly ConcurrentDictionary<long, AccessToken> tokens = new();
+    private string? appSlug;
 
     public async Task<long> CreateQueuedCheckRunAsync(PullRequestRef pr, CancellationToken cancellationToken)
     {
@@ -97,6 +98,46 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
         }
     }
 
+    public async Task<string> GetAppSlugAsync(CancellationToken cancellationToken)
+    {
+        if (appSlug is null)
+        {
+            var app = await AppClient().GitHubApps.GetCurrent();
+            appSlug = app.Slug;
+        }
+
+        return appSlug;
+    }
+
+    public async Task<IReadOnlyList<IssueCommentInfo>> ListIssueCommentsAsync(PullRequestRef pr, CancellationToken cancellationToken)
+    {
+        var client = await ClientAsync(pr.InstallationId);
+        var comments = await Forbidden(() => client.Issue.Comment.GetAllForIssue(pr.Owner, pr.Repo, pr.Number));
+        return comments.Select(c => new IssueCommentInfo(c.Id, c.User?.Login ?? "", c.Body ?? "", c.CreatedAt)).ToList();
+    }
+
+    public async Task CreateIssueCommentAsync(PullRequestRef pr, string body, CancellationToken cancellationToken)
+    {
+        var client = await ClientAsync(pr.InstallationId);
+        await Forbidden(() => client.Issue.Comment.Create(pr.Owner, pr.Repo, pr.Number, body));
+    }
+
+    public async Task UpdateIssueCommentAsync(PullRequestRef pr, long commentId, string body, CancellationToken cancellationToken)
+    {
+        var client = await ClientAsync(pr.InstallationId);
+        await Forbidden(() => client.Issue.Comment.Update(pr.Owner, pr.Repo, commentId, body));
+    }
+
+    public async Task DeleteIssueCommentAsync(PullRequestRef pr, long commentId, CancellationToken cancellationToken)
+    {
+        var client = await ClientAsync(pr.InstallationId);
+        await Forbidden(async () =>
+        {
+            await client.Issue.Comment.Delete(pr.Owner, pr.Repo, commentId);
+            return true;
+        });
+    }
+
     internal RSA PrivateKey => privateKey.Value;
 
     public void Dispose()
@@ -107,15 +148,28 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
         }
     }
 
+    private static async Task<T> Forbidden<T>(Func<Task<T>> call)
+    {
+        try
+        {
+            return await call();
+        }
+        catch (ForbiddenException ex)
+        {
+            throw new GitHubForbiddenException(ex.Message, ex);
+        }
+    }
+
+    private GitHubClient AppClient() => new(Product)
+    {
+        Credentials = new Credentials(AppJwt.Create(options.Value.AppId!, privateKey.Value, time.GetUtcNow()), AuthenticationType.Bearer),
+    };
+
     private async Task<IGitHubClient> ClientAsync(long installationId)
     {
         if (!tokens.TryGetValue(installationId, out var token) || token.ExpiresAt - time.GetUtcNow() < TokenRefreshMargin)
         {
-            var appClient = new GitHubClient(Product)
-            {
-                Credentials = new Credentials(AppJwt.Create(options.Value.AppId!, privateKey.Value, time.GetUtcNow()), AuthenticationType.Bearer),
-            };
-            token = await appClient.GitHubApps.CreateInstallationToken(installationId);
+            token = await AppClient().GitHubApps.CreateInstallationToken(installationId);
             tokens[installationId] = token;
         }
 

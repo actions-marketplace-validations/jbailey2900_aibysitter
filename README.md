@@ -61,13 +61,15 @@ Optional repo config, `.github/aibysitter.json`, read from the pull request's he
 {
   "scope": ["src/**", "tests/**"],
   "conclusion": "fail-on-errors",
-  "disable": ["P002"]
+  "disable": ["P002"],
+  "comment": true
 }
 ```
 
 - `scope`: path globs from the repo root. Turns on P004. Not set: P004 is off.
 - `conclusion`: `advisory` (default) reports findings as neutral. `fail-on-errors` fails the check on any Error finding.
 - `disable`: check IDs to skip, and rule IDs (R001–R016) to skip inside P014.
+- `comment`: `true` posts one PR comment with the summary and up to 25 linked findings, updated on each new commit. Default `false`.
 
 Install: [docs/installing-on-your-repos.md](docs/installing-on-your-repos.md). The App is private until launch. Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
 

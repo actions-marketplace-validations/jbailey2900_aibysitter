@@ -39,6 +39,7 @@
         <label class="choice"><input type="radio" name="Conclusion" value="@ConclusionMode.Advisory" checked="@(Model.Conclusion == ConclusionMode.Advisory ? "checked" : null)" /> <code>advisory</code>: findings report as neutral.</label>
         <label class="choice"><input type="radio" name="Conclusion" value="@ConclusionMode.FailOnErrors" checked="@(Model.Conclusion == ConclusionMode.FailOnErrors ? "checked" : null)" /> <code>fail-on-errors</code>: the check fails when any Error finding exists.</label>
     </fieldset>
+    <label class="choice"><input type="checkbox" name="Comment" value="true" checked="@(Model.Comment ? "checked" : null)" /> <code>comment</code>: post one comment per pull request with the summary, updated on each new commit.</label>
     <label for="TestPath">Test a path</label>
     <input asp-for="TestPath" type="text" spellcheck="false" placeholder="src/Orders/OrderService.cs" aria-describedby="path-help" />
     <p class="note" id="path-help">Optional. Shows whether a changed file at this path is in scope.</p>

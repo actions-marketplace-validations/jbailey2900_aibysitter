@@ -19,6 +19,9 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
     /// <summary>Check IDs (Pnnn) and rule IDs (Rnnn) listed under <c>disable</c>. Disabled checks do not run; disabled rules are skipped by P014.</summary>
     public IReadOnlySet<string> Disabled { get; init; } = new HashSet<string>(StringComparer.Ordinal);
 
+    /// <summary>Post one PR comment with the summary, updated in place (<c>"comment": true</c>).</summary>
+    public bool Comment { get; init; }
+
     public bool HasScope => Scope.Count > 0;
 
     public bool IsEnabled(string checkId) => !Disabled.Contains(checkId);
@@ -54,6 +57,7 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
             var scope = new List<Glob>();
             var conclusion = ConclusionMode.Advisory;
             var disabled = new HashSet<string>(StringComparer.Ordinal);
+            var comment = false;
 
             foreach (var property in doc.RootElement.EnumerateObject())
             {
@@ -109,13 +113,19 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
                     case "disable":
                         errors.Add($"{FilePath}: \"disable\" must be an array of check or rule IDs");
                         break;
+                    case "comment" when property.Value.ValueKind is JsonValueKind.True or JsonValueKind.False:
+                        comment = property.Value.GetBoolean();
+                        break;
+                    case "comment":
+                        errors.Add($"{FilePath}: \"comment\" must be true or false");
+                        break;
                     default:
                         errors.Add($"{FilePath}: unknown key \"{property.Name}\"");
                         break;
                 }
             }
 
-            return (new RepoConfig(scope, conclusion) { Disabled = disabled }, errors);
+            return (new RepoConfig(scope, conclusion) { Disabled = disabled, Comment = comment }, errors);
         }
     }
 

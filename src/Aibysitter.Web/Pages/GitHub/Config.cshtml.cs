@@ -31,6 +31,9 @@ public class ConfigModel : PageModel
     public ConclusionMode Conclusion { get; set; } = ConclusionMode.Advisory;
 
     [BindProperty]
+    public bool Comment { get; set; }
+
+    [BindProperty]
     [StringLength(MaxPathLength, ErrorMessage = "Path is limited to 1,000 characters.")]
     public string? TestPath { get; set; }
 
@@ -80,7 +83,7 @@ public class ConfigModel : PageModel
     private void Generate()
     {
         var disable = Checks.Concat(Rules).Select(d => d.Id).Where(id => !IsEnabled(id)).ToList();
-        Json = RepoConfigWriter.Write(RepoConfigWriter.ScopeLines(Scope), Conclusion, disable);
+        Json = RepoConfigWriter.Write(RepoConfigWriter.ScopeLines(Scope), Conclusion, disable, Comment);
         var (config, errors) = RepoConfig.Parse(Json);
         Errors = errors;
         ConfigFileOutOfScope = config.HasScope && !config.InScope(RepoConfig.FilePath);

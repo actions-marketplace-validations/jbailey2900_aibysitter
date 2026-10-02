@@ -49,4 +49,12 @@ public class RepoConfigWriterTests
         Assert.Equal(["src/**", "tests/**"], RepoConfigWriter.ScopeLines("  src/**\r\n\n tests/** \nsrc/**\n"));
         Assert.Empty(RepoConfigWriter.ScopeLines(null));
     }
+
+    [Fact]
+    public void Comment_WrittenLast_OnlyWhenTrue()
+    {
+        Assert.Equal("{\n  \"conclusion\": \"advisory\",\n  \"comment\": true\n}\n", RepoConfigWriter.Write([], ConclusionMode.Advisory, [], comment: true));
+        Assert.DoesNotContain("comment", RepoConfigWriter.Write([], ConclusionMode.Advisory, [], comment: false));
+        Assert.True(RepoConfig.Parse(RepoConfigWriter.Write(["src/**"], ConclusionMode.Advisory, ["P002"], comment: true)).Config.Comment);
+    }
 }

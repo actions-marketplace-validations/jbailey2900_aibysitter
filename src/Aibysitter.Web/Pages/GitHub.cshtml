@@ -23,7 +23,7 @@
 </section>
 
 <figure class="terminal" aria-label="Example check run">
-    <pre><code><span class="t-prompt">check</span> Aibysitter  <span class="t-prompt">conclusion</span> neutral
+    <pre><code><span class="t-prompt">check</span> Aibysitter review  <span class="t-prompt">conclusion</span> neutral
 <span class="t-sum">4 findings (3 errors, 1 warning)</span>
 <span class="t-loc">docs/notes.txt:1           </span> <span class="t-sev t-error">failure</span> <span class="t-rule">P004</span>  Outside declared scope (added): docs/notes.txt
 <span class="t-loc">src/OrderService.cs:5      </span> <span class="t-sev t-error">failure</span> <span class="t-rule">P001</span>  Placeholder left in change: "YOUR_API_KEY"
@@ -38,7 +38,8 @@
     <pre><code>{
   "scope": ["src/**", "tests/**"],
   "conclusion": "fail-on-errors",
-  "disable": ["P002"]
+  "disable": ["P002"],
+  "comment": true
 }</code></pre>
     <table>
         <thead>
@@ -63,6 +64,11 @@
                 <td><code>disable</code></td>
                 <td>Check IDs to skip, for example <code>["P002"]</code>; disabled checks do not run and show as disabled in the check summary. Rule IDs (<code>R001</code>–<code>R016</code>) skip that rule inside P014. <code>aibysitter-disable</code> comments in a rules file apply first.</td>
                 <td>None</td>
+            </tr>
+            <tr>
+                <td><code>comment</code></td>
+                <td><code>true</code> posts one comment on the pull request with the summary table and up to 25 findings linked to their lines. Each new commit updates the same comment. No comment is created while there are no findings.</td>
+                <td><code>false</code></td>
             </tr>
         </tbody>
     </table>

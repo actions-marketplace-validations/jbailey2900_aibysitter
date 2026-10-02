@@ -32,6 +32,15 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task CommentKey_OnGitHubPage_PullRequestsWrite_OnPrivacy()
+    {
+        var client = factory.CreateClient();
+
+        Assert.Contains("<td><code>comment</code></td>", await client.GetStringAsync("/GitHub"));
+        Assert.Contains("<td>Read and write</td>\n            <td>Listing changed files and diffs; posting and updating one comment", await client.GetStringAsync("/Privacy"));
+    }
+
+    [Fact]
     public async Task GitHubPage_HasNoInstallLink_UntilAppIsPublic()
     {
         var html = await factory.CreateClient().GetStringAsync("/GitHub");
