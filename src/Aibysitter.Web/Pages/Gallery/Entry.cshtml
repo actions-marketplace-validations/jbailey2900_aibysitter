@@ -72,7 +72,7 @@
                 {
                     foreach (var f in lineFindings)
                     {
-                        <p class="file-note sev-@f.Severity.ToString().ToLowerInvariant()"><a asp-page="/Rules/Rule" asp-route-id="@f.Finding.RuleId">@f.Finding.RuleId</a> @f.Finding.Message</p>
+                        <p class="file-note sev-@f.Severity.ToString().ToLowerInvariant()"><a asp-page="/Rules/Rule" asp-route-id="@f.Finding.RuleId">@f.Finding.RuleId</a> @f.Finding.Message<span class="file-fix">Fix: @f.Finding.FixHint</span></p>
                     }
                 }
             </li>
