@@ -1,6 +1,7 @@
 @page
 @model LintModel
 @using Aibysitter.Rules
+@using Aibysitter.Web.Linting
 @{
     ViewData["Title"] = "Lint";
 }
@@ -30,7 +31,18 @@
     <a class="sample-link" asp-page="/Lint" asp-route-sample="true">Try a sample</a>
 </form>
 
+<form method="post" asp-page-handler="Url" id="url-form" class="url-form">
+    <label for="repo">Or lint a public GitHub repository</label>
+    <input id="repo" name="repo" type="text" value="@Model.RepoText" placeholder="owner/repo or https://github.com/owner/repo" spellcheck="false" aria-describedby="repo-help" />
+    <p class="note" id="repo-help">Reads @string.Join(", ", RawGitHubFetcher.FileNames) from the default branch, first found, through raw.githubusercontent.com. Nothing is stored or logged.</p>
+    <button type="submit">Lint repository</button>
+</form>
+
 <div id="lint-results" aria-live="polite">
+@if (Model.UrlLint is { } url)
+{
+    <partial name="_UrlLintResult" model="url" />
+}
 @if (Model.IsSample)
 {
     <p class="note">This sample intentionally triggers six findings.</p>

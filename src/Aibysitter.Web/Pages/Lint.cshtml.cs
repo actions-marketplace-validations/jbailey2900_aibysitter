@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Aibysitter.Web.Pages;
 
-public class LintModel(LintService lint, GalleryCatalog galleryCatalog) : PageModel
+public class LintModel(LintService lint, GalleryCatalog galleryCatalog, RawGitHubFetcher fetcher) : PageModel
 {
     public const int MaxContentLength = LintLimits.MaxContentLength;
 
@@ -48,6 +48,12 @@ public class LintModel(LintService lint, GalleryCatalog galleryCatalog) : PageMo
 
     public bool IsEnabled(string ruleId) => !Disabled.Contains(ruleId);
 
+    /// <summary>Repository text from the URL form, echoed back.</summary>
+    public string? RepoText { get; private set; }
+
+    /// <summary>Set after a lint-by-URL request.</summary>
+    public UrlLintResult? UrlLint { get; private set; }
+
     /// <summary>True when the page shows the built-in sample's results on load.</summary>
     public bool IsSample { get; private set; }
 
@@ -78,14 +84,46 @@ public class LintModel(LintService lint, GalleryCatalog galleryCatalog) : PageMo
         return Page();
     }
 
-    private void Lint()
+    /// <summary>
+    /// Lints a rules file from a public repository's default branch. Form fields <c>repo</c> and <c>file</c> (one of the
+    /// supported names) are read here, not bound as handler arguments, which MVC logs at Debug level.
+    /// </summary>
+    public async Task<IActionResult> OnPostUrlAsync(CancellationToken cancellationToken)
     {
-        var off = RulesPosted ? lint.Rules.Select(r => r.Id).Except(Enabled, StringComparer.OrdinalIgnoreCase) : Enumerable.Empty<string>();
-        Disabled = lint.TryNormalizeDisabled(off, out var disabled, out _) ? disabled : [];
-        var outcome = lint.Lint(RulesText!, Format, Disabled, "form");
+        ModelState.Clear();
+        var repo = Request.Form["repo"].ToString();
+        var file = Request.Form["file"].ToString();
+        RepoText = repo;
+        if (!RepoInput.TryParse(repo, out var parsed))
+        {
+            UrlLint = UrlLintResult.Invalid();
+            return Page();
+        }
+
+        var fetched = await fetcher.FetchAsync(parsed!, file.Length == 0 ? null : file, cancellationToken);
+        UrlLint = UrlLintResult.From(parsed!, fetched);
+        if (fetched.Status == FetchStatus.Found)
+        {
+            RulesText = fetched.Content;
+            Format = RulesFormats.FromFileName(fetched.FileName!) ?? RulesFormat.Auto;
+            Show(lint.Lint(RulesText!, Format, [], "url"));
+        }
+
+        return Page();
+    }
+
+    private void Show(LintOutcome outcome)
+    {
         LintedFormat = outcome.Format;
         Results = outcome.Findings;
         Suppressed = outcome.Suppressed;
         Score = outcome.Score;
+    }
+
+    private void Lint()
+    {
+        var off = RulesPosted ? lint.Rules.Select(r => r.Id).Except(Enabled, StringComparer.OrdinalIgnoreCase) : Enumerable.Empty<string>();
+        Disabled = lint.TryNormalizeDisabled(off, out var disabled, out _) ? disabled : [];
+        Show(lint.Lint(RulesText!, Format, Disabled, "form"));
     }
 }

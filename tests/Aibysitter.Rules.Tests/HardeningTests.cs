@@ -53,6 +53,16 @@ public class HardeningTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task UrlLint_SharesTheBucket()
+    {
+        var client = CreateClient(permitLimit: 2);
+
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, (await PostLint(client, NonCloudflareIp)).StatusCode);
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, (await PostLint(client, NonCloudflareIp, path: "/Lint?handler=Url")).StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await PostApi(client, NonCloudflareIp)).StatusCode);
+    }
+
+    [Fact]
     public async Task ForwardedFor_FromCloudflare_PartitionsByClient()
     {
         var client = CreateClient(permitLimit: 1);
@@ -97,9 +107,9 @@ public class HardeningTests(WebApplicationFactory<Program> factory)
                 .ConfigureServices(s => s.AddTransient<IStartupFilter, TestRemoteIpStartupFilter>()))
             .CreateClient();
 
-    private static Task<HttpResponseMessage> PostLint(HttpClient client, string remoteIp, string? forwardedFor = null)
+    private static Task<HttpResponseMessage> PostLint(HttpClient client, string remoteIp, string? forwardedFor = null, string path = "/Lint")
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "/Lint")
+        var request = new HttpRequestMessage(HttpMethod.Post, path)
         {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["RulesText"] = "x" }),
         };

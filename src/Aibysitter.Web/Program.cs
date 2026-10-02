@@ -23,6 +23,13 @@ try
     builder.Services.AddHealthChecks();
     builder.Services.AddSingleton(_ => new LintEngine());
     builder.Services.AddSingleton<Aibysitter.Web.Linting.LintService>();
+    builder.Services.AddHttpClient<RawGitHubFetcher>(client =>
+        {
+            client.Timeout = Timeout.InfiniteTimeSpan;
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("aibysitter (+https://aibysitting.net)");
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false, AutomaticDecompression = System.Net.DecompressionMethods.All })
+        .RemoveAllLoggers();
     builder.Services.AddSingleton<Aibysitter.Web.Samples.LintDemo>();
     builder.Services.AddSingleton<Aibysitter.Web.Gallery.GalleryCatalog>();
     builder.Services.AddSingleton<Aibysitter.Web.Notes.NoteCatalog>();

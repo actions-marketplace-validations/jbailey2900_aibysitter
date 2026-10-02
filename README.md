@@ -6,7 +6,7 @@ Live at [aibysitting.net](https://aibysitting.net). Free, no accounts.
 
 ## Rules-file linter
 
-Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`.cursor/rules/*.mdc`, root `.cursorrules`), `.github/copilot-instructions.md`, and root `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009, R015 and R016. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint). With JavaScript on, the file is linted in the browser and not sent; without it, the server lints it.
+Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`.cursor/rules/*.mdc`, root `.cursorrules`), `.github/copilot-instructions.md`, and root `.windsurfrules`. The format is auto-detected or chosen on the page. Frontmatter is skipped by every rule except R009, R015 and R016. Paste a file at [aibysitting.net/Lint](https://aibysitting.net/Lint). With JavaScript on, the file is linted in the browser and not sent; without it, the server lints it. A public repository can be linted by URL: the first of CLAUDE.md, AGENTS.md, .github/copilot-instructions.md, GEMINI.md, .cursorrules, .windsurfrules on its default branch, fetched from raw.githubusercontent.com.
 
 | ID | Rule | Severity |
 |---|---|---|

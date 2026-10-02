@@ -259,6 +259,22 @@ main { padding-top: var(--space-section); padding-bottom: var(--space-section); 
 .rules-picker legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .rules-picker label { display: block; font-size: var(--text-sm); break-inside: avoid; }
 
+.url-form { margin-top: var(--space-xl); }
+.also-found { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-sm); margin-bottom: var(--space-md); }
+.inline-form { display: inline; margin: 0; }
+button.link-button[type="submit"] {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--text-sm);
+    text-decoration: underline;
+    text-align: left;
+    cursor: pointer;
+    filter: none;
+}
+
 .provenance { color: var(--mute); font-size: var(--text-sm); }
 
 .legacy {
@@ -389,7 +405,7 @@ label {
     margin-bottom: var(--space-sm);
 }
 
-textarea {
+textarea, input[type="text"] {
     display: block;
     width: 100%;
     padding: var(--space-md);
@@ -401,7 +417,9 @@ textarea {
     resize: vertical;
 }
 
-textarea:focus { background: var(--paper); }
+input[type="text"] { resize: none; }
+
+textarea:focus, input[type="text"]:focus { background: var(--paper); }
 
 select {
     display: block;
