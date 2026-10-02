@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Lints rules files with the aibysitter CLI and merges the per-file JSON into one report.
-# Inputs (env): INPUT_FILES, INPUT_FAIL_ON_ERROR, INPUT_FAIL_BELOW, AIBYSITTER_CLI (command), AIBYSITTER_OUT (folder).
-# Writes: $AIBYSITTER_OUT/report.json, step outputs (grade, score, findings, report, status), job summary.
+# Inputs (env): INPUT_FILES, INPUT_FAIL_ON_ERROR, INPUT_FAIL_BELOW, AIBYSITTER_CLI (command), AIBYSITTER_OUT (base folder).
+# Writes: report.json in a new folder under $AIBYSITTER_OUT, step outputs (grade, score, findings, report, status), job summary.
 # status: ok | threshold | error. This script exits 0; the action's last step fails on threshold or error.
 set -uo pipefail
 
-out="${AIBYSITTER_OUT:?}"
+# A fresh folder per run: the action can run several times in one job, and each step's report output must stay valid.
+mkdir -p "${AIBYSITTER_OUT:?}"
+out=$(mktemp -d "$AIBYSITTER_OUT/run.XXXXXX")
 read -r -a cli <<< "${AIBYSITTER_CLI:?}"
 mkdir -p "$out/files"
 : "${GITHUB_OUTPUT:=/dev/null}"

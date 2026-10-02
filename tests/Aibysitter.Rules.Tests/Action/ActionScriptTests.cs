@@ -183,6 +183,28 @@ public sealed class ActionScriptTests(ITestOutputHelper output) : IDisposable
     }
 
     [Fact]
+    public void RepeatedRuns_InOneJob_KeepSeparateReports()
+    {
+        if (!ToolsOrSkip())
+        {
+            return;
+        }
+
+        RepoWith(("clean/CLAUDE.md", Clean), ("errors/CLAUDE.md", Contradiction), ("warn/AGENTS.md", "# Rules\n- Handle errors properly.\n"));
+
+        var first = Lint();
+        var second = Lint("errors/CLAUDE.md");
+        var third = Lint("nothing/*.md");
+
+        Assert.Equal(3, Files(first.Report).Count);
+        Assert.Equal(["errors/CLAUDE.md"], Files(second.Report));
+        Assert.Equal("1", second.Outputs["findings"]);
+        Assert.Empty(Files(third.Report));
+        Assert.NotEqual(first.Outputs["report"], second.Outputs["report"]);
+        Assert.Equal(3, Files(JsonNode.Parse(File.ReadAllText(first.Outputs["report"]))!.AsObject()).Count);
+    }
+
+    [Fact]
     public void NoFiles_OkAndSaysSo()
     {
         if (!ToolsOrSkip())
