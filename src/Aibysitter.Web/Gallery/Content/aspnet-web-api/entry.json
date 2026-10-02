@@ -3,7 +3,15 @@
   "name": "ASP.NET Core Web API",
   "description": "Minimal-API service on .NET 10 with PostgreSQL, typed results, problem details, and policy-based authorization.",
   "category": ".NET",
-  "tags": ["C#", "Web API", "PostgreSQL", "OpenAPI", "xUnit"],
+  "tags": [
+    "C#",
+    "Web API",
+    "PostgreSQL",
+    "OpenAPI",
+    "xUnit"
+  ],
   "file": "AGENTS.md",
-  "license": "CC0-1.0"
+  "license": "CC0-1.0",
+  "pack": "aspnet-web-api",
+  "title": "ASP.NET Core web API"
 }

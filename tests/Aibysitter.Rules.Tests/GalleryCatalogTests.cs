@@ -22,6 +22,53 @@ public class GalleryCatalogTests
     }
 
     [Fact]
+    public void EveryEntry_IsComposedFromAPack()
+    {
+        var packs = new Aibysitter.Packs.PackCatalog();
+        Assert.All(Catalog.All, e =>
+        {
+            Assert.NotNull(e.PackId);
+            var pack = packs.Find(e.PackId!)!;
+            var title = e.Content.Split('\n').First(l => l.StartsWith("# ", StringComparison.Ordinal))[2..];
+            Assert.Equal(Aibysitter.Packs.PackComposer.Compose([pack], e.Format, title, e.InstallPath), e.Content);
+        });
+    }
+
+    [Fact]
+    public void UnknownPack_OrPackWithoutTheFormat_FailsToLoad()
+    {
+        var none = new GalleryCatalog(new LintEngine(), new Aibysitter.Packs.PackCatalog(new Dictionary<string, string>()));
+        var claudeOnly = new GalleryCatalog(new LintEngine(), new Aibysitter.Packs.PackCatalog(new Dictionary<string, string>
+        {
+            ["aspnet-web-api/pack.json"] = """{"schemaVersion":1,"id":"aspnet-web-api","title":"t","description":"d","tags":["t"],"targets":["AgentsMd"],"license":"CC0-1.0"}""",
+            ["aspnet-web-api/01-a.md"] = "## A\n- x\n",
+        }));
+
+        Assert.Contains("pack 'aspnet-web-api' not found", Assert.Throws<InvalidOperationException>(() => none.All).Message);
+        Assert.Contains("pack 'aspnet-web-api' does not target CopilotInstructions", Assert.Throws<InvalidOperationException>(() => claudeOnly.All).Message);
+    }
+
+    [Fact]
+    public void GalleryFolders_HoldOnlyEntryJson()
+    {
+        var names = typeof(GalleryCatalog).Assembly.GetManifestResourceNames().Select(n => n.Replace('\\', '/'))
+            .Where(n => n.StartsWith(GalleryCatalog.ResourcePrefix, StringComparison.Ordinal)).ToList();
+
+        Assert.NotEmpty(names);
+        Assert.All(names, n => Assert.EndsWith("/entry.json", n));
+    }
+
+    [Theory]
+    [InlineData("monorepo-root", "A package can have its own `AGENTS.md`.")]
+    [InlineData("nextjs-typescript-cursor", "---\ndescription: Next.js with TypeScript\nalwaysApply: true\n---\n\n# Next.js with TypeScript\n")]
+    [InlineData("minimal-starter-windsurf", "# Project rules\n\nFill in the bracketed parts.")]
+    [InlineData("aspnet-web-api-copilot", "# ASP.NET Core web API\n\nASP.NET Core minimal APIs on .NET 10.")]
+    public void ComposedContent_ByFormatAndTitle(string id, string expected)
+    {
+        Assert.Contains(expected, Catalog.Find(id)!.Content);
+    }
+
+    [Fact]
     public void EveryEntry_HasCompleteMetadata_AndCc0License()
     {
         Assert.All(Catalog.All, e =>
@@ -30,7 +77,7 @@ public class GalleryCatalogTests
             Assert.Equal("CC0-1.0", e.License);
             Assert.NotEmpty(e.Tags);
             Assert.False(string.IsNullOrWhiteSpace(e.Description));
-            Assert.StartsWith("# ", e.Content[(e.Content.StartsWith("---\n", StringComparison.Ordinal) ? e.Content.IndexOf("\n---\n", 4, StringComparison.Ordinal) + 5 : 0)..]);
+            Assert.StartsWith("# ", e.Content[(e.Content.StartsWith("---\n", StringComparison.Ordinal) ? e.Content.IndexOf("\n---\n", 4, StringComparison.Ordinal) + 5 : 0)..].TrimStart('\n'));
         });
     }
 
@@ -73,7 +120,7 @@ public class GalleryCatalogTests
     }
 
     [Theory]
-    [InlineData("nextjs-typescript-cursor", "nextjs-typescript", RulesFormat.CursorMdc, ".cursor/rules/storefront.mdc")]
+    [InlineData("nextjs-typescript-cursor", "nextjs-typescript", RulesFormat.CursorMdc, ".cursor/rules/nextjs.mdc")]
     [InlineData("python-fastapi-cursorrules", "python-fastapi", RulesFormat.CursorRules, ".cursorrules")]
     [InlineData("aspnet-web-api-copilot", "aspnet-web-api", RulesFormat.CopilotInstructions, ".github/copilot-instructions.md")]
     [InlineData("go-http-service-gemini", "go-http-service", RulesFormat.GeminiMd, "GEMINI.md")]

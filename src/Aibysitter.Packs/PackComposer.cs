@@ -13,6 +13,9 @@ public static partial class PackComposer
 {
     public const string DefaultTitle = "Project rules";
 
+    /// <summary>Written in pack text where a rules file is named; replaced with the output file's path.</summary>
+    public const string RulesFileToken = "{{rules-file}}";
+
     /// <summary>Short names for <c>--format</c>; full <see cref="RulesFormat"/> names are accepted too.</summary>
     public static readonly IReadOnlyDictionary<string, RulesFormat> ShortNames = new Dictionary<string, RulesFormat>(StringComparer.OrdinalIgnoreCase)
     {
@@ -48,13 +51,28 @@ public static partial class PackComposer
         _ => throw new ArgumentOutOfRangeException(nameof(format), format, "Not a pack output format."),
     };
 
-    public static string Compose(IReadOnlyList<Pack> packs, RulesFormat format, string? title = null)
+    /// <summary>Standalone packs in <paramref name="packs"/> when it holds more than one pack; such a combination is not composed.</summary>
+    public static IReadOnlyList<Pack> StandaloneConflicts(IReadOnlyList<Pack> packs) =>
+        packs.Count > 1 ? packs.Where(p => p.Manifest.Standalone).ToList() : [];
+
+    /// <summary>Text with <see cref="RulesFileToken"/> replaced by <paramref name="rulesFile"/>.</summary>
+    public static string Resolve(string text, string rulesFile) => text.Replace(RulesFileToken, rulesFile, StringComparison.Ordinal);
+
+    /// <param name="rulesFile">Path the file is written to, for <see cref="RulesFileToken"/>; default <see cref="DefaultPath"/>.</param>
+    public static string Compose(IReadOnlyList<Pack> packs, RulesFormat format, string? title = null, string? rulesFile = null)
     {
         ArgumentOutOfRangeException.ThrowIfZero(packs.Count);
         if (!PackCatalog.OutputFormats.Contains(format))
         {
             throw new ArgumentOutOfRangeException(nameof(format), format, "Not a pack output format.");
         }
+
+        if (StandaloneConflicts(packs) is { Count: > 0 } standalone)
+        {
+            throw new ArgumentException($"{string.Join(", ", standalone.Select(p => p.Id))} is used on its own only.", nameof(packs));
+        }
+
+        var file = rulesFile ?? DefaultPath(format, packs);
 
         var heading = string.IsNullOrWhiteSpace(title) ? DefaultTitle : title.Trim();
         var text = new StringBuilder();
@@ -66,7 +84,7 @@ public static partial class PackComposer
         text.Append("# ").Append(heading).Append('\n');
         if (packs.Count == 1 && packs[0].Intro is { } intro)
         {
-            text.Append('\n').Append(intro).Append('\n');
+            text.Append('\n').Append(Resolve(intro, file)).Append('\n');
         }
 
         foreach (var (sectionHeading, lines) in Merge(packs))
@@ -74,7 +92,7 @@ public static partial class PackComposer
             text.Append('\n').Append("## ").Append(sectionHeading).Append('\n');
             foreach (var line in lines)
             {
-                text.Append(line).Append('\n');
+                text.Append(Resolve(line, file)).Append('\n');
             }
         }
 
