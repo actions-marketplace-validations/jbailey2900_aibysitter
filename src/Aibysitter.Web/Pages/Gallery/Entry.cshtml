@@ -3,6 +3,8 @@
 @{
     var e = Model.Entry;
     ViewData["Title"] = e.Name;
+    ViewData["Description"] = e.Description;
+    ViewData["Canonical"] = Aibysitter.Web.Seo.SiteMap.GalleryPath(e.Id);
 }
 
 <p><a asp-page="/Gallery/Index">All examples</a></p>

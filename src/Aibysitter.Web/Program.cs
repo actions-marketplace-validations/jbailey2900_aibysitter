@@ -3,6 +3,7 @@ using Aibysitter.Rules;
 using Aibysitter.Web.Gallery;
 using Aibysitter.Web.GitHub;
 using Aibysitter.Web.Infrastructure;
+using Aibysitter.Web.Seo;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -20,6 +21,7 @@ try
         .WriteTo.Console());
 
     builder.Services.AddRazorPages();
+    builder.Services.AddSingleton(SiteOptions.From(builder.Configuration));
     builder.Services.AddHealthChecks();
     builder.Services.AddSingleton(_ => new LintEngine());
     builder.Services.AddSingleton<Aibysitter.Web.Linting.LintService>();
@@ -34,6 +36,7 @@ try
     builder.Services.AddSingleton<Aibysitter.Web.Samples.LintDemo>();
     builder.Services.AddSingleton<Aibysitter.Web.Gallery.GalleryCatalog>();
     builder.Services.AddSingleton<Aibysitter.Web.Notes.NoteCatalog>();
+    builder.Services.AddSingleton<Aibysitter.Web.Seo.SiteMap>();
     builder.Services.AddAibysitterHardening(builder.Configuration);
     builder.Services.AddAibysitterDataProtection(builder.Configuration);
     builder.Services.AddAibysitterGitHubApp(builder.Configuration);
@@ -62,6 +65,7 @@ try
     app.MapLintApi();
     app.MapRegistry();
     app.MapGalleryDownloads();
+    app.MapSeo();
 
     app.Run();
 }

@@ -1,7 +1,9 @@
 @page "/Rules/{id}"
 @model Aibysitter.Web.Pages.Rules.RuleModel
 @{
-    ViewData["Title"] = $"{Model.Doc.Id} {Model.Doc.Name}";
+    ViewData["Title"] = Aibysitter.Web.Seo.RuleSearchTitles.For(Model.Doc.Id, Model.Doc.Name);
+    ViewData["Description"] = Model.Doc.Summary;
+    ViewData["Canonical"] = Aibysitter.Web.Seo.SiteMap.RulePath(Model.Doc.Id);
 }
 
 <p><a asp-page="/Rules/Index">All rules</a></p>

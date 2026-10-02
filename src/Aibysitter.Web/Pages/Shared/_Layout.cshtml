@@ -1,3 +1,8 @@
+@inject Aibysitter.Web.Infrastructure.SiteOptions Site
+@{
+    var description = ViewData["Description"] as string;
+    var canonical = Site.Url(ViewData["Canonical"] as string ?? Url.Page((string)ViewContext.RouteData.Values["page"]!)!);
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +10,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>@ViewData["Title"] - aibysitter</title>
+    @if (description is not null)
+    {
+        <meta name="description" content="@description" />
+    }
+    <link rel="canonical" href="@canonical" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="aibysitter" />
+    <meta property="og:title" content="@ViewData["Title"]" />
+    @if (description is not null)
+    {
+        <meta property="og:description" content="@description" />
+    }
+    <meta property="og:url" content="@canonical" />
+    <meta name="twitter:card" content="summary" />
     <link rel="preload" href="~/fonts/jetbrains-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>

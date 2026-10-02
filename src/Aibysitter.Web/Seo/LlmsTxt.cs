@@ -1,0 +1,50 @@
+using System.Text;
+using Aibysitter.Rules;
+using Aibysitter.Rules.PullRequests;
+using Aibysitter.Web.Infrastructure;
+using Aibysitter.Web.Linting;
+
+namespace Aibysitter.Web.Seo;
+
+/// <summary>llms.txt (llmstxt.org): H1, summary blockquote, then H2 sections of links. Rules come from the docs.</summary>
+public static class LlmsTxt
+{
+    public static string Build(SiteOptions site)
+    {
+        var text = new StringBuilder();
+        text.Append("# aibysitter\n\n");
+        text.Append("> Lints the rules files AI coding agents read (CLAUDE.md, AGENTS.md, Cursor rules, Copilot instructions, GEMINI.md, .windsurfrules) and reviews agent-authored pull requests with a GitHub App. Free, no account.\n\n");
+        text.Append($"Ruleset version: {RulesetVersion.Current}.\n\n");
+
+        text.Append("## Tools\n\n");
+        Link(text, site, "Lint", "/Lint", "paste a rules file or name a public GitHub repository; findings by line, a fix for each, and a score");
+        Link(text, site, "API", "/API", $"POST {LintApi.Path} with JSON; same rules and results as the lint page; no key");
+        Link(text, site, "GitHub App", "/GitHub", "checks on agent-authored pull requests; in testing, not yet installable");
+        Link(text, site, "Config generator", "/GitHub/Config", $"builds {RepoConfig.FilePath} for the GitHub App");
+        text.Append('\n');
+
+        Section(text, site, "Rules", RuleDocs.All);
+        Section(text, site, "Pull request checks", PullRequestCheckDocs.All);
+
+        text.Append("## Optional\n\n");
+        Link(text, site, "Methodology", "/Rules/Methodology", "how rules are chosen and scored");
+        Link(text, site, "Changelog", "/Rules/Changelog", "ruleset and check changes by version");
+        Link(text, site, "Gallery", "/Gallery", "public-domain rules files, each scored");
+        Link(text, site, "Privacy", "/Privacy", "what is read, kept and logged");
+        return text.ToString();
+    }
+
+    private static void Section(StringBuilder text, SiteOptions site, string heading, IEnumerable<RuleDoc> docs)
+    {
+        text.Append($"## {heading}\n\n");
+        foreach (var doc in docs)
+        {
+            Link(text, site, $"{doc.Id} {doc.Name}", SiteMap.RulePath(doc.Id), doc.Summary);
+        }
+
+        text.Append('\n');
+    }
+
+    private static void Link(StringBuilder text, SiteOptions site, string name, string path, string note) =>
+        text.Append($"- [{name}]({site.Url(path)}): {note}\n");
+}
