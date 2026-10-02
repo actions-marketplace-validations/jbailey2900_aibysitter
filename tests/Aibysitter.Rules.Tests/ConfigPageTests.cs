@@ -105,6 +105,14 @@ public partial class ConfigPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task Post_RejectedGlob_ShowsErrorWithLine()
+    {
+        var html = await PostHtml(AllIds, "src/**.cs");
+
+        Assert.Contains("<li>Line 3: .github/aibysitter.json: scope entry &quot;src/**.cs&quot;: ** must be a whole path segment", html);
+    }
+
+    [Fact]
     public async Task Post_NothingChecked_DisablesEverything()
     {
         var html = await PostHtml([]);

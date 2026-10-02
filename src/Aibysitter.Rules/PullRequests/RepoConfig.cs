@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -7,6 +8,12 @@ public enum ConclusionMode
 {
     Advisory,
     FailOnErrors,
+}
+
+/// <param name="Line">1-based line in the config file.</param>
+public sealed record ConfigError(int Line, string Message)
+{
+    public override string ToString() => Message;
 }
 
 /// <summary>Parsed <c>.github/aibysitter.json</c>.</summary>
@@ -29,14 +36,14 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
     public bool InScope(string path) => Scope.Any(g => g.IsMatch(path));
 
     /// <summary>Parses config JSON. Invalid parts fall back to defaults and are reported in Errors.</summary>
-    public static (RepoConfig Config, IReadOnlyList<string> Errors) Parse(string? json)
+    public static (RepoConfig Config, IReadOnlyList<ConfigError> Errors) Parse(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {
             return (Default, []);
         }
 
-        var errors = new List<string>();
+        var errors = new List<ConfigError>();
         JsonDocument doc;
         try
         {
@@ -44,14 +51,17 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
         }
         catch (JsonException ex)
         {
-            return (Default, [$"{FilePath}: invalid JSON ({ex.Message})"]);
+            return (Default, [new ConfigError((int)(ex.LineNumber ?? 0) + 1, $"{FilePath}: invalid JSON ({ex.Message})")]);
         }
+
+        var lines = KeyLines(json);
+        void Error(string key, string message) => errors.Add(new ConfigError(lines.GetValueOrDefault(key, 1), $"{FilePath}: {message}"));
 
         using (doc)
         {
             if (doc.RootElement.ValueKind != JsonValueKind.Object)
             {
-                return (Default, [$"{FilePath}: root must be an object"]);
+                return (Default, [new ConfigError(1, $"{FilePath}: root must be an object")]);
             }
 
             var scope = new List<Glob>();
@@ -64,21 +74,27 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
                 switch (property.Name)
                 {
                     case "scope" when property.Value.ValueKind == JsonValueKind.Array:
+                        var index = 0;
                         foreach (var item in property.Value.EnumerateArray())
                         {
-                            if (item.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(item.GetString()))
+                            var key = $"scope[{index++}]";
+                            if (item.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(item.GetString()))
                             {
-                                scope.Add(new Glob(item.GetString()!));
+                                Error(key, "\"scope\" entries must be non-empty strings");
+                            }
+                            else if (Glob.TryCreate(item.GetString(), out var glob, out var globError))
+                            {
+                                scope.Add(glob!);
                             }
                             else
                             {
-                                errors.Add($"{FilePath}: \"scope\" entries must be non-empty strings");
+                                Error(key, $"scope entry {item.GetRawText()}: {globError}");
                             }
                         }
 
                         break;
                     case "scope":
-                        errors.Add($"{FilePath}: \"scope\" must be an array of path globs");
+                        Error("scope", "\"scope\" must be an array of path globs");
                         break;
                     case "conclusion":
                         switch (property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() : null)
@@ -90,14 +106,16 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
                                 conclusion = ConclusionMode.FailOnErrors;
                                 break;
                             default:
-                                errors.Add($"{FilePath}: \"conclusion\" must be \"advisory\" or \"fail-on-errors\"");
+                                Error("conclusion", "\"conclusion\" must be \"advisory\" or \"fail-on-errors\"");
                                 break;
                         }
 
                         break;
                     case "disable" when property.Value.ValueKind == JsonValueKind.Array:
+                        var disableIndex = 0;
                         foreach (var item in property.Value.EnumerateArray())
                         {
+                            var key = $"disable[{disableIndex++}]";
                             var id = item.ValueKind == JsonValueKind.String ? item.GetString()?.Trim().ToUpperInvariant() : null;
                             if (id is not null && CheckIdRegex().IsMatch(id) && (PullRequestCheckDocs.Find(id) ?? RuleDocs.Find(id)) is not null)
                             {
@@ -105,28 +123,68 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
                             }
                             else
                             {
-                                errors.Add($"{FilePath}: \"disable\" entry {item.GetRawText()} is not a known check or rule ID");
+                                Error(key, $"\"disable\" entry {item.GetRawText()} is not a known check or rule ID");
                             }
                         }
 
                         break;
                     case "disable":
-                        errors.Add($"{FilePath}: \"disable\" must be an array of check or rule IDs");
+                        Error("disable", "\"disable\" must be an array of check or rule IDs");
                         break;
                     case "comment" when property.Value.ValueKind is JsonValueKind.True or JsonValueKind.False:
                         comment = property.Value.GetBoolean();
                         break;
                     case "comment":
-                        errors.Add($"{FilePath}: \"comment\" must be true or false");
+                        Error("comment", "\"comment\" must be true or false");
                         break;
                     default:
-                        errors.Add($"{FilePath}: unknown key \"{property.Name}\"");
+                        Error(property.Name, $"unknown key \"{property.Name}\"");
                         break;
                 }
             }
 
             return (new RepoConfig(scope, conclusion) { Disabled = disabled, Comment = comment }, errors);
         }
+    }
+
+    /// <summary>1-based line of each top-level key (<c>scope</c>) and of each item in a top-level array (<c>scope[0]</c>).</summary>
+    private static Dictionary<string, int> KeyLines(string json)
+    {
+        var bytes = Encoding.UTF8.GetBytes(json);
+        var lineStarts = new List<long> { 0 };
+        for (var i = 0; i < bytes.Length; i++)
+        {
+            if (bytes[i] == (byte)'\n')
+            {
+                lineStarts.Add(i + 1);
+            }
+        }
+
+        int LineAt(long offset)
+        {
+            var found = lineStarts.BinarySearch(offset);
+            return (found >= 0 ? found : ~found - 1) + 1;
+        }
+
+        var lines = new Dictionary<string, int>(StringComparer.Ordinal);
+        var reader = new Utf8JsonReader(bytes, new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+        string? property = null;
+        var index = 0;
+        while (reader.Read())
+        {
+            if (reader.CurrentDepth == 1 && reader.TokenType == JsonTokenType.PropertyName)
+            {
+                property = reader.GetString();
+                lines[property!] = LineAt(reader.TokenStartIndex);
+                index = 0;
+            }
+            else if (reader.CurrentDepth == 2 && property is not null && reader.TokenType is not (JsonTokenType.EndArray or JsonTokenType.EndObject or JsonTokenType.PropertyName))
+            {
+                lines.TryAdd($"{property}[{index++}]", LineAt(reader.TokenStartIndex));
+            }
+        }
+
+        return lines;
     }
 
     [GeneratedRegex(@"^[PR]\d{3}$")]

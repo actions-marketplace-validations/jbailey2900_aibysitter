@@ -10,7 +10,7 @@ public class CheckRunReportTests
 {
     private static readonly PullRequestReviewer Reviewer = new();
 
-    private static CheckRunReport Build(RepoConfig config, IReadOnlyList<string> configErrors, params ChangedFile[] files) =>
+    private static CheckRunReport Build(RepoConfig config, IReadOnlyList<ConfigError> configErrors, params ChangedFile[] files) =>
         CheckRunReport.Build(Reviewer.Review(new PullRequestContext(files, config)), Reviewer.Checks, files, config, configErrors);
 
     [Fact]

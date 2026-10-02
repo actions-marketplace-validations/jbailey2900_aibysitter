@@ -35,13 +35,14 @@ Optional. Path: `.github/aibysitter.json`. The App reads it from the pull reques
 
 | Key | Value | Default |
 |---|---|---|
-| `scope` | Path globs from the repository root. `**` spans folders, `*` and `?` stay within one. Case-sensitive. Turns on P004. | Not set; P004 off |
+| `scope` | Path globs from the repository root. `**` spans folders and must be a whole segment (`**/*.cs`, not `**.cs`); `*` and `?` stay within one. Case-sensitive. Not supported: `{a,b}`, `[...]`, `!`, `\`. Turns on P004. | Not set; P004 off |
 | `conclusion` | `advisory`: findings report as `neutral`. `fail-on-errors`: any Error finding fails the check. | `advisory` |
 | `disable` | Check IDs (`P001`–`P014`) skip that check. Rule IDs (`R001`–`R016`) skip that rule inside P014. | None |
 | `comment` | `true`: one comment on the pull request with the summary table and up to 25 findings linked to their lines, updated on each new commit. No comment is created while there are no findings; turning it off leaves an existing comment as it is. | `false` |
 
 - Comments and trailing commas are allowed.
-- An invalid entry falls back to its default and is listed under **Config errors** in the summary.
+- An invalid entry falls back to its default, is listed under **Config errors** in the summary and is annotated on its line of the config file.
+- Under `fail-on-errors`, any config error fails the check. Under `advisory`, config errors do not change the conclusion.
 - Editing the config file in a pull request makes it a changed file: outside `scope`, it gets a P004 finding.
 
 Starter config:

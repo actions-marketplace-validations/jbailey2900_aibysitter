@@ -5,11 +5,14 @@ using Aibysitter.Rules.PullRequests;
 
 namespace Aibysitter.Web.GitHub;
 
-public sealed record CheckRunAnnotation(string Path, int Line, Severity Severity, string Title, string Message, string RawDetails);
+/// <param name="IsConfigError">An error in the repo config file; not a finding.</param>
+public sealed record CheckRunAnnotation(string Path, int Line, Severity Severity, string Title, string Message, string RawDetails, bool IsConfigError = false);
 
 public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, string Summary, IReadOnlyList<CheckRunAnnotation> Annotations)
 {
     public const int AnnotationsPerRequest = 50;
+    public const string ConfigErrorTitle = "Config error";
+    public const string ConfigErrorDetails = "The default is used for this entry. Generator and key reference: https://aibysitting.net/GitHub/Config";
 
     public IEnumerable<IReadOnlyList<CheckRunAnnotation>> AnnotationBatches() => Annotations.Chunk(AnnotationsPerRequest);
 
@@ -18,7 +21,7 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         IReadOnlyList<IPullRequestCheck> checks,
         IReadOnlyList<ChangedFile> files,
         RepoConfig config,
-        IReadOnlyList<string> configErrors,
+        IReadOnlyList<ConfigError> configErrors,
         IReadOnlyList<string>? notes = null)
     {
         ArgumentNullException.ThrowIfNull(review);
@@ -29,6 +32,7 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         var annotations = review.Findings
             .Where(f => !removed.Contains(f.Path))
             .Select(f => new CheckRunAnnotation(f.Path, f.Line, f.SeverityOr(checkById[f.CheckId].Severity), $"{f.CheckId} {checkById[f.CheckId].Title}", f.Message, f.FixHint))
+            .Concat(configErrors.Select(e => new CheckRunAnnotation(RepoConfig.FilePath, e.Line, Severity.Warning, ConfigErrorTitle, e.Message, ConfigErrorDetails, IsConfigError: true)))
             .ToList();
 
         var errors = review.Findings.Count(f => f.SeverityOr(checkById[f.CheckId].Severity) == Severity.Error);
@@ -44,6 +48,13 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         {
             title += $" ({errors} error{(errors == 1 ? "" : "s")}, {warnings} warning{(warnings == 1 ? "" : "s")})";
         }
+
+        if (configErrors.Count > 0)
+        {
+            title += $"; {configErrors.Count} config error{(configErrors.Count == 1 ? "" : "s")}";
+        }
+
+        var conclusion = config.Conclusion == ConclusionMode.FailOnErrors && configErrors.Count > 0 ? ReviewConclusion.Failure : review.Conclusion;
 
         var summary = new StringBuilder();
         summary.AppendLine($"Conclusion mode: `{(config.Conclusion == ConclusionMode.FailOnErrors ? "fail-on-errors" : "advisory")}`. Scope: {(config.HasScope ? string.Join(", ", config.Scope.Select(g => $"`{g.Pattern}`")) : "not declared")}.");
@@ -85,14 +96,16 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         if (configErrors.Count > 0)
         {
             summary.AppendLine();
-            summary.AppendLine($"Config errors (defaults used for these):");
+            summary.AppendLine(config.Conclusion == ConclusionMode.FailOnErrors
+                ? "Config errors (defaults used for these; the check fails under fail-on-errors):"
+                : "Config errors (defaults used for these):");
             foreach (var error in configErrors)
             {
-                summary.AppendLine($"- {error}");
+                summary.AppendLine($"- Line {error.Line}: {error.Message}");
             }
         }
 
-        return new CheckRunReport(review.Conclusion, title, summary.ToString().TrimEnd(), annotations);
+        return new CheckRunReport(conclusion, title, summary.ToString().TrimEnd(), annotations);
     }
 
     public static CheckRunReport ForError(Exception ex) => new(

@@ -47,7 +47,7 @@ public class ConfigModel : PageModel
     public string? Json { get; private set; }
 
     /// <summary>Errors from <see cref="RepoConfig.Parse"/> on the generated file.</summary>
-    public IReadOnlyList<string> Errors { get; private set; } = [];
+    public IReadOnlyList<ConfigError> Errors { get; private set; } = [];
 
     /// <summary>Set when <see cref="TestPath"/> was given.</summary>
     public ScopeTest? PathTest { get; private set; }
