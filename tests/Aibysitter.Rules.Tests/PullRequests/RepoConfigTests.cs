@@ -54,7 +54,7 @@ public class RepoConfigTests
     [InlineData("{\"scopes\": []}", "unknown key \"scopes\"")]
     [InlineData("{\"disable\": \"P002\"}", "\"disable\" must be an array of check or rule IDs")]
     [InlineData("{\"disable\": [\"P999\"]}", "\"disable\" entry \"P999\" is not a known check or rule ID")]
-    [InlineData("{\"disable\": [\"R016\"]}", "\"disable\" entry \"R016\" is not a known check or rule ID")]
+    [InlineData("{\"disable\": [\"R099\"]}", "\"disable\" entry \"R099\" is not a known check or rule ID")]
     [InlineData("{\"disable\": [\"X002\"]}", "\"disable\" entry \"X002\" is not a known check or rule ID")]
     [InlineData("{\"disable\": [2]}", "\"disable\" entry 2 is not a known check or rule ID")]
     public void InvalidParts_ReportErrors(string json, string expected)

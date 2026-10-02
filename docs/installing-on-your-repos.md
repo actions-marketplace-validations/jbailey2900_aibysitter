@@ -37,7 +37,7 @@ Optional. Path: `.github/aibysitter.json`. The App reads it from the pull reques
 |---|---|---|
 | `scope` | Path globs from the repository root. `**` spans folders, `*` and `?` stay within one. Case-sensitive. Turns on P004. | Not set; P004 off |
 | `conclusion` | `advisory`: findings report as `neutral`. `fail-on-errors`: any Error finding fails the check. | `advisory` |
-| `disable` | Check IDs (`P001`–`P014`) skip that check. Rule IDs (`R001`–`R015`) skip that rule inside P014. | None |
+| `disable` | Check IDs (`P001`–`P014`) skip that check. Rule IDs (`R001`–`R016`) skip that rule inside P014. | None |
 
 - Comments and trailing commas are allowed.
 - An invalid entry falls back to its default and is listed under **Config errors** in the summary.

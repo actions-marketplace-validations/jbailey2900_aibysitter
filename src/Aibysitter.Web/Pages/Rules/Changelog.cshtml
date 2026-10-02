@@ -1,0 +1,41 @@
+@page
+@using Aibysitter.Rules
+@{
+    ViewData["Title"] = "Changelog";
+}
+
+<p><a asp-page="/Rules/Index">All rules</a></p>
+
+<h1>Changelog</h1>
+<p>Current ruleset: v@(RulesetVersion.Current). The version changes when anything that decides a lint score changes: lint rules, format detection, or scoring.</p>
+
+<h2>Ruleset</h2>
+@foreach (var entry in RulesetChangelog.Ruleset)
+{
+    <section class="changelog-entry" id="v@(entry.Version)">
+        <h3>v@(entry.Version), @entry.Title</h3>
+        <p class="note"><time datetime="@entry.Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@entry.Date.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</time></p>
+        <ul>
+            @foreach (var change in entry.Changes)
+            {
+                <li>@change</li>
+            }
+        </ul>
+    </section>
+}
+
+<h2>App checks</h2>
+<p>Pull request checks and R006. These do not change the ruleset version.</p>
+@foreach (var entry in RulesetChangelog.AppChecks)
+{
+    <section class="changelog-entry">
+        <h3>@entry.Title</h3>
+        <p class="note"><time datetime="@entry.Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@entry.Date.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</time></p>
+        <ul>
+            @foreach (var change in entry.Changes)
+            {
+                <li>@change</li>
+            }
+        </ul>
+    </section>
+}

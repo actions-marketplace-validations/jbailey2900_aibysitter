@@ -1,3 +1,4 @@
+using Aibysitter.Rules;
 using Microsoft.Net.Http.Headers;
 
 namespace Aibysitter.Web.Gallery;
@@ -15,6 +16,7 @@ public static class RegistryEndpoints
             return Results.Json(new
             {
                 schemaVersion = SchemaVersion,
+                rulesetVersion = RulesetVersion.Current,
                 entries = catalog.All.Select(e => new
                 {
                     id = e.Id,

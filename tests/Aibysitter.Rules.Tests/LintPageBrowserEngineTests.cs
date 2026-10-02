@@ -76,7 +76,7 @@ public class LintPageBrowserEngineTests(WebApplicationFactory<Program> factory)
     {
         var html = await factory.CreateClient().GetStringAsync("/Lint");
 
-        Assert.Contains("The format only changes whether R015 runs.", html);
+        Assert.Contains("The format only changes whether R015 and R016 run.", html);
         Assert.Contains("Linted in your browser; the text is not sent.", html);
         Assert.Contains(@"<a href=""/Privacy"">Privacy</a>", html);
     }

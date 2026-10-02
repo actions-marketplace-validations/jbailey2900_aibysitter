@@ -50,8 +50,9 @@ public class RegistryAndBadgeTests(WebApplicationFactory<Program> factory)
         Assert.Equal("svg", svg.Name.LocalName);
         Assert.Contains(svg.Descendants(), e => e.Name.LocalName == "text" && e.Value == "A 100");
         Assert.Contains(svg.Descendants(), e => e.Name.LocalName == "text" && e.Value == "aibysitter");
-        Assert.Equal("Aibysitter lint score: A 100", svg.Attribute("aria-label")?.Value);
-        Assert.Equal("Aibysitter lint score: A 100", svg.Descendants().Single(e => e.Name.LocalName == "title").Value);
+        Assert.Equal($"Aibysitter lint score: A 100 (ruleset v{RulesetVersion.Current})", svg.Attribute("aria-label")?.Value);
+        Assert.Equal($"Aibysitter lint score: A 100 (ruleset v{RulesetVersion.Current})", svg.Descendants().Single(e => e.Name.LocalName == "title").Value);
+        Assert.DoesNotContain(svg.Descendants(), e => e.Name.LocalName == "text" && e.Value.Contains("ruleset", StringComparison.Ordinal));
     }
 
     [Theory]
