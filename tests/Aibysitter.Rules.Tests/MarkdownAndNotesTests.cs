@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Aibysitter.Rules.Tests;
 
+[Trait("Category", "Catalog")]
 public class MarkdownAndNotesTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {

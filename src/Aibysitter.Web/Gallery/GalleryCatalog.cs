@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Aibysitter.Packs;
 using Aibysitter.Rules;
 
 namespace Aibysitter.Web.Gallery;
@@ -35,32 +36,27 @@ public sealed partial class GalleryCatalog
 
     private static IReadOnlyList<GalleryEntry> Load(LintEngine engine, Assembly assembly)
     {
-        var resources = assembly.GetManifestResourceNames()
-            .Select(raw => (Raw: raw, Path: raw.Replace('\\', '/')))
-            .Where(r => r.Path.StartsWith(ResourcePrefix, StringComparison.Ordinal))
-            .ToDictionary(r => r.Path, r => r.Raw, StringComparer.Ordinal);
+        var files = EmbeddedFiles.Read(assembly, ResourcePrefix);
 
         var severities = engine.Rules.ToDictionary(r => r.Id, StringComparer.Ordinal);
         var list = new List<GalleryEntry>();
 
-        foreach (var folder in resources.Keys.Select(p => p.Split('/')[1]).Distinct(StringComparer.Ordinal))
+        foreach (var folder in files.Keys.Select(p => p.Split('/')[0]).Distinct(StringComparer.Ordinal))
         {
-            var manifestPath = $"{ResourcePrefix}{folder}/entry.json";
-            if (!resources.TryGetValue(manifestPath, out var manifestResource))
+            if (!files.TryGetValue($"{folder}/entry.json", out var manifestJson))
             {
                 throw new InvalidOperationException($"Gallery entry '{folder}' has no entry.json.");
             }
 
-            var manifest = JsonSerializer.Deserialize<Manifest>(Read(assembly, manifestResource), JsonOptions)
+            var manifest = JsonSerializer.Deserialize<Manifest>(manifestJson, JsonOptions)
                 ?? throw new InvalidOperationException($"Gallery entry '{folder}': entry.json is empty.");
             Validate(folder, manifest);
 
-            if (!resources.TryGetValue($"{ResourcePrefix}{folder}/{manifest.File}", out var fileResource))
+            if (!files.TryGetValue($"{folder}/{manifest.File}", out var content))
             {
                 throw new InvalidOperationException($"Gallery entry '{folder}': file '{manifest.File}' not found.");
             }
 
-            var content = Read(assembly, fileResource);
             var format = RulesFormats.FromFileName(manifest.Path ?? manifest.File!)!.Value;
             var findings = engine.Lint(content, format);
             list.Add(new GalleryEntry(
@@ -100,13 +96,6 @@ public sealed partial class GalleryCatalog
         Require(m.File is not null && RulesFormats.FromFileName(m.Path ?? m.File) is not null, "file (or path) must be a known rules file (CLAUDE.md, AGENTS.md, .cursor/rules/*.mdc, .cursorrules, copilot-instructions.md, GEMINI.md, .windsurfrules)");
         Require(m.Path is null || m.Path.Replace('\\', '/').EndsWith("/" + m.File, StringComparison.Ordinal), "path must end with the file name");
         Require(!string.IsNullOrWhiteSpace(m.License), "license is required");
-    }
-
-    private static string Read(Assembly assembly, string resource)
-    {
-        using var stream = assembly.GetManifestResourceStream(resource)!;
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
     }
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };

@@ -2,6 +2,7 @@ using Aibysitter.Packs;
 
 namespace Aibysitter.Rules.Tests.Packs;
 
+[Trait("Category", "Catalog")]
 public class PackComposerTests
 {
     private static readonly PackCatalog Catalog = new();

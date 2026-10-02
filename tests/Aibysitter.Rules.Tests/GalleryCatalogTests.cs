@@ -2,6 +2,7 @@ using Aibysitter.Web.Gallery;
 
 namespace Aibysitter.Rules.Tests;
 
+[Trait("Category", "Catalog")]
 public class GalleryCatalogTests
 {
     private static readonly GalleryCatalog Catalog = new(new LintEngine());

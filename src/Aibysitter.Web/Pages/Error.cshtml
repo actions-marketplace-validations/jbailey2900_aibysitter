@@ -1,12 +1,33 @@
 @page
 @model ErrorModel
 @{
-    ViewData["Title"] = "Error";
+    // Standalone: no layout, no injected services, no route generation. Renders when catalogs or other services fail.
+    Layout = null;
 }
-
-<h1>Error</h1>
-<p>An error occurred while processing your request.</p>
-@if (Model.ShowRequestId)
-{
-    <p>Request ID: <code>@Model.RequestId</code></p>
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex" />
+    <title>Error - aibysitter</title>
+    <style>
+        body { margin: 0; font: 1rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+        main { max-width: 40rem; margin: 0 auto; padding: 3rem 1rem; }
+        h1 { font-size: 1.5rem; }
+        code { overflow-wrap: anywhere; }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Error</h1>
+        <p>An error occurred while processing your request.</p>
+        @if (Model.ShowRequestId)
+        {
+            <p>Request ID: <code>@Model.RequestId</code></p>
+        }
+        <p><a href="/">aibysitting.net</a></p>
+    </main>
+</body>
+</html>

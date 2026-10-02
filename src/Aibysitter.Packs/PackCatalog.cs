@@ -20,19 +20,41 @@ public sealed partial class PackCatalog
     }
 
     public PackCatalog(Assembly assembly)
-        : this(assembly.GetManifestResourceNames().Where(n => n.StartsWith(Prefix, StringComparison.Ordinal))
-            .ToDictionary(n => n[Prefix.Length..], n => Read(assembly, n), StringComparer.Ordinal))
+        : this(EmbeddedFiles.Read(assembly, Prefix))
     {
     }
 
-    /// <param name="files">Path relative to the packs root (<c>&lt;id&gt;/&lt;file&gt;</c>) to content.</param>
+    /// <param name="files">Path relative to the packs root (<c>&lt;id&gt;/&lt;file&gt;</c>, <c>/</c> or <c>\</c>) to content.</param>
     public PackCatalog(IReadOnlyDictionary<string, string> files)
     {
         var errors = new List<string>();
-        var packs = new List<Pack>();
-        foreach (var group in files.GroupBy(f => f.Key.Split('/')[0]).OrderBy(g => g.Key, StringComparer.Ordinal))
+        var folders = new SortedDictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
+        foreach (var (key, text) in files.OrderBy(f => f.Key, StringComparer.Ordinal))
         {
-            var pack = Load(group.Key, group.ToDictionary(f => f.Key[(group.Key.Length + 1)..], f => f.Value.Replace("\r\n", "\n"), StringComparer.Ordinal), errors);
+            var path = EmbeddedFiles.Normalize(key);
+            var slash = path.IndexOf('/');
+            if (slash <= 0 || slash == path.Length - 1)
+            {
+                errors.Add($"{key}: path must be <id>/<file>");
+                continue;
+            }
+
+            var folder = path[..slash];
+            if (!folders.TryGetValue(folder, out var folderFiles))
+            {
+                folders[folder] = folderFiles = new Dictionary<string, string>(StringComparer.Ordinal);
+            }
+
+            if (!folderFiles.TryAdd(path[(slash + 1)..], text.Replace("\r\n", "\n")))
+            {
+                errors.Add($"{path}: appears more than once");
+            }
+        }
+
+        var packs = new List<Pack>();
+        foreach (var (folder, folderFiles) in folders)
+        {
+            var pack = Load(folder, folderFiles, errors);
             if (pack is not null)
             {
                 packs.Add(pack);
@@ -53,12 +75,6 @@ public sealed partial class PackCatalog
 
     public static IReadOnlyList<RulesFormat> OutputFormats { get; } =
         [RulesFormat.ClaudeMd, RulesFormat.AgentsMd, RulesFormat.GeminiMd, RulesFormat.CopilotInstructions, RulesFormat.CursorMdc, RulesFormat.CursorRules, RulesFormat.WindsurfRules];
-
-    private static string Read(Assembly assembly, string name)
-    {
-        using var reader = new StreamReader(assembly.GetManifestResourceStream(name)!);
-        return reader.ReadToEnd();
-    }
 
     private static Pack? Load(string folder, Dictionary<string, string> files, List<string> errors)
     {

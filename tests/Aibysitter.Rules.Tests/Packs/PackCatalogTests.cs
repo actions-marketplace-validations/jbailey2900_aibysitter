@@ -4,6 +4,7 @@ using Aibysitter.Web.Gallery;
 
 namespace Aibysitter.Rules.Tests.Packs;
 
+[Trait("Category", "Catalog")]
 public class PackCatalogTests
 {
     private static readonly PackCatalog Catalog = new();
@@ -126,6 +127,54 @@ public class PackCatalogTests
     {
         Assert.Contains(Invalid(new() { ["demo/pack.json"] = Manifest.Replace("}", ",\"extra\":1}"), ["demo/01-a.md"] = "## A\n- x\n" }).Errors, e => e.StartsWith("demo/pack.json: ", StringComparison.Ordinal));
         Assert.Contains("demo/pack.json: schemaVersion must be 1", Invalid(new() { ["demo/pack.json"] = Manifest.Replace("\"schemaVersion\":1", "\"schemaVersion\":2"), ["demo/01-a.md"] = "## A\n- x\n" }).Errors);
+    }
+
+    [Fact]
+    public void WindowsSeparators_LoadTheSamePacks()
+    {
+        var catalog = new PackCatalog(new Dictionary<string, string>
+        {
+            ["demo\\pack.json"] = Manifest,
+            ["demo\\intro.md"] = "Intro.",
+            ["demo\\01-a.md"] = "## A\n- x\n",
+        });
+
+        var pack = catalog.All.Single();
+        Assert.Equal("demo", pack.Id);
+        Assert.Equal("Intro.", pack.Intro);
+        Assert.Equal("a", pack.Sections.Single().Id);
+    }
+
+    [Fact]
+    public void Validation_KeysWithoutFolderOrFile_AndDuplicatesAfterNormalizing()
+    {
+        var ex = Invalid(new()
+        {
+            ["pack.json"] = Manifest,
+            ["demo/"] = "",
+            ["/01-a.md"] = "## A\n- x\n",
+            ["demo/pack.json"] = Manifest,
+            ["demo\\pack.json"] = Manifest,
+            ["demo/01-a.md"] = "## A\n- x\n",
+        });
+
+        Assert.Equal(
+        [
+            "/01-a.md: path must be <id>/<file>",
+            "demo/: path must be <id>/<file>",
+            "demo/pack.json: appears more than once",
+            "pack.json: path must be <id>/<file>",
+        ], ex.Errors);
+    }
+
+    [Fact]
+    public void EmbeddedFiles_Select_NormalizesSeparators_AndKeepsTheResourceName()
+    {
+        string[] names = ["packs/starter\\pack.json", "packs/starter/01-a.md", "gallery/x\\CLAUDE.md", "Aibysitter.Web.Samples.sample-rules.md"];
+
+        Assert.Equal(
+            [("starter/pack.json", "packs/starter\\pack.json"), ("starter/01-a.md", "packs/starter/01-a.md")],
+            EmbeddedFiles.Select(names, "packs/"));
     }
 
     [Fact]
