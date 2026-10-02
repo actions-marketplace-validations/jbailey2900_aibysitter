@@ -25,6 +25,18 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
 
     public TaskCompletionSource<CheckRunReport> Completed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    public string Slug { get; set; } = "aibysitter";
+
+    /// <summary>PR conversation comments; ids increase in creation order.</summary>
+    public List<IssueCommentInfo> Comments { get; } = [];
+
+    public bool ForbidComments { get; set; }
+
+    /// <summary>Added by "another process" right after this one creates its comment.</summary>
+    public string? RacingCommentBody { get; set; }
+
+    private long nextCommentId = 1000;
+
     public Task<long> CreateQueuedCheckRunAsync(PullRequestRef pr, CancellationToken cancellationToken)
     {
         Calls.Enqueue($"create {pr}");
@@ -65,6 +77,48 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
         }
 
         Completed.TrySetResult(report);
+        return Task.CompletedTask;
+    }
+
+    public Task<string> GetAppSlugAsync(CancellationToken cancellationToken)
+    {
+        Calls.Enqueue("slug");
+        return Task.FromResult(Slug);
+    }
+
+    public Task<IReadOnlyList<IssueCommentInfo>> ListIssueCommentsAsync(PullRequestRef pr, CancellationToken cancellationToken)
+    {
+        Calls.Enqueue("list comments");
+        return ForbidComments
+            ? Task.FromException<IReadOnlyList<IssueCommentInfo>>(new GitHubForbiddenException("Resource not accessible by integration"))
+            : Task.FromResult<IReadOnlyList<IssueCommentInfo>>(Comments.ToList());
+    }
+
+    public Task CreateIssueCommentAsync(PullRequestRef pr, string body, CancellationToken cancellationToken)
+    {
+        Calls.Enqueue("create comment");
+        Comments.Add(new IssueCommentInfo(nextCommentId++, $"{Slug}[bot]", body, DateTimeOffset.UnixEpoch.AddSeconds(nextCommentId)));
+        if (RacingCommentBody is not null)
+        {
+            Comments.Insert(Comments.Count - 1, new IssueCommentInfo(nextCommentId++, $"{Slug}[bot]", RacingCommentBody, DateTimeOffset.UnixEpoch));
+            RacingCommentBody = null;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateIssueCommentAsync(PullRequestRef pr, long commentId, string body, CancellationToken cancellationToken)
+    {
+        Calls.Enqueue($"update comment {commentId}");
+        var i = Comments.FindIndex(c => c.Id == commentId);
+        Comments[i] = Comments[i] with { Body = body };
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteIssueCommentAsync(PullRequestRef pr, long commentId, CancellationToken cancellationToken)
+    {
+        Calls.Enqueue($"delete comment {commentId}");
+        Comments.RemoveAll(c => c.Id == commentId);
         return Task.CompletedTask;
     }
 }

@@ -7,7 +7,7 @@ The App is private until launch. Only accounts it is shared with can install it.
 1. Open https://github.com/apps/aibysitter/installations/new.
 2. Pick the account or organization. Installing needs owner or admin rights on it.
 3. Choose **Only select repositories** and pick the repositories.
-4. Confirm. The App requests: Checks (read and write), Pull requests (read), Contents (read), Metadata (read).
+4. Confirm. The App requests: Checks (read and write), Pull requests (read and write), Contents (read), Metadata (read). Pull requests write is used only to post the summary comment when `comment` is `true`.
 
 Change the repository list later under **Configure** for Aibysitter: personal account, **Settings → Applications → Installed GitHub Apps**; organization, **Settings → GitHub Apps**.
 
@@ -38,6 +38,7 @@ Optional. Path: `.github/aibysitter.json`. The App reads it from the pull reques
 | `scope` | Path globs from the repository root. `**` spans folders, `*` and `?` stay within one. Case-sensitive. Turns on P004. | Not set; P004 off |
 | `conclusion` | `advisory`: findings report as `neutral`. `fail-on-errors`: any Error finding fails the check. | `advisory` |
 | `disable` | Check IDs (`P001`–`P014`) skip that check. Rule IDs (`R001`–`R016`) skip that rule inside P014. | None |
+| `comment` | `true`: one comment on the pull request with the summary table and up to 25 findings linked to their lines, updated on each new commit. No comment is created while there are no findings; turning it off leaves an existing comment as it is. | `false` |
 
 - Comments and trailing commas are allowed.
 - An invalid entry falls back to its default and is listed under **Config errors** in the summary.
@@ -86,3 +87,4 @@ Precedence: comments in the file, then rule IDs in `disable`, then `"disable": [
 | Check stays **Queued** | The review is waiting behind others, or the server is restarting | Wait a few minutes. Still queued: push a commit. App owner: redeliver the webhook (App settings → Advanced → Recent deliveries) |
 | Summary says "R006 skipped" | The repository file list is too large for one GitHub request | None; R006 does not run on that repository |
 | Unexpected P004 findings | `scope` does not cover the path | Add the glob to `scope`, or remove `scope` |
+| Summary says "PR comment not posted: the App needs Pull requests: Read and write" | The installation has not accepted the updated permissions | Accept the pending permission request under **Configure** for Aibysitter |

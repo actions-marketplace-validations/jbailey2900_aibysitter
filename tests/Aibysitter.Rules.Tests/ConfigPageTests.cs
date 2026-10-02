@@ -11,7 +11,7 @@ public partial class ConfigPageTests(WebApplicationFactory<Program> factory)
 {
     private static readonly string[] AllIds = [.. PullRequestCheckDocs.All.Select(d => d.Id), .. RuleDocs.All.Select(d => d.Id)];
 
-    private async Task<HttpResponseMessage> Post(IEnumerable<string> enabled, string? scope = null, string conclusion = "Advisory", string? path = null, string? handler = null)
+    private async Task<HttpResponseMessage> Post(IEnumerable<string> enabled, string? scope = null, string conclusion = "Advisory", string? path = null, string? handler = null, bool comment = false)
     {
         var client = factory.CreateClient();
         var form = await client.GetStringAsync("/GitHub/Config");
@@ -30,6 +30,11 @@ public partial class ConfigPageTests(WebApplicationFactory<Program> factory)
         if (path is not null)
         {
             fields.Add(new("TestPath", path));
+        }
+
+        if (comment)
+        {
+            fields.Add(new("Comment", "true"));
         }
 
         using var content = new FormUrlEncodedContent(fields);
@@ -87,6 +92,16 @@ public partial class ConfigPageTests(WebApplicationFactory<Program> factory)
         Assert.Contains("<input type=\"checkbox\" name=\"Enabled\" value=\"P002\" />", html);
         Assert.Contains("<input type=\"radio\" name=\"Conclusion\" value=\"FailOnErrors\" checked=\"checked\" />", html);
         Assert.Contains("Scope does not include <code>.github/aibysitter.json</code>", html);
+    }
+
+    [Fact]
+    public async Task Post_Comment_WritesKey_KeepsCheckbox()
+    {
+        var response = await Post(AllIds, comment: true);
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Contains("<pre id=\"config-json\"><code>" + Encoded("{\n  \"conclusion\": \"advisory\",\n  \"comment\": true\n}\n") + "</code></pre>", html);
+        Assert.Contains("name=\"Comment\" value=\"true\" checked=\"checked\"", html);
     }
 
     [Fact]

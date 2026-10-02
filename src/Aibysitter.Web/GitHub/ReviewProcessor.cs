@@ -45,6 +45,16 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
 
             var review = reviewer.Review(new PullRequestContext(enriched, config, repo, unchanged));
             var report = CheckRunReport.Build(review, reviewer.Checks, enriched, config, configErrors, notes);
+            if (config.Comment)
+            {
+                var note = await new ReviewCommentPublisher(gateway, logger)
+                    .PublishAsync(pr, ReviewComment.Build(report, pr, job.CheckRunId), review.Findings.Count > 0, cancellationToken);
+                if (note is not null)
+                {
+                    report = report with { Summary = $"{report.Summary}\n\n{note}" };
+                }
+            }
+
             await gateway.CompleteCheckRunAsync(pr, job.CheckRunId, report, cancellationToken);
 
             logger.LogInformation(
