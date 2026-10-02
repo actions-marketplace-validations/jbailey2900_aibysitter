@@ -40,6 +40,12 @@ public sealed class LintEngine
             : new LintResult(all.Where(f => !file.Suppressions.IsSuppressed(f)).ToList(), suppressed, file.Format);
     }
 
+    /// <summary>This engine without the given rule IDs; this instance when none are given.</summary>
+    public LintEngine Without(IReadOnlyCollection<string> ruleIds) =>
+        ruleIds.Count == 0 ? this : new LintEngine(Rules.Where(r => !ruleIds.Contains(r.Id)));
+
+    public Severity SeverityOf(string ruleId) => Rules.First(r => r.Id == ruleId).Severity;
+
     public LintScore Score(IReadOnlyList<Finding> findings) =>
         Scorer.Score(findings, Rules.ToDictionary(r => r.Id, r => r.Severity, StringComparer.Ordinal));
 

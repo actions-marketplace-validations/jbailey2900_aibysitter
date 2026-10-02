@@ -13,17 +13,6 @@ public static class LintApi
 
     public sealed record Request(string? Content, string? Format, IReadOnlyList<string?>? Disable);
 
-    public sealed record ApiFinding(string Rule, int Line, string Severity, string Message, string FixHint);
-
-    public sealed record Response(
-        int RulesetVersion,
-        string DetectedFormat,
-        int Score,
-        string Grade,
-        IReadOnlyList<string> Disabled,
-        IReadOnlyList<ApiFinding> Findings,
-        IReadOnlyList<ApiFinding> Suppressed);
-
     public static IEndpointRouteBuilder MapLintApi(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapPost(Path, HandleAsync);
@@ -56,7 +45,7 @@ public static class LintApi
 
         return Validate(request, lint, out var format, out var disabled) is { } errors
             ? Results.ValidationProblem(errors)
-            : Results.Json(ToResponse(lint.Lint(request!.Content!, format, disabled, "api")), Json);
+            : Results.Json(lint.Lint(request!.Content!, format, disabled, "api").Report, Json);
     }
 
     /// <summary>Body bytes, or null when over <see cref="MaxBodyBytes"/>.</summary>
@@ -98,7 +87,7 @@ public static class LintApi
             errors["content"] = [$"Limited to {LintLimits.MaxContentLength:N0} characters."];
         }
 
-        if (request?.Format is { } name && !TryParseFormat(name, out format))
+        if (request?.Format is { } name && !RulesFormats.TryParse(name, out format))
         {
             errors["format"] = [$"Unknown format \"{name}\". Use one of: {string.Join(", ", Enum.GetNames<RulesFormat>())}."];
         }
@@ -110,19 +99,4 @@ public static class LintApi
 
         return errors.Count == 0 ? null : errors;
     }
-
-    private static bool TryParseFormat(string name, out RulesFormat format) =>
-        Enum.TryParse(name, ignoreCase: true, out format) && Enum.IsDefined(format) && !int.TryParse(name, out _);
-
-    private static Response ToResponse(LintOutcome outcome) => new(
-        RulesetVersion.Current,
-        outcome.Format.ToString(),
-        outcome.Score.Value,
-        outcome.Score.Grade,
-        outcome.Disabled,
-        outcome.Findings.Select(ToApi).ToList(),
-        outcome.Suppressed.Select(ToApi).ToList());
-
-    private static ApiFinding ToApi(LintRow row) =>
-        new(row.Finding.RuleId, row.Finding.Line, row.Severity.ToString(), row.Finding.Message, row.Finding.FixHint);
 }

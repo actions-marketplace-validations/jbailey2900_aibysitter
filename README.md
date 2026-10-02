@@ -75,6 +75,24 @@ Install: [docs/installing-on-your-repos.md](docs/installing-on-your-repos.md). T
 
 `POST /api/lint` with JSON `{ "content": "...", "format": "Auto", "disable": ["R013"] }` returns findings, suppressed findings, score, grade, detected format and ruleset version. Same limits as the lint page; no key. Details: [aibysitting.net/API](https://aibysitting.net/API).
 
+## CLI
+
+`aibysitter`, a .NET tool using the same rules, ruleset version and scoring as the site. Runs offline. Not yet published to nuget.org; build and install from source:
+
+```
+dotnet pack src/Aibysitter.Cli -o artifacts
+dotnet tool install --global Aibysitter.Cli --add-source artifacts
+```
+
+```
+aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fail-on-error] [--fail-below <A|B|C|D>]
+```
+
+- Format: `--format`, else from the file path (as in the list above), else detected from content. `-` reads standard input.
+- `--json`: the `/api/lint` response fields, plus `file`.
+- Exit codes: 0 ok, 1 a `--fail-*` threshold failed, 2 usage error, 3 file not readable. Without a `--fail-*` flag the exit code is 0 whatever the findings.
+- No length limit.
+
 ## Gallery
 
 Example rules files, each linted and scored: [aibysitting.net/Gallery](https://aibysitting.net/Gallery).
@@ -90,6 +108,7 @@ Entries live in [`src/Aibysitter.Web/Gallery/Content/`](src/Aibysitter.Web/Galle
 | Path | Contents |
 |---|---|
 | `src/Aibysitter.Rules` | Lint rules, scoring, pull request checks |
+| `src/Aibysitter.Cli` | `aibysitter` dotnet tool |
 | `src/Aibysitter.Rules.Browser` | Build-time exporter: rule patterns and constants for the browser lint engine |
 | `src/Aibysitter.Web` | ASP.NET Core Razor Pages site, GitHub App webhook, gallery, notes (`Notes/Content`); browser lint engine in `wwwroot/js` |
 | `tests/Aibysitter.Rules.Tests` | xUnit tests; fixtures in `tests/fixtures` |
