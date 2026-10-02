@@ -152,7 +152,7 @@ public sealed partial class PackCatalog
                 continue;
             }
 
-            if (OutsideFences(lines.Skip(1)).Any(l => HeadingRegex().IsMatch(l)))
+            if (MarkdownLines.OutsideFences(lines.Skip(1)).Any(l => HeadingRegex().IsMatch(l)))
             {
                 errors.Add($"{folder}/{name}: only one H1 or H2 heading is allowed");
             }
@@ -175,40 +175,13 @@ public sealed partial class PackCatalog
         if (files.TryGetValue("intro.md", out var introText))
         {
             intro = introText.Trim('\n', ' ');
-            if (intro.Length == 0 || OutsideFences(intro.Split('\n')).Any(l => l.StartsWith('#')))
+            if (intro.Length == 0 || MarkdownLines.OutsideFences(intro.Split('\n')).Any(l => l.StartsWith('#')))
             {
                 errors.Add($"{folder}/intro.md: must be non-empty text without headings");
             }
         }
 
         return errors.Count == count ? new Pack(manifest, intro, sections) : null;
-    }
-
-    /// <summary>Lines not inside a ``` or ~~~ fenced block.</summary>
-    private static IEnumerable<string> OutsideFences(IEnumerable<string> lines)
-    {
-        string? fence = null;
-        foreach (var line in lines)
-        {
-            var trimmed = line.TrimStart();
-            if (fence is null && (trimmed.StartsWith("```", StringComparison.Ordinal) || trimmed.StartsWith("~~~", StringComparison.Ordinal)))
-            {
-                fence = trimmed[..3];
-                continue;
-            }
-
-            if (fence is not null)
-            {
-                if (trimmed.StartsWith(fence, StringComparison.Ordinal))
-                {
-                    fence = null;
-                }
-
-                continue;
-            }
-
-            yield return line;
-        }
     }
 
     [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$")]

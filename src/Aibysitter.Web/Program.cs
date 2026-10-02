@@ -38,6 +38,7 @@ try
     builder.Services.AddSingleton<Aibysitter.Web.Samples.LintDemo>();
     builder.Services.AddSingleton<Aibysitter.Web.Gallery.GalleryCatalog>();
     builder.Services.AddSingleton<Aibysitter.Web.Notes.NoteCatalog>();
+    builder.Services.AddSingleton<Aibysitter.Web.Incidents.IncidentCatalog>();
     builder.Services.AddSingleton<Aibysitter.Web.Seo.SiteMap>();
     builder.Services.AddSingleton(_ => new Aibysitter.Packs.PackCatalog());
     builder.Services.AddSingleton<Aibysitter.Web.RulesPacks.PackScores>();

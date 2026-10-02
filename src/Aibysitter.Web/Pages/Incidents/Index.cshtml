@@ -1,0 +1,37 @@
+@page
+@using Aibysitter.Web.Incidents
+@model Aibysitter.Web.Pages.Incidents.IndexModel
+@{
+    ViewData["Title"] = "Incidents";
+    ViewData["Description"] = "Postmortems of AI coding agent changes that went wrong, with the checks that would have caught them.";
+}
+
+<h1>Incidents</h1>
+<p>Postmortems of AI coding agent changes that went wrong, submitted by the people who merged them. Each entry records why review and CI missed it, and which aibysitter check, if any, would have caught it.</p>
+<p>Accepted: incidents from your own repository or work. No people named. No secrets or private code. Entries are published under <a href="@IncidentCatalog.LicenseUrl">@IncidentCatalog.License</a>, credited to the submitter's GitHub account. <a href="@IncidentCatalog.SubmitUrl">Submit an incident</a>.</p>
+
+<p class="note">@Model.Incidents.Count @(Model.Incidents.Count == 1 ? "incident" : "incidents"). Caught by an existing check: @Model.Caught. Caught by none: @(Model.Incidents.Count - Model.Caught).</p>
+
+<table class="stack">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Incident</th>
+            <th>Agent</th>
+            <th>Caught by</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var incident in Model.Incidents)
+        {
+            <tr>
+                <td>@incident.Id</td>
+                <td><a asp-page="/Incidents/Entry" asp-route-id="@incident.Id">@incident.Title</a></td>
+                <td>@incident.Agent</td>
+                <td>@(incident.CaughtBy.Count == 0 ? IncidentCatalog.None : string.Join(", ", incident.CaughtBy))</td>
+                <td><time datetime="@incident.Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@incident.Date.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</time></td>
+            </tr>
+        }
+    </tbody>
+</table>

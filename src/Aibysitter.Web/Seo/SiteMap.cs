@@ -1,6 +1,7 @@
 using Aibysitter.Rules;
 using Aibysitter.Rules.PullRequests;
 using Aibysitter.Web.Gallery;
+using Aibysitter.Web.Incidents;
 using Aibysitter.Web.Notes;
 
 namespace Aibysitter.Web.Seo;
@@ -9,13 +10,13 @@ namespace Aibysitter.Web.Seo;
 /// <param name="LastModified">Set for notes only.</param>
 public sealed record SiteMapEntry(string Path, DateOnly? LastModified = null);
 
-/// <summary>Every indexable page: fixed pages, rule and check pages, rendered gallery entries, notes.</summary>
-public sealed class SiteMap(GalleryCatalog gallery, NoteCatalog notes)
+/// <summary>Every indexable page: fixed pages, rule and check pages, rendered gallery entries, notes, incidents.</summary>
+public sealed class SiteMap(GalleryCatalog gallery, NoteCatalog notes, IncidentCatalog incidents)
 {
     public static readonly IReadOnlyList<string> FixedPages =
     [
         "/", "/Lint", "/Gallery", "/Packs", "/Rules", "/Rules/Methodology", "/Rules/Changelog",
-        "/GitHub", "/GitHub/Config", "/API", "/Notes", "/About", "/Privacy",
+        "/GitHub", "/GitHub/Config", "/API", "/Notes", "/Incidents", "/About", "/Privacy",
     ];
 
     public IReadOnlyList<SiteMapEntry> Entries =>
@@ -24,6 +25,7 @@ public sealed class SiteMap(GalleryCatalog gallery, NoteCatalog notes)
         .. RuleDocs.All.Concat(PullRequestCheckDocs.All).Select(d => new SiteMapEntry(RulePath(d.Id))),
         .. gallery.All.Select(e => new SiteMapEntry(GalleryPath(e.Id))),
         .. notes.All.Select(n => new SiteMapEntry(NotePath(n.Slug), n.Date)),
+        .. incidents.All.OrderBy(i => i.Id).Select(i => new SiteMapEntry(IncidentPath(i.Id))),
     ];
 
     public static string RulePath(string id) => $"/Rules/{id}";
@@ -31,4 +33,6 @@ public sealed class SiteMap(GalleryCatalog gallery, NoteCatalog notes)
     public static string GalleryPath(string id) => $"/Gallery/{id}";
 
     public static string NotePath(string slug) => $"/Notes/{slug}";
+
+    public static string IncidentPath(int id) => $"/Incidents/{id}";
 }
