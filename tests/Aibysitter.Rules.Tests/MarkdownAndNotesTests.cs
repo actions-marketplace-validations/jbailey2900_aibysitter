@@ -54,9 +54,15 @@ public class MarkdownAndNotesTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public void Notes_NewestFirst()
+    {
+        Assert.Equal(["field-note-2", "field-note-1"], new NoteCatalog().All.Select(n => n.Slug));
+    }
+
+    [Fact]
     public void FieldNote1_IsLoaded()
     {
-        var note = Assert.Single(new NoteCatalog().All);
+        var note = new NoteCatalog().Find("field-note-1")!;
 
         Assert.Equal("field-note-1", note.Slug);
         Assert.Equal(new DateOnly(2026, 10, 1), note.Date);
@@ -82,5 +88,19 @@ public class MarkdownAndNotesTests(WebApplicationFactory<Program> factory)
         Assert.Contains("<td>R002 VagueVerbs</td>", html);
         Assert.Contains("<code>app/posts.js</code>", html);
         Assert.Contains("1 October 2026", html);
+    }
+
+    [Fact]
+    public async Task FieldNote2_NamesTheAgent_AndStatesTheLimit()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Notes/field-note-2");
+
+        Assert.Contains("<h1>Field note 2</h1>", html);
+        Assert.Contains("2 October 2026", html);
+        Assert.Contains("Claude Code, running in Claude's cloud sessions", html);
+        Assert.Contains("None of Aibysitter's pull request checks would have caught this.", html);
+        Assert.Contains("<code>packs/aspnet-web-api\\01-commands.md</code>", html);
+        Assert.Contains("href=\"/Notes/field-note-2\">Field note 2</a>", await factory.CreateClient().GetStringAsync("/Notes"));
+        Assert.Contains("/Notes/field-note-2", await factory.CreateClient().GetStringAsync("/sitemap.xml"));
     }
 }
