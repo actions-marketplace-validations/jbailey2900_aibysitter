@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "winforms-devexpress",
+  "title": "WinForms with DevExpress",
+  "description": "WinForms desktop app on .NET 10 with DevExpress controls: projects, forms, CSV export, settings and tests.",
+  "tags": [
+    ".NET",
+    "WinForms",
+    "DevExpress",
+    "Windows"
+  ],
+  "targets": [
+    "ClaudeMd",
+    "AgentsMd",
+    "GeminiMd",
+    "CopilotInstructions",
+    "CursorMdc",
+    "CursorRules",
+    "WindsurfRules"
+  ],
+  "license": "CC0-1.0",
+  "source": "winforms-devexpress"
+}

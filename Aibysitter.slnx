@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Aibysitter.Cli/Aibysitter.Cli.csproj" />
+    <Project Path="src/Aibysitter.Packs/Aibysitter.Packs.csproj" />
     <Project Path="src/Aibysitter.Rules.Browser/Aibysitter.Rules.Browser.csproj" />
     <Project Path="src/Aibysitter.Rules/Aibysitter.Rules.csproj" />
     <Project Path="src/Aibysitter.Web/Aibysitter.Web.csproj" />

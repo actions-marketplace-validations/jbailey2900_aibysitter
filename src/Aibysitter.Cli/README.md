@@ -4,8 +4,12 @@ Lints rules files for AI coding agents: CLAUDE.md, AGENTS.md, GEMINI.md, Cursor 
 
 ```
 aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fail-on-error] [--fail-below <A|B|C|D>]
+aibysitter init --packs starter,aspnet-web-api --format claude [--title <text>] [--output <path>] [--force]
+aibysitter packs
 ```
 
-Exit codes: 0 ok, 1 threshold failed, 2 usage error, 3 file not readable.
+`init` writes a rules file composed from rules packs and prints its score. Packs: [aibysitting.net/Packs](https://aibysitting.net/Packs).
+
+Exit codes: 0 ok, 1 threshold failed, 2 usage error, 3 file not readable or not writable.
 
 Rules: [aibysitting.net/Rules](https://aibysitting.net/Rules).

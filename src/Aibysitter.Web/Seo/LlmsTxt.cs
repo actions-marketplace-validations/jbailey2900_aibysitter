@@ -1,4 +1,5 @@
 using System.Text;
+using Aibysitter.Packs;
 using Aibysitter.Rules;
 using Aibysitter.Rules.PullRequests;
 using Aibysitter.Web.Infrastructure;
@@ -9,7 +10,7 @@ namespace Aibysitter.Web.Seo;
 /// <summary>llms.txt (llmstxt.org): H1, summary blockquote, then H2 sections of links. Rules come from the docs.</summary>
 public static class LlmsTxt
 {
-    public static string Build(SiteOptions site)
+    public static string Build(SiteOptions site, PackCatalog packs)
     {
         var text = new StringBuilder();
         text.Append("# aibysitter\n\n");
@@ -22,6 +23,14 @@ public static class LlmsTxt
         Link(text, site, "GitHub App", "/GitHub", "checks on agent-authored pull requests; in testing, not yet installable");
         Link(text, site, "Config generator", "/GitHub/Config", $"builds {RepoConfig.FilePath} for the GitHub App");
         text.Append('\n');
+
+        text.Append("## Rules packs\n\n");
+        foreach (var pack in packs.All)
+        {
+            Link(text, site, pack.Manifest.Title, $"/Packs#{pack.Id}", $"{pack.Manifest.Description} Compose with `aibysitter init --packs {pack.Id} --format claude`.");
+        }
+
+        text.Append($"- [Packs registry]({site.Url(RulesPacks.PackRegistryEndpoints.Path)}): JSON, schema version {PackCatalog.SchemaVersion}\n\n");
 
         Section(text, site, "Rules", RuleDocs.All);
         Section(text, site, "Pull request checks", PullRequestCheckDocs.All);

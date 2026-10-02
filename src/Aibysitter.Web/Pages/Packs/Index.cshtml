@@ -1,0 +1,46 @@
+@page
+@model Aibysitter.Web.Pages.Packs.IndexModel
+@using Aibysitter.Rules
+@using Aibysitter.Packs
+@{
+    ViewData["Title"] = "Rules packs";
+    ViewData["Description"] = "Rules packs for AI coding agents: sections to compose into CLAUDE.md, AGENTS.md, Cursor, Copilot, Gemini or Windsurf rules, each scored by the linter.";
+}
+
+<h1>Rules packs</h1>
+<p class="lede">Sections for a rules file, grouped by stack. Combine packs into one file with the CLI; each section is scored on its own, each pack as a whole CLAUDE.md. Public domain (CC0).</p>
+<pre><code>aibysitter init --packs starter,aspnet-web-api --format claude</code></pre>
+<p class="note">Formats: @string.Join(", ", PackComposer.ShortNames.Keys). A heading in more than one pack becomes one section. The CLI is not published yet: <a href="https://github.com/jbailey2900/aibysitter#cli">build it from source</a>. Machine-readable: <a href="/packs/registry.json">/packs/registry.json</a>.</p>
+
+<ul class="packs">
+    @foreach (var view in Model.Packs)
+    {
+        var pack = view.Pack;
+        <li class="entry pack" id="@pack.Id">
+            <h2>@pack.Manifest.Title</h2>
+            <p class="entry-meta">
+                <span class="score-label">Aibysitter lint score</span> <span class="grade grade-@view.Score.Grade.ToLowerInvariant()">@view.Score.Grade @view.Score.Value</span>
+                <span><code>@pack.Id</code>, @view.Sections.Count sections</span>
+            </p>
+            <p>@pack.Manifest.Description</p>
+            <ul class="tags" aria-label="Tags">
+                @foreach (var tag in pack.Manifest.Tags)
+                {
+                    <li>@tag</li>
+                }
+            </ul>
+            <pre><code>@view.InitCommand</code></pre>
+            <ol class="pack-sections">
+                @foreach (var part in view.Sections)
+                {
+                    <li>
+                        <details>
+                            <summary><span class="pack-section-heading">@part.Section.Heading</span> <span class="grade grade-@part.Score.Grade.ToLowerInvariant()">@part.Score.Grade @part.Score.Value</span></summary>
+                            <div class="rendered">@Html.Raw(part.Html)</div>
+                        </details>
+                    </li>
+                }
+            </ol>
+        </li>
+    }
+</ul>
