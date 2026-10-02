@@ -3,8 +3,8 @@ using System.Reflection;
 namespace Aibysitter.Packs;
 
 /// <summary>
-/// Embedded resources under a prefix, keyed by the path below it with <c>/</c> separators. A Windows build writes
-/// <c>%(RecursiveDir)</c> with <c>\</c>; a Linux build writes <c>/</c>.
+/// Embedded text resources under a prefix, keyed by the path below it with <c>/</c> separators, content with LF line
+/// endings. A Windows build writes <c>%(RecursiveDir)</c> with <c>\</c> and may check files out with CRLF.
 /// </summary>
 public static class EmbeddedFiles
 {
@@ -24,6 +24,6 @@ public static class EmbeddedFiles
     private static string ReadResource(Assembly assembly, string name)
     {
         using var reader = new StreamReader(assembly.GetManifestResourceStream(name)!);
-        return reader.ReadToEnd();
+        return reader.ReadToEnd().Replace("\r\n", "\n");
     }
 }

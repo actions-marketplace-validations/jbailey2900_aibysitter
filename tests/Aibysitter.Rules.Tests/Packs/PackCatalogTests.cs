@@ -178,6 +178,18 @@ public class PackCatalogTests
     }
 
     [Fact]
+    public void EmbeddedContent_HasLfLineEndings()
+    {
+        var withCr = Catalog.All.SelectMany(p => p.Sections.Select(s => (Name: $"packs/{p.Id}/{s.Id}", Text: s.Markdown)).Append((Name: $"packs/{p.Id}/intro", Text: p.Intro ?? "")))
+            .Concat(new GalleryCatalog(Engine).All.Select(e => (Name: $"gallery/{e.Id}", Text: e.Content)))
+            .Concat(new Aibysitter.Web.Notes.NoteCatalog().All.Select(n => (Name: $"notes/{n.Slug}", Text: n.Html)))
+            .Where(x => x.Text.Contains('\r'))
+            .Select(x => x.Name);
+
+        Assert.Empty(withCr);
+    }
+
+    [Fact]
     public void Validation_HeadingsInsideCodeFences_AreFine_CrlfNormalized()
     {
         var catalog = new PackCatalog(new Dictionary<string, string>
