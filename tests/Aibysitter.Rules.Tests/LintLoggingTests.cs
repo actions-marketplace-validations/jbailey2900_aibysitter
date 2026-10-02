@@ -100,4 +100,42 @@ public class LintLoggingTests(WebApplicationFactory<Program> factory)
 
         Assert.Contains(sink.Events, e => e.Contains("Linted", StringComparison.Ordinal) && e.Contains("Source=\"api\"", StringComparison.Ordinal));
     }
+
+    [Theory]
+    [InlineData("found")]
+    [InlineData("missing")]
+    [InlineData("chosen")]
+    public async Task UrlLint_RepoNameNotLogged(string kind)
+    {
+        var sink = new CapturingSink();
+        var raw = new RawGitHubFetcherTests.FakeRaw();
+        if (kind != "missing")
+        {
+            foreach (var name in new[] { "CLAUDE.md", "AGENTS.md" })
+            {
+                raw.Routes[$"https://raw.githubusercontent.com/{Marker}/r/HEAD/{name}"] = () => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent("# Rules\n- Always use tabs.\n- Never use tabs.") };
+            }
+        }
+
+        var client = factory.WithWebHostBuilder(b => b
+            .UseSetting("Serilog:MinimumLevel:Default", "Verbose")
+            .UseSetting("Serilog:MinimumLevel:Override:Microsoft.AspNetCore", "Verbose")
+            .ConfigureServices(s =>
+            {
+                s.AddSingleton<ILogEventSink>(sink);
+                s.AddHttpClient<Web.Linting.RawGitHubFetcher>().ConfigurePrimaryHttpMessageHandler(() => raw);
+            }))
+            .CreateClient();
+
+        var response = await LintClient.PostUrlAsync(client, $"https://github.com/{Marker}/r", kind == "chosen" ? "AGENTS.md" : null);
+
+        Assert.True(response.IsSuccessStatusCode);
+        Assert.NotEmpty(raw.Requested);
+        if (kind != "missing")
+        {
+            Assert.Contains(sink.Events, e => e.Contains("Source=\"url\"", StringComparison.Ordinal));
+        }
+
+        AssertNoMarker(sink);
+    }
 }

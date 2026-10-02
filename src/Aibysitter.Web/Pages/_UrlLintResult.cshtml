@@ -1,0 +1,27 @@
+@model Aibysitter.Web.Linting.UrlLintResult
+@if (Model.Error is { } error)
+{
+    <p class="error" role="alert">@error</p>
+}
+else
+{
+    <p class="note">Linted <code>@Model.FileName</code> from @Model.Repo, default branch. <a href="@Model.RawUrl">Raw file</a></p>
+    @if (Model.Repo!.HasExtraPath)
+    {
+        <p class="note">The URL named a branch or path; the default branch was linted.</p>
+    }
+}
+@if (Model.OtherFiles.Count > 0)
+{
+    <div class="also-found">
+        <span class="note">Also on the default branch:</span>
+        @foreach (var other in Model.OtherFiles)
+        {
+            <form method="post" asp-page="/Lint" asp-page-handler="Url" class="inline-form">
+                <input type="hidden" name="repo" value="@Model.Repo" />
+                <input type="hidden" name="file" value="@other" />
+                <button type="submit" class="link-button">Lint @other instead</button>
+            </form>
+        }
+    </div>
+}

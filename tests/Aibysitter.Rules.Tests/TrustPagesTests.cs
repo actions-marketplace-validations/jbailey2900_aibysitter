@@ -11,6 +11,7 @@ public class TrustPagesTests(WebApplicationFactory<Program> factory)
     [InlineData("/Privacy", "Logs record repository, pull request number, commit, delivery ID and finding count for 14 days. No file contents are logged.")]
     [InlineData("/Privacy", "Holds a queue file for the duration of a review")]
     [InlineData("/Privacy", "<td>Checks</td>")]
+    [InlineData("/Privacy", "Lint by URL: the server fetches the file from raw.githubusercontent.com")]
     [InlineData("/Privacy", "Installed GitHub Apps")]
     [InlineData("/About", "Jon Bailey")]
     [InlineData("/About", "The repository is private until launch.")]
