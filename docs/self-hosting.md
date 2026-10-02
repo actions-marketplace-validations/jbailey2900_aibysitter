@@ -14,12 +14,27 @@ Set on IIS as environment variables (`__` replaces `:`). Nothing secret goes in 
 | `ForwardedHeaders__KnownNetworks__<n>` | No | Proxy CIDR ranges trusted for `X-Forwarded-For`. Default: Cloudflare ranges in `appsettings.json`. Overrides apply per index and do not shorten the list. |
 | `RateLimiting__Lint__PermitLimit` | No | Lint POSTs per IP per window. Default 20. |
 | `RateLimiting__Lint__WindowSeconds` | No | Window length. Default 60. |
+| `RateLimiting__Badge__PermitLimit` | No | Badge requests per IP per window. Default 60. |
+| `RateLimiting__Badge__WindowSeconds` | No | Window length. Default 60. |
+| `ConnectionStrings__Aibysitter` | For score history | SQL Server connection string, for example `Server=.;Database=Aibysitter;Integrated Security=true;TrustServerCertificate=true`. |
 | `GitHub__AppId` | App only | App ID or Client ID. |
 | `GitHub__WebhookSecret` | App only | Webhook secret. |
 | `GitHub__PrivateKeyPath` | App only | Path to the App's private key PEM. |
 | `ReviewQueue__Path` | App only, recommended | Folder for queued review jobs. Without it, jobs are kept in memory and lost on restart. |
 
 Without the three `GitHub__*` values the site runs and `POST /github/webhook` returns 503.
+
+Without `ConnectionStrings__Aibysitter` the site runs with score history off: nothing is stored, the lint page shows no history, and badges render from live fetches.
+
+## Database (score history)
+
+- SQL Server 2022. One table, `dbo.ScoreHistory`.
+- Create the database and logins once with [`deploy/create-database.sql`](../deploy/create-database.sql), as a sysadmin. Set `@RunnerAccount` in both batches.
+  - Runner service account: `db_owner`, applies migrations.
+  - App pool identity: `db_datareader`, `db_datawriter`.
+- The app never creates or migrates the database. Migrations run from the deploy workflow.
+- Migrations are additive: the running version keeps working after a migration is applied.
+- Retention: a daily job in the app deletes rows older than 400 days and all but the newest 500 per repository and file.
 
 ## Server
 
@@ -77,6 +92,8 @@ Copy with `app_offline.htm` in place, then remove it.
 
 - Runner labels: `self-hosted`, `windows`, and the value of repo variable `RUNNER_LABEL`.
 - Repo variable `SITE_PATH`: the IIS site's physical path.
+- Repo variable `DB_CONNECTION`: connection string the runner uses to apply migrations, for example `Server=.;Database=Aibysitter;Integrated Security=true;TrustServerCertificate=true`.
+- Migrations: the workflow builds an EF Core migrations bundle and applies it before taking the site offline. A failed migration fails the workflow and leaves the current site serving.
 - Runner service account: Modify on `SITE_PATH`.
 - The health check resolves `aibysitting.net` to 127.0.0.1; change the host name in the workflow for another domain.
 - On failure, `app_offline.htm` stays in place. Fix and re-run.

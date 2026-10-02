@@ -15,18 +15,23 @@ public static class ScoreBadge
     private const int Padding = 6;
     private const int Height = 20;
 
-    public static string Render(LintScore score)
+    public static string Render(LintScore score) => Render(score.Value, score.Grade);
+
+    public static string Render(int score, string grade) => Render($"{grade} {score}", grade switch
     {
-        var value = $"{score.Grade} {score.Value}";
+        "A" or "B" => "#2e7d32",
+        "C" or "D" => "#9a6400",
+        _ => "#b3261e",
+    });
+
+    /// <summary>Grey "unknown": no public rules file found, or GitHub not reachable.</summary>
+    public static string RenderUnknown() => Render("unknown", "#6b6966");
+
+    private static string Render(string value, string color)
+    {
         var left = Width(Label);
         var right = Width(value);
         var total = left + right;
-        var color = score.Grade switch
-        {
-            "A" or "B" => "#2e7d32",
-            "C" or "D" => "#9a6400",
-            _ => "#b3261e",
-        };
 
         return string.Create(CultureInfo.InvariantCulture, $"""
             <svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="{Height}" role="img" aria-label="{Title}: {Escape(value)} (ruleset v{RulesetVersion.Current})">

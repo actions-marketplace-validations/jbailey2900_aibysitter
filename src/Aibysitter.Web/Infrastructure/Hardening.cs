@@ -27,6 +27,9 @@ public static class Hardening
         var lint = configuration.GetSection(LintRateLimitSettings.SectionName).Get<LintRateLimitSettings>()
             ?? new LintRateLimitSettings();
 
+        var badge = configuration.GetSection(BadgeRateLimitSettings.SectionName).Get<BadgeRateLimitSettings>()
+            ?? new BadgeRateLimitSettings();
+
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -41,7 +44,16 @@ public static class Hardening
                             Window = TimeSpan.FromSeconds(lint.WindowSeconds),
                             QueueLimit = 0,
                         })
-                    : RateLimitPartition.GetNoLimiter(string.Empty));
+                    : IsBadgeRequest(context.Request)
+                        ? RateLimitPartition.GetFixedWindowLimiter(
+                            "badge|" + (context.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+                            _ => new FixedWindowRateLimiterOptions
+                            {
+                                PermitLimit = badge.PermitLimit,
+                                Window = TimeSpan.FromSeconds(badge.WindowSeconds),
+                                QueueLimit = 0,
+                            })
+                        : RateLimitPartition.GetNoLimiter(string.Empty));
         });
 
         return services;
@@ -52,6 +64,10 @@ public static class Hardening
         HttpMethods.IsPost(request.Method)
         && (request.Path.Equals("/Lint", StringComparison.OrdinalIgnoreCase)
             || request.Path.Equals(LintApi.Path, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Badges: one bucket per client IP, separate from linting.</summary>
+    private static bool IsBadgeRequest(HttpRequest request) =>
+        HttpMethods.IsGet(request.Method) && request.Path.StartsWithSegments(BadgeEndpoints.Prefix.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>API callers get a ProblemDetails body and no-store; the form keeps the bare 429.</summary>
     private static ValueTask WriteApiRejectionAsync(OnRejectedContext context, CancellationToken cancellationToken)

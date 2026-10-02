@@ -16,6 +16,23 @@ concurrency:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    # Throwaway SQL Server for the score history tests; the password exists only inside this job.
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: Ci-only-Passw0rd
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P Ci-only-Passw0rd -Q 'SELECT 1' -b"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 20s
+    env:
+      AIBYSITTER_TEST_SQL: Server=localhost,1433;User Id=sa;Password=Ci-only-Passw0rd;TrustServerCertificate=true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

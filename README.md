@@ -93,6 +93,12 @@ aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fai
 - Exit codes: 0 ok, 1 a `--fail-*` threshold failed, 2 usage error, 3 file not readable. Without a `--fail-*` flag the exit code is 0 whatever the findings.
 - No length limit.
 
+## Score history and badges
+
+Lint by URL stores each public result: repository, file, score, grade, ruleset version and time. The result page lists the last 10 for that repository and file. Kept up to 400 days, at most 500 rows per repository and file. Private repositories cannot be read, so nothing is stored for them.
+
+Badge: `https://aibysitting.net/badge/{owner}/{repo}.svg`, optional `?file=` (one of the supported file names). Default: the first file found, in the lint-by-URL order. Cached for an hour; a refresh fetches, lints and stores a row. No file found: grey `unknown`.
+
 ## Gallery
 
 Example rules files, each linted and scored: [aibysitting.net/Gallery](https://aibysitting.net/Gallery).

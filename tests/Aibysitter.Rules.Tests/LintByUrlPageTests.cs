@@ -31,7 +31,8 @@ public class LintByUrlPageTests(WebApplicationFactory<Program> factory)
         var html = await factory.CreateClient().GetStringAsync("/Lint");
 
         Assert.Contains("<form method=\"post\" id=\"url-form\" class=\"url-form\" action=\"/Lint?handler=Url\">", html);
-        Assert.Contains("Nothing is stored or logged.", html);
+        Assert.Contains("Stores the score for score history (<a href=\"/Privacy\">Privacy</a>).", html);
+        Assert.DoesNotContain("Nothing is stored or logged.", html);
     }
 
     [Fact]
