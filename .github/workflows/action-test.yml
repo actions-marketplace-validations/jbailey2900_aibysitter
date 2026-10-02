@@ -1,0 +1,105 @@
+name: Action test
+
+# Runs action.yml from this checkout (uses: ./) against tests/action-fixtures.
+# Jobs whose thresholds are meant to fail run without checks: write, so their failures go to the log
+# (exercising the fallback) instead of posting a failed check on the pull request.
+
+on:
+  pull_request:
+    branches: [main]
+    paths: [action.yml, action/**, tests/action-fixtures/**, src/Aibysitter.Cli/**, src/Aibysitter.Rules/**, .github/workflows/action-test.yml]
+
+concurrency:
+  group: action-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  passing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Discovery (no files input)
+        id: discover
+        uses: ./
+
+      - name: Glob, fail-below A on an A-grade file
+        id: glob
+        uses: ./
+        with:
+          files: tests/action-fixtures/errors/*.md tests/action-fixtures/clean/**/*.md
+          fail-below: A
+
+      - name: No files matched
+        id: none
+        uses: ./
+        with:
+          files: tests/action-fixtures/nothing-here/*.md
+
+      - name: Check outputs
+        env:
+          DISCOVER_FINDINGS: ${{ steps.discover.outputs.findings }}
+          DISCOVER_REPORT: ${{ steps.discover.outputs.report }}
+          GLOB_GRADE: ${{ steps.glob.outputs.grade }}
+          GLOB_SCORE: ${{ steps.glob.outputs.score }}
+          GLOB_FINDINGS: ${{ steps.glob.outputs.findings }}
+          NONE_FINDINGS: ${{ steps.none.outputs.findings }}
+          NONE_GRADE: ${{ steps.none.outputs.grade }}
+        run: |
+          set -e
+          test "$DISCOVER_FINDINGS" -gt 0
+          jq -e '.files | map(.file) | index("tests/action-fixtures/lowgrade/GEMINI.md") != null' "$DISCOVER_REPORT"
+          jq -e '.files | map(.file) | index("src/Aibysitter.Web/Gallery/Content/minimal-starter/CLAUDE.md") != null' "$DISCOVER_REPORT"
+          test "$GLOB_GRADE" = A
+          test "$GLOB_SCORE" = 90
+          test "$GLOB_FINDINGS" = 1
+          test "$NONE_FINDINGS" = 0
+          test -z "$NONE_GRADE"
+
+  failing:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: fail-on-error with an Error finding
+        id: error
+        continue-on-error: true
+        uses: ./
+        with:
+          files: tests/action-fixtures/errors/CLAUDE.md
+          fail-on-error: "true"
+
+      - name: fail-below B on a C-grade file
+        id: below
+        continue-on-error: true
+        uses: ./
+        with:
+          files: tests/action-fixtures/lowgrade/GEMINI.md
+          fail-below: B
+
+      - name: Missing file
+        id: missing
+        continue-on-error: true
+        uses: ./
+        with:
+          files: tests/action-fixtures/missing/CLAUDE.md
+
+      - name: Check outcomes
+        env:
+          ERROR_OUTCOME: ${{ steps.error.outcome }}
+          ERROR_GRADE: ${{ steps.error.outputs.grade }}
+          BELOW_OUTCOME: ${{ steps.below.outcome }}
+          BELOW_GRADE: ${{ steps.below.outputs.grade }}
+          MISSING_OUTCOME: ${{ steps.missing.outcome }}
+        run: |
+          set -e
+          test "$ERROR_OUTCOME" = failure
+          test "$ERROR_GRADE" = A
+          test "$BELOW_OUTCOME" = failure
+          test "$BELOW_GRADE" = C
+          test "$MISSING_OUTCOME" = failure
