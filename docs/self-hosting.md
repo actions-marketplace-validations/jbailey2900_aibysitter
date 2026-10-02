@@ -17,6 +17,7 @@ Set on IIS as environment variables (`__` replaces `:`). Nothing secret goes in 
 | `GitHub__AppId` | App only | App ID or Client ID. |
 | `GitHub__WebhookSecret` | App only | Webhook secret. |
 | `GitHub__PrivateKeyPath` | App only | Path to the App's private key PEM. |
+| `ReviewQueue__Path` | App only, recommended | Folder for queued review jobs. Without it, jobs are kept in memory and lost on restart. |
 
 Without the three `GitHub__*` values the site runs and `POST /github/webhook` returns 503.
 
@@ -27,6 +28,7 @@ Without the three `GitHub__*` values the site runs and `POST /github/webhook` re
 - Log folder exists; the app pool identity has Modify on it.
 - Data Protection keys folder exists; the app pool identity has Modify on it. On Windows, keys are encrypted with machine-scope DPAPI.
 - GitHub App private key: the app pool identity has Read on the PEM. Replacing the file needs no recycle.
+- Review queue folder exists; the app pool identity has Modify on it.
 
 ## App pool and site
 
@@ -53,7 +55,15 @@ Register an App with:
 
 Verify: a webhook ping returns 200 `pong`.
 
-Reviews run on an in-memory queue. A review lost to a recycle or crash leaves the `Aibysitter` check in `queued`. Recover by redelivering the webhook from the App's advanced settings or pushing a new commit.
+Review queue, with `ReviewQueue__Path` set:
+
+- Each job is a file, `<delivery ID>.json`, written before the webhook returns 202 and deleted when its check run completes.
+- On start, saved jobs are queued again, oldest first. A review interrupted by a recycle or crash resumes.
+- A job interrupted 3 times has its check run closed as `Review failed`.
+- Unreadable job files move to `failed/` in the folder and are logged.
+- Redelivering a webhook re-queues its saved job against the existing check run. If the job is being reviewed, the redelivery does nothing.
+
+Without `ReviewQueue__Path`, a review lost to a recycle or crash leaves the `Aibysitter` check in `queued`. Recover by redelivering the webhook from the App's advanced settings or pushing a new commit.
 
 ## Publishing
 

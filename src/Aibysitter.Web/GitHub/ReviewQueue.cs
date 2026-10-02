@@ -4,7 +4,7 @@ namespace Aibysitter.Web.GitHub;
 
 public sealed record ReviewJob(PullRequestRef PullRequest, long CheckRunId, string? DeliveryId);
 
-/// <summary>In-memory review queue. Jobs are lost on process exit; their check runs stay queued (documented v1 limitation).</summary>
+/// <summary>Jobs waiting for <see cref="ReviewWorker"/>. Persistence is <see cref="IReviewJobStore"/>'s job.</summary>
 public sealed class ReviewQueue
 {
     public const int Capacity = 1000;
@@ -16,6 +16,8 @@ public sealed class ReviewQueue
     });
 
     public bool TryEnqueue(ReviewJob job) => channel.Writer.TryWrite(job);
+
+    public ValueTask EnqueueAsync(ReviewJob job, CancellationToken cancellationToken) => channel.Writer.WriteAsync(job, cancellationToken);
 
     public IAsyncEnumerable<ReviewJob> ReadAllAsync(CancellationToken cancellationToken) => channel.Reader.ReadAllAsync(cancellationToken);
 }
