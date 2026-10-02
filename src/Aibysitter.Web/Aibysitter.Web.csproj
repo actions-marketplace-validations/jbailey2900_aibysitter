@@ -22,6 +22,27 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aibysitter.Rules\Aibysitter.Rules.csproj" />
+    <ProjectReference Include="..\Aibysitter.Rules.Browser\Aibysitter.Rules.Browser.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
+
+  <!-- Browser lint engine patterns, generated from the C# rules on every build and publish. Not committed. -->
+  <PropertyGroup>
+    <RulesPatternsFile>wwwroot/js/generated/rules-patterns.mjs</RulesPatternsFile>
+  </PropertyGroup>
+
+  <Target Name="ExportRulesPatterns" AfterTargets="ResolveProjectReferences" BeforeTargets="AssignTargetPaths" Condition="'$(DesignTimeBuild)' != 'true'">
+    <MSBuild Projects="..\Aibysitter.Rules.Browser\Aibysitter.Rules.Browser.csproj" Targets="GetTargetPath">
+      <Output TaskParameter="TargetOutputs" ItemName="_RulesPatternsExporter" />
+    </MSBuild>
+    <PropertyGroup>
+      <_DotNetHost>$(DOTNET_HOST_PATH)</_DotNetHost>
+      <_DotNetHost Condition="'$(_DotNetHost)' == ''">dotnet</_DotNetHost>
+    </PropertyGroup>
+    <Exec Command="&quot;$(_DotNetHost)&quot; &quot;@(_RulesPatternsExporter)&quot; &quot;$(RulesPatternsFile)&quot;" />
+    <ItemGroup>
+      <Content Remove="$(RulesPatternsFile)" />
+      <Content Include="$(RulesPatternsFile)" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
 
 </Project>

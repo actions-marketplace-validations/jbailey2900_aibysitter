@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Aibysitter.Rules\Aibysitter.Rules.csproj" />
     <ProjectReference Include="..\..\src\Aibysitter.Web\Aibysitter.Web.csproj" />
+    <ProjectReference Include="..\..\src\Aibysitter.Rules.Browser\Aibysitter.Rules.Browser.csproj" />
   </ItemGroup>
 
   <ItemGroup>

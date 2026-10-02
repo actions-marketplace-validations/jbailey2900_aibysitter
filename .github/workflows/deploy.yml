@@ -43,6 +43,8 @@ jobs:
           if (Test-Path -LiteralPath $publish) { Remove-Item -LiteralPath $publish -Recurse -Force }
           dotnet publish src/Aibysitter.Web/Aibysitter.Web.csproj -p:PublishProfile=FolderProfile -o $publish
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $patterns = Join-Path $publish 'wwwroot/js/generated/rules-patterns.mjs'
+          if (-not (Test-Path -LiteralPath $patterns -PathType Leaf)) { throw "Publish output is missing $patterns." }
 
       - name: Take site offline
         run: |

@@ -7,7 +7,7 @@
 
 <h1>Lint a rules file</h1>
 
-<form method="post">
+<form method="post" id="lint-form">
     <label for="Format">Format</label>
     <select asp-for="Format" asp-items="Model.FormatOptions"></select>
     <label for="RulesText">Rules file content</label>
@@ -17,6 +17,7 @@
     <a class="sample-link" asp-page="/Lint" asp-route-sample="true">Try a sample</a>
 </form>
 
+<div id="lint-results" aria-live="polite">
 @if (Model.LintedFormat is { } linted)
 {
     <p class="note">Linted as @RulesFormats.DisplayName(linted)@(Model.Format == RulesFormat.Auto ? " (detected)" : "").</p>
@@ -85,4 +86,9 @@
             }
         </tbody>
     </table>
+}
+</div>
+
+@section Scripts {
+    <script type="module" src="~/js/lint-page.mjs" asp-append-version="true"></script>
 }
