@@ -38,6 +38,21 @@ public class HardeningTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task FormAndApi_ShareOneBucket_ApiRejectionIsProblemNoStore()
+    {
+        var client = CreateClient(permitLimit: 2);
+
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, (await PostLint(client, NonCloudflareIp)).StatusCode);
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, (await PostApi(client, NonCloudflareIp)).StatusCode);
+        var rejected = await PostApi(client, NonCloudflareIp);
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
+        Assert.Equal("application/problem+json", rejected.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("no-store", rejected.Headers.CacheControl?.ToString());
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await PostLint(client, NonCloudflareIp)).StatusCode);
+    }
+
+    [Fact]
     public async Task ForwardedFor_FromCloudflare_PartitionsByClient()
     {
         var client = CreateClient(permitLimit: 1);
@@ -94,6 +109,16 @@ public class HardeningTests(WebApplicationFactory<Program> factory)
             request.Headers.Add("X-Forwarded-For", forwardedFor);
         }
 
+        return client.SendAsync(request);
+    }
+
+    private static Task<HttpResponseMessage> PostApi(HttpClient client, string remoteIp)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, Web.Linting.LintApi.Path)
+        {
+            Content = new StringContent("{\"content\": \"x\"}", System.Text.Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add(TestRemoteIpHeader, remoteIp);
         return client.SendAsync(request);
     }
 

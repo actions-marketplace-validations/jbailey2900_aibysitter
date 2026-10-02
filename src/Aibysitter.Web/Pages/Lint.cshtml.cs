@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Aibysitter.Rules;
 using Aibysitter.Web.Gallery;
+using Aibysitter.Web.Linting;
 using Aibysitter.Web.Samples;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -8,9 +9,9 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Aibysitter.Web.Pages;
 
-public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger<LintModel> logger) : PageModel
+public class LintModel(LintService lint, GalleryCatalog galleryCatalog) : PageModel
 {
-    public const int MaxContentLength = 100_000;
+    public const int MaxContentLength = LintLimits.MaxContentLength;
 
     [BindProperty]
     [Required(ErrorMessage = "Paste a rules file to lint.")]
@@ -26,11 +27,26 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
     public IEnumerable<SelectListItem> FormatOptions =>
         RulesFormats.Selectable.Select(f => new SelectListItem(RulesFormats.DisplayName(f), f.ToString(), f == Format));
 
-    public IReadOnlyList<ResultRow>? Results { get; private set; }
+    public IReadOnlyList<LintRow>? Results { get; private set; }
 
     public LintScore? Score { get; private set; }
 
-    public IReadOnlyList<ResultRow>? Suppressed { get; private set; }
+    public IReadOnlyList<LintRow>? Suppressed { get; private set; }
+
+    /// <summary>Checked rule IDs from the Rules section. Posted with <see cref="RulesPosted"/>; unchecked rules are disabled.</summary>
+    [BindProperty]
+    public List<string> Enabled { get; set; } = [];
+
+    /// <summary>Marks that the Rules section was posted, so an empty <see cref="Enabled"/> means every rule is off.</summary>
+    [BindProperty]
+    public bool RulesPosted { get; set; }
+
+    public IReadOnlyList<IRule> Rules => lint.Rules;
+
+    /// <summary>Rules disabled for the last lint.</summary>
+    public IReadOnlyList<string> Disabled { get; private set; } = [];
+
+    public bool IsEnabled(string ruleId) => !Disabled.Contains(ruleId);
 
     /// <summary>True when the page shows the built-in sample's results on load.</summary>
     public bool IsSample { get; private set; }
@@ -64,22 +80,12 @@ public class LintModel(LintEngine engine, GalleryCatalog galleryCatalog, ILogger
 
     private void Lint()
     {
-        var rules = engine.Rules.ToDictionary(r => r.Id);
-        var result = engine.Analyze(RulesText!, Format);
-        LintedFormat = result.Format;
-
-        Results = result.Findings
-            .Select(f => new ResultRow(f, rules[f.RuleId].Title, rules[f.RuleId].Severity))
-            .ToList();
-
-        Suppressed = result.Suppressed
-            .Select(f => new ResultRow(f, rules[f.RuleId].Title, rules[f.RuleId].Severity))
-            .ToList();
-
-        Score = engine.Score(result.Findings);
-
-        logger.LogInformation("Linted {Length} chars as {Format}, {FindingCount} findings, {SuppressedCount} suppressed, score {Score}", RulesText!.Length, result.Format, Results.Count, Suppressed.Count, Score.Value);
+        var off = RulesPosted ? lint.Rules.Select(r => r.Id).Except(Enabled, StringComparer.OrdinalIgnoreCase) : Enumerable.Empty<string>();
+        Disabled = lint.TryNormalizeDisabled(off, out var disabled, out _) ? disabled : [];
+        var outcome = lint.Lint(RulesText!, Format, Disabled, "form");
+        LintedFormat = outcome.Format;
+        Results = outcome.Findings;
+        Suppressed = outcome.Suppressed;
+        Score = outcome.Score;
     }
-
-    public sealed record ResultRow(Finding Finding, string Title, Severity Severity);
 }

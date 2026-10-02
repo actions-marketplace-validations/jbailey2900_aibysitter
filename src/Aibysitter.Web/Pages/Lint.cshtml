@@ -15,6 +15,17 @@
     <textarea asp-for="RulesText" rows="20" spellcheck="false" aria-describedby="text-help"></textarea>
     <p class="note" id="text-help">Linted in your browser; the text is not sent. Without JavaScript, the server lints it and does not store or log the text. <a asp-page="/Privacy">Privacy</a></p>
     <span asp-validation-for="RulesText" class="error"></span>
+    <details class="rules-picker" open="@(Model.Disabled.Count > 0 ? "open" : null)">
+        <summary>Rules</summary>
+        <input type="hidden" name="RulesPosted" value="true" />
+        <fieldset>
+            <legend>Rules to run</legend>
+            @foreach (var rule in Model.Rules)
+            {
+                <label><input type="checkbox" name="Enabled" value="@rule.Id" checked="@(Model.IsEnabled(rule.Id) ? "checked" : null)" /> @rule.Id @rule.Title</label>
+            }
+        </fieldset>
+    </details>
     <button type="submit">Lint</button>
     <a class="sample-link" asp-page="/Lint" asp-route-sample="true">Try a sample</a>
 </form>
@@ -27,6 +38,10 @@
 @if (Model.LintedFormat is { } linted)
 {
     <p class="note">Linted as @RulesFormats.DisplayName(linted)@(Model.Format == RulesFormat.Auto ? " (detected)" : "").</p>
+    @if (Model.Disabled.Count > 0)
+    {
+        <p class="note">Rules off: @string.Join(", ", Model.Disabled).</p>
+    }
 }
 
 @if (Model.Score is not null)

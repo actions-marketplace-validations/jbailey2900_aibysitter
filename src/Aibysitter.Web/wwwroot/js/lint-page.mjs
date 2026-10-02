@@ -53,10 +53,12 @@ function suppressedSection(suppressed) {
     el("table", { class: "findings stack" }, head("Line", "Rule", "Message"), el("tbody", null, ...rows))];
 }
 
-function render(container, selected, result) {
+function render(container, selected, result, disabled) {
   const detected = selected === "Auto" ? " (detected)" : "";
+  const rulesOff = disabled.length > 0 ? [el("p", { class: "note" }, `Rules off: ${disabled.join(", ")}.`)] : [];
   container.replaceChildren(
     el("p", { class: "note" }, `Linted as ${formatName(result.format)}${detected}.`),
+    ...rulesOff,
     el("p", { class: "note" }, "Linted in your browser. The text was not sent."),
     scorePanel(score(result.findings)),
     ...findingsSection(result.findings),
@@ -69,9 +71,10 @@ function onSubmit(event, form, container) {
   if (text.trim().length === 0 || text.replace(/\r?\n/g, "\r\n").length > MAX_LENGTH) return;
   try {
     const selected = form.elements.Format.value;
-    const result = analyze(text, selected);
+    const disabled = [...form.querySelectorAll('input[name="Enabled"]')].filter((box) => !box.checked).map((box) => box.value).sort();
+    const result = analyze(text, selected, disabled);
     event.preventDefault();
-    render(container, selected, result);
+    render(container, selected, result, disabled);
   } catch (error) {
     console.error("Browser lint failed; using the server.", error);
   }

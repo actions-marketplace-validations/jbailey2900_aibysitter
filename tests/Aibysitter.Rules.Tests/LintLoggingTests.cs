@@ -77,4 +77,27 @@ public class LintLoggingTests(WebApplicationFactory<Program> factory)
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
         AssertNoMarker(sink);
     }
+
+    [Theory]
+    [InlineData("{\"content\": \"- Use Password=ZqMarker7731; to connect.\"}")]
+    [InlineData("{\"content\": \"ZqMarker7731\", \"format\": \"Nope\"}")]
+    [InlineData("{\"content\": \"ZqMarker7731")]
+    public async Task ApiPost_TextNotLogged(string json)
+    {
+        var (client, sink) = Create();
+
+        await client.PostAsync(Web.Linting.LintApi.Path, new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
+
+        AssertNoMarker(sink);
+    }
+
+    [Fact]
+    public async Task ApiPost_LogsSourceApi()
+    {
+        var (client, sink) = Create();
+
+        await client.PostAsync(Web.Linting.LintApi.Path, new StringContent("{\"content\": \"- a\"}", System.Text.Encoding.UTF8, "application/json"));
+
+        Assert.Contains(sink.Events, e => e.Contains("Linted", StringComparison.Ordinal) && e.Contains("Source=\"api\"", StringComparison.Ordinal));
+    }
 }

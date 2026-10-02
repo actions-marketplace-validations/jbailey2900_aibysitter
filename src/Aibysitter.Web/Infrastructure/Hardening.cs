@@ -1,5 +1,7 @@
 using System.Threading.RateLimiting;
+using Aibysitter.Web.Linting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Aibysitter.Web.Infrastructure;
 
@@ -28,9 +30,9 @@ public static class Hardening
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.OnRejected = WriteApiRejectionAsync;
             options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                HttpMethods.IsPost(context.Request.Method)
-                && context.Request.Path.Equals("/Lint", StringComparison.OrdinalIgnoreCase)
+                IsLintRequest(context.Request)
                     ? RateLimitPartition.GetFixedWindowLimiter(
                         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                         _ => new FixedWindowRateLimiterOptions
@@ -43,6 +45,29 @@ public static class Hardening
         });
 
         return services;
+    }
+
+    /// <summary>Form posts and API calls share one bucket per client IP.</summary>
+    private static bool IsLintRequest(HttpRequest request) =>
+        HttpMethods.IsPost(request.Method)
+        && (request.Path.Equals("/Lint", StringComparison.OrdinalIgnoreCase)
+            || request.Path.Equals(LintApi.Path, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>API callers get a ProblemDetails body and no-store; the form keeps the bare 429.</summary>
+    private static ValueTask WriteApiRejectionAsync(OnRejectedContext context, CancellationToken cancellationToken)
+    {
+        var response = context.HttpContext.Response;
+        if (!context.HttpContext.Request.Path.Equals(LintApi.Path, StringComparison.OrdinalIgnoreCase))
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        response.Headers.CacheControl = "no-store";
+        return new ValueTask(response.WriteAsJsonAsync(
+            new Microsoft.AspNetCore.Mvc.ProblemDetails { Status = StatusCodes.Status429TooManyRequests, Title = "Too many requests. Try again in a minute." },
+            options: null,
+            contentType: "application/problem+json",
+            cancellationToken));
     }
 
     public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app) =>

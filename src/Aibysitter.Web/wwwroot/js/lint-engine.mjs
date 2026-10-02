@@ -486,9 +486,11 @@ for (const r of rules) {
 const ordinal = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 /** Same result shape as LintEngine.Analyze: findings, suppressed, and the resolved format. */
-export function analyze(text, format = "Auto") {
+/** disable: rule IDs to skip; their findings are never produced. */
+export function analyze(text, format = "Auto", disable = []) {
   const file = parse(text, format);
-  const all = rules.flatMap((r) => EVALUATORS[r.id](file))
+  const off = new Set(disable.map((id) => id.toUpperCase()));
+  const all = rules.filter((r) => !off.has(r.id)).flatMap((r) => EVALUATORS[r.id](file))
     .map((f, i) => ({ f, i }))
     .sort((a, b) => a.f.line - b.f.line || ordinal(a.f.ruleId, b.f.ruleId) || a.i - b.i)
     .map((x) => x.f);

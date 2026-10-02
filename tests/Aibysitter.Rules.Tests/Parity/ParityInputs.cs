@@ -2,12 +2,22 @@ using Aibysitter.Web.Gallery;
 
 namespace Aibysitter.Rules.Tests.Parity;
 
-internal sealed record ParityInput(string Name, string Text, RulesFormat Format);
+internal sealed record ParityInput(string Name, string Text, RulesFormat Format, IReadOnlyList<string>? Disable = null);
 
 /// <summary>Inputs both engines must agree on: gallery entries, fixtures, rule note examples, and edge cases.</summary>
 internal static class ParityInputs
 {
-    public static IReadOnlyList<ParityInput> All { get; } = [.. Gallery(), .. Fixtures(), .. RuleDocExamples(), .. EdgeCases()];
+    public static IReadOnlyList<ParityInput> All { get; } = [.. Gallery(), .. Fixtures(), .. RuleDocExamples(), .. EdgeCases(), .. Disabled()];
+
+    private static IEnumerable<ParityInput> Disabled()
+    {
+        var sample = Web.Samples.SampleRules.Text;
+        yield return new ParityInput("disable/one", sample, RulesFormat.Auto, ["R001"]);
+        yield return new ParityInput("disable/several", sample, RulesFormat.Auto, ["R002", "R003", "R005"]);
+        yield return new ParityInput("disable/all-findings", sample, RulesFormat.Auto, ["R001", "R002", "R003", "R005"]);
+        yield return new ParityInput("disable/suppressed-rule", "# T\n<!-- aibysitter-disable R001 -->\n## S\n- Use tabs because x.\n- Handle errors properly.", RulesFormat.Auto, ["R001"]);
+        yield return new ParityInput("disable/mdc", "---\nalwaysApply: maybe\n---\n# Rules\n- Use tabs.", RulesFormat.CursorMdc, ["R016"]);
+    }
 
     private static IEnumerable<ParityInput> Gallery() =>
         new GalleryCatalog(new LintEngine()).All.Select(e => new ParityInput("gallery/" + e.Id, e.Content, e.Format));

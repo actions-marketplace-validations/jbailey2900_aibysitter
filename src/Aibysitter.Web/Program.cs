@@ -1,3 +1,4 @@
+using Aibysitter.Web.Linting;
 using Aibysitter.Rules;
 using Aibysitter.Web.Gallery;
 using Aibysitter.Web.GitHub;
@@ -21,6 +22,7 @@ try
     builder.Services.AddRazorPages();
     builder.Services.AddHealthChecks();
     builder.Services.AddSingleton(_ => new LintEngine());
+    builder.Services.AddSingleton<Aibysitter.Web.Linting.LintService>();
     builder.Services.AddSingleton<Aibysitter.Web.Samples.LintDemo>();
     builder.Services.AddSingleton<Aibysitter.Web.Gallery.GalleryCatalog>();
     builder.Services.AddSingleton<Aibysitter.Web.Notes.NoteCatalog>();
@@ -49,6 +51,7 @@ try
     app.MapRazorPages().WithStaticAssets();
     app.MapHealthChecks("/health");
     app.MapGitHubWebhook();
+    app.MapLintApi();
     app.MapRegistry();
     app.MapGalleryDownloads();
 
