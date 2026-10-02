@@ -1,0 +1,88 @@
+@page
+@model Aibysitter.Web.Pages.Rules.MethodologyModel
+@using Aibysitter.Rules
+@using Aibysitter.Rules.Rules
+@{
+    ViewData["Title"] = "Methodology";
+}
+
+<p><a asp-page="/Rules/Index">All rules</a></p>
+
+<h1>Methodology</h1>
+
+<h2>How rules were chosen</h2>
+<ul>
+    <li>Each lint rule reads the rules file text only. No agent is run and no repository is read; R006 is the exception and runs only in the GitHub App, where the repository is available.</li>
+    <li>Each rule was run against a corpus of 336 public CLAUDE.md and AGENTS.md files before it shipped. A rule ships when fewer than 5% of corpus files get a finding that is a false positive and nothing else.</li>
+    <li>Thresholds (line counts, word counts, ratios) are fixed constants in the rule code and apply to every file the same way.</li>
+</ul>
+
+<h2>Severities</h2>
+<table class="stack">
+    <thead>
+        <tr>
+            <th>Severity</th>
+            <th>Cost per finding</th>
+            <th>Meaning</th>
+            <th>Rules</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Error</td>
+            <td>−@Scorer.Weight(Severity.Error)</td>
+            <td>The file is broken or unsafe as written: an instruction contradicts another, a secret is exposed, or markup swallows the rest of the file.</td>
+            <td>@string.Join(", ", Model.RulesBySeverity.GetValueOrDefault(Severity.Error) ?? [])</td>
+        </tr>
+        <tr>
+            <td>Warning</td>
+            <td>−@Scorer.Weight(Severity.Warning)</td>
+            <td>An instruction or structure the agent cannot act on reliably: vague or hedged wording, repetition, length, emphasis, empty sections, frontmatter Cursor ignores, references that do not exist.</td>
+            <td>@string.Join(", ", Model.RulesBySeverity.GetValueOrDefault(Severity.Warning) ?? [])</td>
+        </tr>
+        <tr>
+            <td>Info</td>
+            <td>−@Scorer.Weight(Severity.Info)</td>
+            <td>Text that is not an instruction: rationale, persona, long prose, references to unnamed context.</td>
+            <td>@string.Join(", ", Model.RulesBySeverity.GetValueOrDefault(Severity.Info) ?? [])</td>
+        </tr>
+    </tbody>
+</table>
+<partial name="_Scoring" />
+
+<h2>Why R001 penalises rationale prose</h2>
+<p class="gap">Position to be written.</p>
+
+<h2>Thresholds</h2>
+<p>Corpus hit rates are from the 336-file corpus with the current rules.</p>
+<table class="stack">
+    <thead>
+        <tr>
+            <th>Rule</th>
+            <th>Threshold</th>
+            <th>Corpus files flagged</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><a asp-page="/Rules/Rule" asp-route-id="R004">R004</a> FileLength</td>
+            <td>More than @FileLength.MaxLines lines</td>
+            <td>129 of 336 (38.4%)</td>
+        </tr>
+        <tr>
+            <td><a asp-page="/Rules/Rule" asp-route-id="R008">R008</a> EmphasisInflation</td>
+            <td>More than @EmphasisInflation.PerHundredLines emphasis lines per 100 lines, at least @EmphasisInflation.MinAllowed allowed</td>
+            <td>10 of 336 (3.0%)</td>
+        </tr>
+        <tr>
+            <td><a asp-page="/Rules/Rule" asp-route-id="R013">R013</a> ProseParagraph</td>
+            <td>A paragraph of more than @ProseParagraph.MaxWords words</td>
+            <td>59 of 336 (17.6%)</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Why these thresholds</h3>
+<p class="gap">Position to be written: R004.</p>
+<p class="gap">Position to be written: R008.</p>
+<p class="gap">Position to be written: R013.</p>

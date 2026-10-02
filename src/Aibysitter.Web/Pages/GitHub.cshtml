@@ -8,6 +8,7 @@
     <h1>Review agent pull requests.</h1>
     <p class="lede">The Aibysitter GitHub App reads every pull request in a repository where it is installed. It posts a check named Aibysitter, with an annotation on each line it flags.</p>
     <p class="install-status"><strong>Install coming soon.</strong> The App is in testing.</p>
+    <p><a asp-page="/Privacy">What the App reads and keeps</a></p>
 </section>
 
 <section class="section">
@@ -15,7 +16,7 @@
     <ul class="marks">
         @foreach (var row in Model.Checks)
         {
-            <li><a asp-page="/Notes/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a> @row.Doc.Summary <span class="note">@row.Severity</span></li>
+            <li><a asp-page="/Rules/Rule" asp-route-id="@row.Doc.Id">@row.Doc.Id</a> @row.Doc.Summary <span class="note">@row.Severity</span></li>
         }
     </ul>
 </section>
@@ -68,6 +69,19 @@
 </section>
 
 <section class="section">
+    <h2>Security model</h2>
+    <ul>
+        <li>Every webhook is verified against its HMAC-SHA256 signature; unsigned or mis-signed deliveries are rejected.</li>
+        <li>The App acts as each installation with short-lived installation tokens. The App's private key stays on the server.</li>
+        <li>Its only write permission is Checks. It cannot push, comment, merge, or change settings.</li>
+        <li>Checks are static text analysis. Code from the pull request is never run.</li>
+        <li>It reads at the pull request's head commit only, with fixed caps: file contents for at most @Aibysitter.Web.GitHub.ReviewProcessor.MaxContentFetches changed files, @Aibysitter.Web.GitHub.ReviewProcessor.MaxUnchangedRulesFiles unchanged rules files and @Aibysitter.Web.GitHub.ReviewProcessor.MaxManifestFetches manifests per review.</li>
+    </ul>
+    <p>What it reads, keeps and logs: <a asp-page="/Privacy">Privacy</a>.</p>
+</section>
+
+<section class="section">
     <h2>Install</h2>
     <p>Install coming soon. Until then, the same rules-file checks are available on the <a asp-page="/Lint">lint page</a>.</p>
+    <p>To uninstall: <strong>Settings → Applications → Installed GitHub Apps → Aibysitter → Configure → Uninstall</strong> (organizations: <strong>Settings → GitHub Apps</strong>). Details: <a asp-page="/Privacy">Privacy</a>.</p>
 </section>

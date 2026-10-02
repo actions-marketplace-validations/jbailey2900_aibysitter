@@ -1,24 +1,19 @@
 @page
 @model Aibysitter.Web.Pages.Notes.IndexModel
 @{
-    ViewData["Title"] = "Rules";
+    ViewData["Title"] = "Notes";
 }
 
-<h1>Rules</h1>
+<h1>Notes</h1>
+<p class="note">Looking for the rules? They moved to <a asp-page="/Rules/Index">/Rules</a>.</p>
 
-<h2>Rules files</h2>
-<p>Checked by the <a asp-page="/Lint">lint page</a> against CLAUDE.md, AGENTS.md, Cursor rules (.mdc and .cursorrules), Copilot instructions, GEMINI.md, and .windsurfrules. Frontmatter is skipped by every rule except R009 and R015. R015 applies to Cursor .mdc rules only.</p>
-<partial name="_RulesTable" model="Model.Rows" />
-
-<h2>Scoring</h2>
-<p>Each file starts at @Aibysitter.Rules.Scorer.MaxScore. Each finding deducts by severity: Error @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Error), Warning @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Warning), Info @Aibysitter.Rules.Scorer.Weight(Aibysitter.Rules.Severity.Info). Deductions per rule are capped at @Aibysitter.Rules.Scorer.PerRuleCap. Total deductions per severity are capped: Error @Aibysitter.Rules.Scorer.SeverityCap(Aibysitter.Rules.Severity.Error), Warning @Aibysitter.Rules.Scorer.SeverityCap(Aibysitter.Rules.Severity.Warning), Info @Aibysitter.Rules.Scorer.SeverityCap(Aibysitter.Rules.Severity.Info). Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below 60.</p>
-<p>Fenced code blocks are excluded from all rules. Headings are excluded from R001–R003.</p>
-
-<h2>Suppressing a rule</h2>
-<p>An HTML comment on its own line. IDs are required; separate several with commas. Suppressed findings are listed on the lint page and not scored.</p>
-<pre><code>&lt;!-- aibysitter-disable R002 --&gt;            whole file
-&lt;!-- aibysitter-disable-next-line R001, R005 --&gt;   the next line only</code></pre>
-
-<h2>Pull request checks</h2>
-<p>Run by the <a asp-page="/GitHub">GitHub App</a> on every pull request in an installed repository.</p>
-<partial name="_RulesTable" model="Model.CheckRows" />
+<ul class="notes-list">
+    @foreach (var note in Model.Notes)
+    {
+        <li>
+            <h2><a asp-page="/Notes/Entry" asp-route-slug="@note.Slug">@note.Title</a></h2>
+            <p class="note"><time datetime="@note.Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@note.Date.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</time></p>
+            <p>@note.Summary</p>
+        </li>
+    }
+</ul>

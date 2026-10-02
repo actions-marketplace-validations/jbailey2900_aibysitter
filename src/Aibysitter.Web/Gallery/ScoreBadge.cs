@@ -8,6 +8,9 @@ namespace Aibysitter.Web.Gallery;
 public static class ScoreBadge
 {
     private const string Label = "aibysitter";
+
+    /// <summary>Accessible name and tooltip; the visible label stays short for 20 px badges.</summary>
+    private const string Title = "Aibysitter lint score";
     private const double CharWidth = 6.6;
     private const int Padding = 6;
     private const int Height = 20;
@@ -26,8 +29,8 @@ public static class ScoreBadge
         };
 
         return string.Create(CultureInfo.InvariantCulture, $"""
-            <svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="{Height}" role="img" aria-label="{Label}: {Escape(value)}">
-              <title>{Label}: {Escape(value)}</title>
+            <svg xmlns="http://www.w3.org/2000/svg" width="{total}" height="{Height}" role="img" aria-label="{Title}: {Escape(value)}">
+              <title>{Title}: {Escape(value)}</title>
               <rect width="{left}" height="{Height}" fill="#1d1c1a"/>
               <rect x="{left}" width="{right}" height="{Height}" fill="{color}"/>
               <g fill="#fbfaf8" font-family="'JetBrains Mono','DejaVu Sans Mono',Menlo,Consolas,monospace" font-size="11">

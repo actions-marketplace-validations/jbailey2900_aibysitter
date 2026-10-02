@@ -26,6 +26,9 @@ public sealed record GalleryEntry(
 
     public string FormatName => RulesFormats.DisplayName(Format);
 
+    /// <summary>Single-file formats superseded by rules folders: .cursorrules and .windsurfrules.</summary>
+    public bool IsLegacyFormat => Format is RulesFormat.CursorRules or RulesFormat.WindsurfRules;
+
     /// <summary>Where the file goes in a repository, e.g. <c>.cursor/rules/storefront.mdc</c>.</summary>
     public string InstallPath => RepoPath ?? RulesFormats.InstallPath(Format, FileName);
 }

@@ -23,6 +23,7 @@ try
     builder.Services.AddSingleton(_ => new LintEngine());
     builder.Services.AddSingleton<Aibysitter.Web.Samples.LintDemo>();
     builder.Services.AddSingleton<Aibysitter.Web.Gallery.GalleryCatalog>();
+    builder.Services.AddSingleton<Aibysitter.Web.Notes.NoteCatalog>();
     builder.Services.AddAibysitterHardening(builder.Configuration);
     builder.Services.AddAibysitterDataProtection(builder.Configuration);
     builder.Services.AddAibysitterGitHubApp(builder.Configuration);

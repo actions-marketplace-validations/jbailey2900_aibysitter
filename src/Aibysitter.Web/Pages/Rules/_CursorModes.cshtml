@@ -1,0 +1,39 @@
+<h2>Cursor application modes</h2>
+<p>Cursor decides when to include a rule from three frontmatter fields: <code>alwaysApply</code>, <code>globs</code>, and <code>description</code>.</p>
+<table class="stack">
+    <thead>
+        <tr>
+            <th>Mode</th>
+            <th>Frontmatter</th>
+            <th>Included</th>
+            <th>R015</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Always Apply</td>
+            <td><code>alwaysApply: true</code></td>
+            <td>In every chat session</td>
+            <td>No finding</td>
+        </tr>
+        <tr>
+            <td>Apply Intelligently</td>
+            <td><code>description</code> set, <code>alwaysApply: false</code></td>
+            <td>When the agent judges the description relevant</td>
+            <td>No finding</td>
+        </tr>
+        <tr>
+            <td>Apply to Specific Files</td>
+            <td><code>globs</code> set, <code>alwaysApply: false</code></td>
+            <td>When a file in context matches a glob</td>
+            <td>No finding</td>
+        </tr>
+        <tr>
+            <td>Apply Manually</td>
+            <td><code>alwaysApply: false</code>, no <code>description</code> or <code>globs</code></td>
+            <td>Only when @@-mentioned in chat</td>
+            <td>"Rule never applies automatically" (Warning)</td>
+        </tr>
+    </tbody>
+</table>
+<p>Source: <a href="https://cursor.com/docs/context/rules">Cursor rules documentation</a>.</p>

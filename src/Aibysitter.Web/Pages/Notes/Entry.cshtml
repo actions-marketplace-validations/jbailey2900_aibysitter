@@ -1,0 +1,13 @@
+@page "/Notes/{slug}"
+@model Aibysitter.Web.Pages.Notes.EntryModel
+@{
+    ViewData["Title"] = Model.Note.Title;
+}
+
+<p><a asp-page="/Notes/Index">All notes</a></p>
+
+<article class="note-body">
+    <h1>@Model.Note.Title</h1>
+    <p class="note"><time datetime="@Model.Note.Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@Model.Note.Date.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</time></p>
+    @Html.Raw(Model.Note.Html)
+</article>

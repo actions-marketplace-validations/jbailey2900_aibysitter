@@ -1,10 +1,10 @@
-@page "/Notes/{id}"
-@model Aibysitter.Web.Pages.Notes.RuleModel
+@page "/Rules/{id}"
+@model Aibysitter.Web.Pages.Rules.RuleModel
 @{
     ViewData["Title"] = $"{Model.Doc.Id} {Model.Doc.Name}";
 }
 
-<p><a asp-page="/Notes/Index">All rules</a></p>
+<p><a asp-page="/Rules/Index">All rules</a></p>
 
 <h1>@Model.Doc.Id @Model.Doc.Name</h1>
 
@@ -16,7 +16,7 @@
     }
     else if (Model.Doc.AppOnly)
     {
-        <dd>Rules files in pull requests, through P014 in the <a asp-page="/GitHub">GitHub App</a>. Not run on the lint page.</dd>
+        <dd>App-only. Rules files in pull requests, through P014 in the <a asp-page="/GitHub">GitHub App</a>. Not run on the lint page.</dd>
     }
     else
     {
@@ -46,3 +46,8 @@
 
 <h2>Passes</h2>
 <pre><code>@Model.Doc.GoodExample</code></pre>
+
+@if (Model.Doc.Id == "R015")
+{
+    <partial name="_CursorModes" />
+}

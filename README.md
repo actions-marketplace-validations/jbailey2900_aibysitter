@@ -25,13 +25,13 @@ Lints `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` (any directory), Cursor rules (`
 | R014 | UnverifiableCrossReference | Info |
 | R015 | FrontmatterFields (Cursor .mdc only) | Warning |
 
-R006 (MissingIdentifiers, Warning) runs only in the GitHub App, through P014: it checks that paths, package scripts, make targets, and MSBuild targets a rules file names exist in the repository.
+R006 (MissingIdentifiers, Warning) is App-only and runs through P014: it checks that paths, package scripts, make targets, and MSBuild targets a rules file names exist in the repository.
 
 Suppress a rule with an HTML comment on its own line: `<!-- aibysitter-disable R002 -->` (whole file) or `<!-- aibysitter-disable-next-line R002 -->` (next line). Suppressed findings are listed and not scored.
 
-Score: 100, minus 10 per Error, 4 per Warning, 1 per Info. Each rule deducts at most 30. Total deductions per severity are capped: Error 40, Warning 30, Info 10. Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below.
+Aibysitter lint score: 100, minus 10 per Error, 4 per Warning, 1 per Info. Each rule deducts at most 30. Total deductions per severity are capped: Error 40, Warning 30, Info 10, so the lowest possible score is 20. Grades: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60, F below.
 
-Rule notes: [aibysitting.net/Notes](https://aibysitting.net/Notes).
+Rules: [aibysitting.net/Rules](https://aibysitting.net/Rules). Methodology: [aibysitting.net/Rules/Methodology](https://aibysitting.net/Rules/Methodology).
 
 ## GitHub App
 
@@ -86,10 +86,14 @@ Entries live in [`src/Aibysitter.Web/Gallery/Content/`](src/Aibysitter.Web/Galle
 |---|---|
 | `src/Aibysitter.Rules` | Lint rules, scoring, pull request checks |
 | `src/Aibysitter.Rules.Browser` | Build-time exporter: rule patterns and constants for the browser lint engine |
-| `src/Aibysitter.Web` | ASP.NET Core Razor Pages site, GitHub App webhook, gallery; browser lint engine in `wwwroot/js` |
+| `src/Aibysitter.Web` | ASP.NET Core Razor Pages site, GitHub App webhook, gallery, notes (`Notes/Content`); browser lint engine in `wwwroot/js` |
 | `tests/Aibysitter.Rules.Tests` | xUnit tests; fixtures in `tests/fixtures` |
 
 Requires the .NET 10 SDK. Build and test: `dotnet test Aibysitter.slnx`. The browser parity tests need Node.js on PATH: without it they pass with a SKIPPED message locally and fail when `CI` is set.
+
+## Privacy
+
+What the site and the App read, keep, and log: [aibysitting.net/Privacy](https://aibysitting.net/Privacy).
 
 ## Self-hosting
 

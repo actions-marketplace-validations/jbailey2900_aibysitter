@@ -16,7 +16,7 @@
             <ul class="nav-links">
                 <li><a asp-page="/Lint">lint</a></li>
                 <li><a asp-page="/Gallery/Index">gallery</a></li>
-                <li><a asp-page="/Notes/Index">rules</a></li>
+                <li><a asp-page="/Rules/Index">rules</a></li>
                 <li><a asp-page="/GitHub">github</a></li>
             </ul>
         </nav>
@@ -26,6 +26,7 @@
     </main>
     <footer class="site-footer">
         <p>Babysitting the AI. Free to use, no account.</p>
+        <p><a asp-page="/About">About</a> · <a asp-page="/Privacy">Privacy</a> · <a asp-page="/Notes/Index">Notes</a></p>
     </footer>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

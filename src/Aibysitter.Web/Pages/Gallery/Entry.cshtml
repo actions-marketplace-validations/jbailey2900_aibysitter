@@ -1,4 +1,4 @@
-@page "/Gallery/{id}"
+@page "/Gallery/{id}/{view:regex(^source$)?}"
 @model Aibysitter.Web.Pages.Gallery.EntryModel
 @{
     var e = Model.Entry;
@@ -9,12 +9,13 @@
 
 <h1>@e.Name</h1>
 <p class="lede">@e.Description</p>
+<partial name="_Provenance" />
 
 <dl class="facts">
     <dt>File</dt>
     <dd>@e.FileName, @e.Lines.Count lines</dd>
     <dt>Format</dt>
-    <dd>@e.FormatName</dd>
+    <dd>@e.FormatName<partial name="_LegacyBadge" model="e" /></dd>
     <dt>Save as</dt>
     <dd><code>@e.InstallPath</code></dd>
     <dt>Category</dt>
@@ -40,24 +41,57 @@
 <partial name="_ScorePanel" model="e.Score" />
 
 <h2>Badge</h2>
-<p><img src="@e.BadgePath" alt="aibysitter @e.Score.Grade @e.Score.Value" height="20" /></p>
+<p><img src="@e.BadgePath" alt="Aibysitter lint score: @e.Score.Grade @e.Score.Value" height="20" /></p>
 <p>Markdown for a README:</p>
 <pre><code>@Model.BadgeMarkdown</code></pre>
 
 <h2>@e.FileName</h2>
-<ol class="file" aria-label="@e.FileName with line numbers">
-    @for (var i = 0; i < e.Lines.Count; i++)
+<p class="view-switch">
+    @if (Model.IsSource)
     {
-        var number = i + 1;
-        var lineFindings = Model.FindingsByLine.GetValueOrDefault(number);
-        <li id="L@(number)"><code>@e.Lines[i]</code>
-            @if (lineFindings is not null)
-            {
-                foreach (var f in lineFindings)
-                {
-                    <p class="file-note sev-@f.Severity.ToString().ToLowerInvariant()"><a asp-page="/Notes/Rule" asp-route-id="@f.Finding.RuleId">@f.Finding.RuleId</a> @f.Finding.Message</p>
-                }
-            }
-        </li>
+        <a asp-page="/Gallery/Entry" asp-route-id="@e.Id" asp-route-view="">View rendered</a>
     }
-</ol>
+    else
+    {
+        <a asp-page="/Gallery/Entry" asp-route-id="@e.Id" asp-route-view="@Aibysitter.Web.Pages.Gallery.EntryModel.SourceView">View source</a>
+    }
+    <button type="button" class="button" data-copy="raw-file" data-copy-status="copy-status" hidden>Copy @e.FileName</button>
+    <span id="copy-status" class="note" aria-live="polite"></span>
+</p>
+<pre id="raw-file" hidden>@e.Content</pre>
+
+@if (Model.IsSource)
+{
+    <ol class="file" aria-label="@e.FileName with line numbers">
+        @for (var i = 0; i < e.Lines.Count; i++)
+        {
+            var number = i + 1;
+            var lineFindings = Model.FindingsByLine.GetValueOrDefault(number);
+            <li id="L@(number)"><code>@e.Lines[i]</code>
+                @if (lineFindings is not null)
+                {
+                    foreach (var f in lineFindings)
+                    {
+                        <p class="file-note sev-@f.Severity.ToString().ToLowerInvariant()"><a asp-page="/Rules/Rule" asp-route-id="@f.Finding.RuleId">@f.Finding.RuleId</a> @f.Finding.Message</p>
+                    }
+                }
+            </li>
+        }
+    </ol>
+}
+else
+{
+    @if (e.Findings.Count > 0)
+    {
+        <p class="note">@e.Findings.Count finding@(e.Findings.Count == 1 ? "" : "s"). <a asp-page="/Gallery/Entry" asp-route-id="@e.Id" asp-route-view="@Aibysitter.Web.Pages.Gallery.EntryModel.SourceView">View source</a> to see them on their lines.</p>
+    }
+    @if (Model.FrontmatterLines.Count > 0)
+    {
+        <pre class="frontmatter"><code>@string.Join("\n", Model.FrontmatterLines)</code></pre>
+    }
+    <div class="rendered">@Html.Raw(Model.RenderedHtml)</div>
+}
+
+@section Scripts {
+    <script type="module" src="~/js/copy.mjs" asp-append-version="true"></script>
+}

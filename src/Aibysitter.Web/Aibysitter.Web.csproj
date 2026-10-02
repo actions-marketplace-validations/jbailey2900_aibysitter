@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Markdig" Version="1.4.0" />
     <PackageReference Include="Octokit" Version="14.0.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
   </ItemGroup>
@@ -14,6 +15,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Samples\sample-rules.md" LogicalName="Aibysitter.Web.Samples.sample-rules.md" />
     <EmbeddedResource Include="Gallery\Content\**\*" Exclude="Gallery\Content\LICENSE" LogicalName="gallery/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Notes\Content\*.md" LogicalName="notes/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

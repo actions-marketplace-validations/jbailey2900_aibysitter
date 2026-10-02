@@ -19,7 +19,7 @@ The default conclusion is `advisory`. Every review completes as `success` (no fi
 - The summary has one row per check with its finding count, then notes and config errors.
 - Each finding is an annotation on the changed line, in **Files changed**. Findings on removed files are listed in the summary.
 
-Checks: [aibysitting.net/Notes](https://aibysitting.net/Notes).
+Checks: [aibysitting.net/Rules](https://aibysitting.net/Rules). What the App reads and keeps: [aibysitting.net/Privacy](https://aibysitting.net/Privacy).
 
 ## Config file
 
