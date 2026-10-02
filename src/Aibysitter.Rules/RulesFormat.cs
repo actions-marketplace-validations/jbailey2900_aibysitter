@@ -40,6 +40,10 @@ public static partial class RulesFormats
         _ => throw new ArgumentOutOfRangeException(nameof(format), format, null),
     };
 
+    /// <summary>Parses a <see cref="RulesFormat"/> name, ignoring case; numbers are rejected.</summary>
+    public static bool TryParse(string name, out RulesFormat format) =>
+        Enum.TryParse(name, ignoreCase: true, out format) && Enum.IsDefined(format) && !int.TryParse(name, out _);
+
     /// <summary>Where the file goes in a repository. <paramref name="fileName"/> is used for .mdc rules.</summary>
     public static string InstallPath(RulesFormat format, string fileName) => format switch
     {

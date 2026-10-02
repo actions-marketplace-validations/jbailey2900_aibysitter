@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Aibysitter.Cli</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>aibysitter</ToolCommandName>
+    <PackageId>Aibysitter.Cli</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Jon Bailey</Authors>
+    <Description>Lints rules files for AI coding agents (CLAUDE.md, AGENTS.md, Cursor rules, Copilot instructions, GEMINI.md, .windsurfrules). Same rules and scoring as aibysitting.net. Runs offline.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://aibysitting.net</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>claude-md;agents-md;cursor;copilot;lint;ai-agents</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aibysitter.Rules\Aibysitter.Rules.csproj" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <InternalsVisibleTo Include="Aibysitter.Rules.Tests" />
+  </ItemGroup>
+
+</Project>

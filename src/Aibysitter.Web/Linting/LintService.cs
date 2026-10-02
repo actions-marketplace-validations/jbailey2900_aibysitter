@@ -9,35 +9,33 @@ public sealed record LintOutcome(
     IReadOnlyList<LintRow> Findings,
     IReadOnlyList<LintRow> Suppressed,
     LintScore Score,
-    IReadOnlyList<string> Disabled);
+    IReadOnlyList<string> Disabled,
+    LintReport Report);
 
 /// <summary>Server-side lint for the form and the API: optional disabled rules, scoring, and one log line without the text.</summary>
 public sealed class LintService(LintEngine engine, ILogger<LintService> logger)
 {
     public IReadOnlyList<IRule> Rules => engine.Rules;
 
-    /// <summary>Upper-cased, de-duplicated, ordered rule IDs. False with the offending IDs when any is not a lint rule.</summary>
-    public bool TryNormalizeDisabled(IEnumerable<string?>? ids, out IReadOnlyList<string> disabled, out IReadOnlyList<string> unknown)
-    {
-        var requested = (ids ?? []).Select(id => (id ?? string.Empty).Trim().ToUpperInvariant()).Distinct().ToList();
-        unknown = requested.Where(id => !engine.Rules.Any(r => r.Id == id)).ToList();
-        disabled = unknown.Count == 0 ? requested.Order(StringComparer.Ordinal).ToList() : [];
-        return unknown.Count == 0;
-    }
+    /// <summary>See <see cref="LintReport.TryNormalizeDisabled"/>.</summary>
+    public bool TryNormalizeDisabled(IEnumerable<string?>? ids, out IReadOnlyList<string> disabled, out IReadOnlyList<string> unknown) =>
+        LintReport.TryNormalizeDisabled(engine, ids, out disabled, out unknown);
 
     /// <param name="disabled">Normalized IDs from <see cref="TryNormalizeDisabled"/>.</param>
     /// <param name="source">"form" or "api", for the log line.</param>
     public LintOutcome Lint(string text, RulesFormat format, IReadOnlyList<string> disabled, string source)
     {
-        var active = disabled.Count == 0 ? engine : new LintEngine(engine.Rules.Where(r => !disabled.Contains(r.Id)));
+        var active = engine.Without(disabled);
         var rules = active.Rules.ToDictionary(r => r.Id);
         var result = active.Analyze(text, format);
+        var score = active.Score(result.Findings);
         var outcome = new LintOutcome(
             result.Format,
             result.Findings.Select(f => Row(f, rules)).ToList(),
             result.Suppressed.Select(f => Row(f, rules)).ToList(),
-            active.Score(result.Findings),
-            disabled);
+            score,
+            disabled,
+            LintReport.From(result, score, disabled, active.SeverityOf));
 
         logger.LogInformation(
             "Linted {Length} chars as {Format} ({Source}), {FindingCount} findings, {SuppressedCount} suppressed, {DisabledCount} rules off, score {Score}",
