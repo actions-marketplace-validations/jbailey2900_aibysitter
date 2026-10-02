@@ -4,6 +4,7 @@ using Aibysitter.Packs;
 namespace Aibysitter.Rules.Tests.Cli;
 
 /// <summary>init and packs. Paths are absolute under a temp folder, so the working directory is not changed.</summary>
+[Trait("Category", "Catalog")]
 public sealed class CliInitTests : IDisposable
 {
     private readonly string dir = Directory.CreateTempSubdirectory("aibysitter-init-").FullName;

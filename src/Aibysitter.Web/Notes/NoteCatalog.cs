@@ -1,4 +1,5 @@
 using System.Reflection;
+using Aibysitter.Packs;
 using Aibysitter.Web.Content;
 
 namespace Aibysitter.Web.Notes;
@@ -20,9 +21,9 @@ public sealed class NoteCatalog
 
     internal NoteCatalog(Assembly assembly)
     {
-        All = assembly.GetManifestResourceNames()
-            .Where(n => n.StartsWith(ResourcePrefix, StringComparison.Ordinal) && n.EndsWith(".md", StringComparison.Ordinal))
-            .Select(n => Load(assembly, n))
+        All = EmbeddedFiles.Read(assembly, ResourcePrefix)
+            .Where(f => f.Key.EndsWith(".md", StringComparison.Ordinal))
+            .Select(f => Load(f.Key, f.Value))
             .OrderByDescending(n => n.Date)
             .ThenBy(n => n.Slug, StringComparer.Ordinal)
             .ToList();
@@ -32,11 +33,10 @@ public sealed class NoteCatalog
 
     public Note? Find(string slug) => All.FirstOrDefault(n => string.Equals(n.Slug, slug, StringComparison.OrdinalIgnoreCase));
 
-    private static Note Load(Assembly assembly, string resource)
+    private static Note Load(string path, string text)
     {
-        using var reader = new StreamReader(assembly.GetManifestResourceStream(resource)!);
-        var text = reader.ReadToEnd();
-        var slug = resource[ResourcePrefix.Length..^".md".Length];
+        var resource = ResourcePrefix + path;
+        var slug = path[..^".md".Length];
         var meta = ReadFrontmatter(text, resource);
         return new Note(
             slug,

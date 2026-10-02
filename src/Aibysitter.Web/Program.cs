@@ -41,6 +41,7 @@ try
     builder.Services.AddSingleton<Aibysitter.Web.Seo.SiteMap>();
     builder.Services.AddSingleton(_ => new Aibysitter.Packs.PackCatalog());
     builder.Services.AddSingleton<Aibysitter.Web.RulesPacks.PackScores>();
+    builder.Services.AddHostedService<CatalogStartupCheck>();
     builder.Services.AddAibysitterHardening(builder.Configuration);
     builder.Services.AddAibysitterDataProtection(builder.Configuration);
     builder.Services.AddAibysitterGitHubApp(builder.Configuration);
@@ -80,6 +81,7 @@ try
 catch (Exception ex) when (ex is not HostAbortedException)
 {
     Log.Fatal(ex, "Host terminated unexpectedly");
+    Environment.ExitCode = 1;
 }
 finally
 {
