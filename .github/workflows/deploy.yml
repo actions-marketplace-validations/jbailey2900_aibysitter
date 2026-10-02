@@ -54,7 +54,10 @@ jobs:
           if (Test-Path -LiteralPath $bundleDir) { Remove-Item -LiteralPath $bundleDir -Recurse -Force }
           dotnet tool restore
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          dotnet ef migrations bundle --project src/Aibysitter.Web --configuration Release --output (Join-Path $bundleDir 'efbundle.exe') --force
+          # Build first so compiler errors appear in the log; dotnet ef only reports "Build failed".
+          dotnet build src/Aibysitter.Web/Aibysitter.Web.csproj --configuration Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet ef migrations bundle --project src/Aibysitter.Web --configuration Release --no-build --verbose --output (Join-Path $bundleDir 'efbundle.exe') --force
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       # Before the site goes offline: a failed migration leaves the current site serving. Migrations must be additive.
