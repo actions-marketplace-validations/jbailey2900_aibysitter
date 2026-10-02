@@ -1,6 +1,6 @@
 // Runs the browser lint engine for RulesParityTests.
 // Usage: node parity-runner.mjs <wwwroot/js directory> <lint|patterns>
-// lint:     stdin [{name, text, format}]    -> stdout [{name, format, findings, suppressed, score}]
+// lint:     stdin [{name, text, format, disable}] -> stdout [{name, format, findings, suppressed, score}]
 // patterns: stdin {patterns:[key], lines:[]} -> stdout {key: [[index, length], ...] per line, or {error}}
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -12,8 +12,8 @@ const engine = await import(pathToFileURL(join(jsDir, "lint-engine.mjs")).href);
 const generated = (await import(pathToFileURL(join(jsDir, "generated", "rules-patterns.mjs")).href)).default;
 
 function lint(items) {
-  return items.map(({ name, text, format }) => {
-    const result = engine.analyze(text, format);
+  return items.map(({ name, text, format, disable }) => {
+    const result = engine.analyze(text, format, disable ?? []);
     return { name, format: result.format, findings: result.findings, suppressed: result.suppressed, score: engine.score(result.findings) };
   });
 }

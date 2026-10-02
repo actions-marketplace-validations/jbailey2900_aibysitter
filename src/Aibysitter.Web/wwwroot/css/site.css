@@ -254,6 +254,11 @@ main { padding-top: var(--space-section); padding-bottom: var(--space-section); 
     overflow-x: auto;
 }
 
+.rules-picker { margin: var(--space-md) 0; }
+.rules-picker fieldset { border: 0; padding: 0; margin: var(--space-sm) 0 0; columns: 2 18ch; }
+.rules-picker legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.rules-picker label { display: block; font-size: var(--text-sm); break-inside: avoid; }
+
 .provenance { color: var(--mute); font-size: var(--text-sm); }
 
 .legacy {

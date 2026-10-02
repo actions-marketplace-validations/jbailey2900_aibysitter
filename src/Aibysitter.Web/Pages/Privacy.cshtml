@@ -12,6 +12,11 @@
     <li>One cookie: the lint form's anti-forgery token. No analytics, no tracking scripts.</li>
 </ul>
 
+<h2>API</h2>
+<ul>
+    <li>The text is not stored or logged. Request logs record IP address, path and status for 14 days.</li>
+</ul>
+
 <h2>GitHub App</h2>
 <ul>
     <li>Reads, at the pull request's head commit: the changed files and their diff, rules files, and <code>.github/aibysitter.json</code>. For R006 it also reads the repository file list and the manifests a rules file refers to (<code>package.json</code>, Makefiles, <code>.gitignore</code>, MSBuild files).</li>

@@ -80,4 +80,43 @@ public class LintPageBrowserEngineTests(WebApplicationFactory<Program> factory)
         Assert.Contains("Linted in your browser; the text is not sent.", html);
         Assert.Contains(@"<a href=""/Privacy"">Privacy</a>", html);
     }
+
+    private static IEnumerable<KeyValuePair<string, string>> RulesExcept(params string[] off) =>
+        new LintEngine().Rules.Where(r => !off.Contains(r.Id)).Select(r => KeyValuePair.Create("Enabled", r.Id))
+            .Prepend(KeyValuePair.Create("RulesPosted", "true"));
+
+    [Fact]
+    public async Task Form_HasCollapsedRulesPicker_AllChecked()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Lint");
+        var rules = new LintEngine().Rules;
+
+        Assert.Contains("<details class=\"rules-picker\">", html);
+        Assert.Equal(rules.Count, html.Split("name=\"Enabled\"").Length - 1);
+        Assert.Equal(rules.Count, html.Split("checked=\"checked\"").Length - 1);
+        Assert.DoesNotContain("value=\"R006\"", html);
+    }
+
+    [Fact]
+    public async Task ServerPost_UncheckedRule_IsDisabled_AndEchoed()
+    {
+        var response = await LintClient.PostAsync(factory.CreateClient(), Web.Samples.SampleRules.Text, RulesExcept("R001"));
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Contains("<h2>Findings (4)</h2>", html);
+        Assert.Contains("<p class=\"note\">Rules off: R001.</p>", html);
+        Assert.DoesNotContain("<a href=\"/Rules/R001\">R001</a> Rationale prose", html);
+        Assert.Contains("<details class=\"rules-picker\" open=\"open\">", html);
+        Assert.Contains("value=\"R001\" /> R001", html);
+        Assert.Contains("value=\"R002\" checked=\"checked\"", html);
+    }
+
+    [Fact]
+    public async Task ServerPost_WithoutRulesSection_RunsEveryRule()
+    {
+        var html = await (await LintClient.PostAsync(factory.CreateClient(), Web.Samples.SampleRules.Text)).Content.ReadAsStringAsync();
+
+        Assert.Contains("<h2>Findings (6)</h2>", html);
+        Assert.DoesNotContain("Rules off", html);
+    }
 }

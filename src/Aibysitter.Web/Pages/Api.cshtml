@@ -1,0 +1,110 @@
+@page "/API"
+@model ApiModel
+@using Aibysitter.Rules
+@using Aibysitter.Web.Linting
+@{
+    ViewData["Title"] = "API";
+}
+
+<h1>API</h1>
+<p>Lint a rules file over HTTP. Same rules, limits and results as the <a asp-page="/Lint">lint page</a>. No key, no account; the text is not stored or logged (<a asp-page="/Privacy">Privacy</a>).</p>
+
+<h2>Request</h2>
+<p><code>POST @LintApi.Path</code> with <code>Content-Type: application/json</code>.</p>
+<table class="stack">
+    <thead>
+        <tr>
+            <th>Field</th>
+            <th>Required</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><code>content</code></td>
+            <td>Yes</td>
+            <td>The rules file text, at most @LintLimits.MaxContentLength.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) characters.</td>
+        </tr>
+        <tr>
+            <td><code>format</code></td>
+            <td>No</td>
+            <td>One of @string.Join(", ", Enum.GetNames<RulesFormat>()). Case-insensitive. Default <code>Auto</code>.</td>
+        </tr>
+        <tr>
+            <td><code>disable</code></td>
+            <td>No</td>
+            <td>Lint rule IDs to skip, for example <code>["R004", "R013"]</code>. Their findings are not produced or scored.</td>
+        </tr>
+    </tbody>
+</table>
+
+<pre id="api-request"><code>POST @LintApi.Path HTTP/1.1
+Host: aibysitting.net
+Content-Type: application/json
+
+{
+  "content": "# Rules\n- Always use tabs.\n- Never use tabs.\n- Use tabs because the linter expects them.",
+  "format": "ClaudeMd",
+  "disable": ["R004"]
+}</code></pre>
+
+<h2>Response</h2>
+<pre id="api-response"><code>HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Cache-Control: no-store
+
+{
+  "rulesetVersion": @RulesetVersion.Current,
+  "detectedFormat": "ClaudeMd",
+  "score": 89,
+  "grade": "B",
+  "disabled": ["R004"],
+  "findings": [
+    {
+      "rule": "R003",
+      "line": 3,
+      "severity": "Error",
+      "message": "Contradicts line 2: \"use tabs\" is both required and forbidden.",
+      "fixHint": "Keep one instruction and delete the other."
+    },
+    {
+      "rule": "R001",
+      "line": 4,
+      "severity": "Info",
+      "message": "Rationale prose: \"because\"",
+      "fixHint": "Remove the explanation. State the instruction only."
+    }
+  ],
+  "suppressed": []
+}</code></pre>
+<p><code>findings</code> and <code>suppressed</code> are ordered by line, then rule. <code>suppressed</code> lists findings matched by an <code>aibysitter-disable</code> comment; they are not scored. <code>rulesetVersion</code> is listed on the <a asp-page="/Rules/Changelog">changelog</a>.</p>
+
+<h2>Errors</h2>
+<p>Errors are <a href="https://www.rfc-editor.org/rfc/rfc9457">problem details</a> (<code>application/problem+json</code>). Field errors are under <code>errors</code>, keyed by field name.</p>
+<table class="stack">
+    <thead>
+        <tr>
+            <th>Status</th>
+            <th>When</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>400</td>
+            <td>Invalid JSON; <code>content</code> missing, blank, or too long; unknown <code>format</code>; an ID in <code>disable</code> that is not a lint rule</td>
+        </tr>
+        <tr>
+            <td>413</td>
+            <td>Request body over @(LintApi.MaxBodyBytes / 1024) KB</td>
+        </tr>
+        <tr>
+            <td>415</td>
+            <td>Content type is not JSON</td>
+        </tr>
+        <tr>
+            <td>429</td>
+            <td>More than @Model.RateLimit.PermitLimit lint requests in @Model.RateLimit.WindowSeconds seconds from one IP address, counting lint page submissions without JavaScript and API calls together</td>
+        </tr>
+    </tbody>
+</table>
+<p>Browsers on other sites cannot call the API: it sends no CORS headers.</p>

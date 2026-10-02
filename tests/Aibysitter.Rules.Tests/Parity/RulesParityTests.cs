@@ -21,7 +21,7 @@ public class RulesParityTests(ITestOutputHelper output)
             return;
         }
 
-        var request = JsonSerializer.Serialize(ParityInputs.All.Select(i => new { name = i.Name, text = i.Text, format = i.Format.ToString() }));
+        var request = JsonSerializer.Serialize(ParityInputs.All.Select(i => new { name = i.Name, text = i.Text, format = i.Format.ToString(), disable = i.Disable ?? [] }));
         var actual = JsonNode.Parse(NodeRunner.Run(node, "lint", request))!.AsArray();
 
         var mismatches = ParityInputs.All.Zip(actual)
@@ -58,14 +58,15 @@ public class RulesParityTests(ITestOutputHelper output)
 
     private static JsonNode Expected(ParityInput input)
     {
-        var result = Engine.Analyze(input.Text, input.Format);
+        var engine = input.Disable is { Count: > 0 } off ? new LintEngine(Engine.Rules.Where(r => !off.Contains(r.Id))) : Engine;
+        var result = engine.Analyze(input.Text, input.Format);
         return JsonSerializer.SerializeToNode(new
         {
             name = input.Name,
             format = result.Format.ToString(),
             findings = result.Findings,
             suppressed = result.Suppressed,
-            score = ScoreShape(Engine.Score(result.Findings)),
+            score = ScoreShape(engine.Score(result.Findings)),
         }, Json)!;
     }
 

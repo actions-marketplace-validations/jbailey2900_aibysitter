@@ -25,9 +25,12 @@ public class TrustPagesTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task Privacy_DoesNotMentionApiYet()
+    public async Task Privacy_HasApiLine()
     {
-        Assert.DoesNotContain("API", await factory.CreateClient().GetStringAsync("/Privacy"));
+        var html = await factory.CreateClient().GetStringAsync("/Privacy");
+
+        Assert.Contains("<h2>API</h2>", html);
+        Assert.Contains("The text is not stored or logged. Request logs record IP address, path and status for 14 days.", html);
     }
 
     [Fact]

@@ -71,6 +71,10 @@ Optional repo config, `.github/aibysitter.json`, read from the pull request's he
 
 Install: [docs/installing-on-your-repos.md](docs/installing-on-your-repos.md). The App is private until launch. Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
 
+## API
+
+`POST /api/lint` with JSON `{ "content": "...", "format": "Auto", "disable": ["R013"] }` returns findings, suppressed findings, score, grade, detected format and ruleset version. Same limits as the lint page; no key. Details: [aibysitting.net/API](https://aibysitting.net/API).
+
 ## Gallery
 
 Example rules files, each linted and scored: [aibysitting.net/Gallery](https://aibysitting.net/Gallery).
