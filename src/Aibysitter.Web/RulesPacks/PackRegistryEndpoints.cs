@@ -27,7 +27,6 @@ public static class PackRegistryEndpoints
                     tags = v.Pack.Manifest.Tags,
                     targets = v.Pack.Manifest.Targets,
                     license = v.Pack.Manifest.License,
-                    standalone = v.Pack.Manifest.Standalone,
                     score = v.Score.Value,
                     grade = v.Score.Grade,
                     pageUrl = site.Url($"/Packs#{v.Pack.Id}"),

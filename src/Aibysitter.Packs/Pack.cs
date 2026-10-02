@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Aibysitter.Packs;
 
-/// <summary><c>pack.json</c>, schema version 1. <see cref="Standalone"/>: the pack is composed only on its own.</summary>
+/// <summary><c>pack.json</c>, schema version 1.</summary>
 public sealed record PackManifest(
     [property: JsonPropertyName("schemaVersion")] int SchemaVersion,
     [property: JsonPropertyName("id")] string Id,
@@ -11,7 +11,7 @@ public sealed record PackManifest(
     [property: JsonPropertyName("tags")] IReadOnlyList<string> Tags,
     [property: JsonPropertyName("targets")] IReadOnlyList<string> Targets,
     [property: JsonPropertyName("license")] string License,
-    [property: JsonPropertyName("standalone")] bool Standalone = false);
+    [property: JsonPropertyName("source")] string? Source = null);
 
 /// <param name="Id">File name without the order prefix and extension.</param>
 /// <param name="Heading">Text of the section's H2.</param>

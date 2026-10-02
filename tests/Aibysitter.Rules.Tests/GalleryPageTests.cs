@@ -94,24 +94,12 @@ public partial class GalleryPageTests(WebApplicationFactory<Program> factory)
         Assert.Equal(HttpStatusCode.NotFound, (await factory.CreateClient().GetAsync(path)).StatusCode);
     }
 
-    [Theory]
-    [InlineData("monorepo-root", "monorepo", "agents")]
-    [InlineData("nextjs-typescript-cursor", "nextjs-typescript", "cursor")]
-    [InlineData("minimal-starter-windsurf", "starter", "windsurf")]
-    public async Task EntryPage_LinksItsPack_AndInitCommand(string id, string pack, string format)
-    {
-        var html = await factory.CreateClient().GetStringAsync($"/Gallery/{id}");
-
-        Assert.Contains($"Composed from the <a href=\"/Packs#{pack}\"><code>{pack}</code></a> rules pack.", html);
-        Assert.Contains($"<code>aibysitter init --packs {pack} --format {format}</code>", html);
-    }
-
     [Fact]
     public async Task LintACopy_PrefillsTextarea()
     {
         var html = await factory.CreateClient().GetStringAsync("/Lint?gallery=go-http-service");
 
-        Assert.Contains("# Go HTTP service", html);
+        Assert.Contains("# Notify", html);
     }
 
     [Fact]

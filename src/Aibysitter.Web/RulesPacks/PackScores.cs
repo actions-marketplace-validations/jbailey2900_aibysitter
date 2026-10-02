@@ -25,5 +25,5 @@ public sealed class PackScores(PackCatalog catalog, LintEngine engine)
     private static PackView View(Pack pack, LintEngine engine) => new(
         pack,
         engine.Score(engine.Lint(PackComposer.Compose([pack], PackView.ScoreFormat), PackView.ScoreFormat)),
-        pack.Sections.Select(s => new SectionView(s, engine.Score(engine.Lint(s.Markdown, RulesFormat.Markdown)), MarkdownRenderer.ToHtml(PackComposer.Resolve(string.Join('\n', s.BodyLines), PackComposer.DefaultPath(PackView.ScoreFormat, [pack]))))).ToList());
+        pack.Sections.Select(s => new SectionView(s, engine.Score(engine.Lint(s.Markdown, RulesFormat.Markdown)), MarkdownRenderer.ToHtml(string.Join('\n', s.BodyLines)))).ToList());
 }

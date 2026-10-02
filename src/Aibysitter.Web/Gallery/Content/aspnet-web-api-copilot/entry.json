@@ -1,19 +1,10 @@
 {
   "id": "aspnet-web-api-copilot",
   "name": "ASP.NET Core Web API, Copilot instructions",
-  "description": "The ASP.NET Core Web API rules as GitHub Copilot repository instructions: same content.",
+  "description": "The inventory API rules as GitHub Copilot repository instructions: same content.",
   "category": ".NET",
-  "tags": [
-    "C#",
-    "Web API",
-    "PostgreSQL",
-    "OpenAPI",
-    "xUnit",
-    "GitHub Copilot"
-  ],
+  "tags": ["C#", "Web API", "PostgreSQL", "OpenAPI", "xUnit", "GitHub Copilot"],
   "file": "copilot-instructions.md",
   "path": ".github/copilot-instructions.md",
-  "license": "CC0-1.0",
-  "pack": "aspnet-web-api",
-  "title": "ASP.NET Core web API"
+  "license": "CC0-1.0"
 }
