@@ -29,7 +29,7 @@ Without `ConnectionStrings__Aibysitter` the site runs with score history off: no
 ## Database (score history)
 
 - SQL Server 2022. One table, `dbo.ScoreHistory`.
-- Create the database and logins once with [`deploy/create-database.sql`](../deploy/create-database.sql), as a sysadmin. Set `@RunnerAccount` in both batches.
+- Create the database and logins once with [`deploy/create-database.sql`](../deploy/create-database.sql), as a sysadmin. Set `@RunnerAccount` at the top.
   - Runner service account: `db_owner`, applies migrations.
   - App pool identity: `db_datareader`, `db_datawriter`.
 - The app never creates or migrates the database. Migrations run from the deploy workflow.
