@@ -2,6 +2,8 @@
 @model Aibysitter.Web.Pages.Notes.EntryModel
 @{
     ViewData["Title"] = Model.Note.Title;
+    ViewData["Description"] = Model.Note.Summary;
+    ViewData["Canonical"] = Aibysitter.Web.Seo.SiteMap.NotePath(Model.Note.Slug);
 }
 
 <p><a asp-page="/Notes/Index">All notes</a></p>
