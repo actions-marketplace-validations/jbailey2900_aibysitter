@@ -39,6 +39,7 @@ public static class LlmsTxt
         Link(text, site, "Methodology", "/Rules/Methodology", "how rules are chosen and scored");
         Link(text, site, "Changelog", "/Rules/Changelog", "ruleset and check changes by version");
         Link(text, site, "Gallery", "/Gallery", "public-domain rules files, each scored");
+        Link(text, site, "Incidents", "/Incidents", "postmortems of AI coding agent changes, with the checks that would have caught them; CC BY 4.0");
         Link(text, site, "Privacy", "/Privacy", "what is read, kept and logged");
         return text.ToString();
     }

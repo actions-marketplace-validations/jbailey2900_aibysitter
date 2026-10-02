@@ -1,0 +1,41 @@
+@page "/Incidents/{id:int}"
+@using Aibysitter.Web.Incidents
+@model Aibysitter.Web.Pages.Incidents.EntryModel
+@{
+    var incident = Model.Incident;
+    ViewData["Title"] = $"Incident {incident.Id}: {incident.Title}";
+    ViewData["Description"] = $"Incident {incident.Id}: {incident.Title}. Agent: {incident.Agent}.";
+    ViewData["Canonical"] = Aibysitter.Web.Seo.SiteMap.IncidentPath(incident.Id);
+}
+
+<p><a asp-page="/Incidents/Index">All incidents</a></p>
+
+<article class="note-body">
+    <h1>Incident @incident.Id: @incident.Title</h1>
+    <p class="note"><time datetime="@incident.Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@incident.Date.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</time></p>
+    <dl>
+        <dt>Agent</dt>
+        <dd>@incident.Agent</dd>
+        @if (incident.Model is not null)
+        {
+            <dt>Model</dt>
+            <dd>@incident.Model</dd>
+        }
+        <dt>Caught by</dt>
+        <dd>
+            @if (incident.CaughtBy.Count == 0)
+            {
+                @IncidentCatalog.None
+            }
+            else
+            {
+                for (var i = 0; i < incident.CaughtBy.Count; i++)
+                {
+                    @(i > 0 ? ", " : "")<a asp-page="/Rules/Rule" asp-route-id="@incident.CaughtBy[i]">@incident.CaughtBy[i]</a>
+                }
+            }
+        </dd>
+    </dl>
+    @Html.Raw(incident.Html)
+    <p class="note">Submitted by <a href="https://github.com/@incident.Submitter">@@@incident.Submitter</a> · <a href="@IncidentCatalog.LicenseUrl">@IncidentCatalog.License</a>@if (incident.Source is not null){<text> · <a href="@incident.Source">Source</a></text>}</p>
+</article>

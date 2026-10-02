@@ -1,5 +1,6 @@
 using Aibysitter.Packs;
 using Aibysitter.Web.Gallery;
+using Aibysitter.Web.Incidents;
 using Aibysitter.Web.Notes;
 using Aibysitter.Web.RulesPacks;
 using Aibysitter.Web.Seo;
@@ -13,7 +14,7 @@ namespace Aibysitter.Web.Infrastructure;
 public sealed class CatalogStartupCheck(IServiceProvider services, ILogger<CatalogStartupCheck> logger) : IHostedService
 {
     public static readonly IReadOnlyList<Type> Catalogs =
-        [typeof(PackCatalog), typeof(GalleryCatalog), typeof(NoteCatalog), typeof(PackScores), typeof(SiteMap)];
+        [typeof(PackCatalog), typeof(GalleryCatalog), typeof(NoteCatalog), typeof(IncidentCatalog), typeof(PackScores), typeof(SiteMap)];
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -35,7 +36,7 @@ public sealed class CatalogStartupCheck(IServiceProvider services, ILogger<Catal
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
-    /// <summary>PackCatalog and NoteCatalog load in their constructors; the rest load on first access.</summary>
+    /// <summary>PackCatalog, NoteCatalog and IncidentCatalog load in their constructors; the rest load on first access.</summary>
     private static void Load(object catalog)
     {
         _ = catalog switch

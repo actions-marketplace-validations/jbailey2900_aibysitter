@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Aibysitter.Rules.PullRequests;
 using Aibysitter.Web.Gallery;
+using Aibysitter.Web.Incidents;
 using Aibysitter.Web.Notes;
 using Aibysitter.Web.Seo;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -49,13 +50,14 @@ public class SeoEndpointsTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task SiteMap_ListsFixedPages_RulesChecks_Gallery_Notes()
+    public async Task SiteMap_ListsFixedPages_RulesChecks_Gallery_Notes_Incidents()
     {
         var locs = (await SiteMapUrls()).Select(u => u.Element(Ns + "loc")!.Value).ToList();
         var expected = SiteMap.FixedPages
             .Concat(RuleDocs.All.Concat(PullRequestCheckDocs.All).Select(d => "/Rules/" + d.Id))
             .Concat(factory.Services.GetRequiredService<GalleryCatalog>().All.Select(e => "/Gallery/" + e.Id))
             .Concat(factory.Services.GetRequiredService<NoteCatalog>().All.Select(n => "/Notes/" + n.Slug))
+            .Concat(factory.Services.GetRequiredService<IncidentCatalog>().All.OrderBy(i => i.Id).Select(i => "/Incidents/" + i.Id))
             .Select(p => Base + p);
 
         Assert.Equal(expected, locs);

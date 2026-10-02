@@ -46,20 +46,8 @@ public sealed class NoteCatalog
             MarkdownRenderer.ToHtml(text));
     }
 
-    private static Dictionary<string, string> ReadFrontmatter(string text, string resource)
-    {
-        var lines = text.Replace("\r\n", "\n").Split('\n');
-        var end = Array.IndexOf(lines, "---", 1);
-        if (lines.Length == 0 || lines[0] != "---" || end < 0)
-        {
-            throw new InvalidOperationException($"Note {resource} has no frontmatter block.");
-        }
-
-        return lines[1..end]
-            .Select(l => l.Split(':', 2))
-            .Where(p => p.Length == 2)
-            .ToDictionary(p => p[0].Trim(), p => p[1].Trim(), StringComparer.Ordinal);
-    }
+    private static Dictionary<string, string> ReadFrontmatter(string text, string resource) =>
+        FrontmatterBlock.Parse(text)?.Values ?? throw new InvalidOperationException($"Note {resource} has no frontmatter block.");
 
     private static string Required(Dictionary<string, string> meta, string key, string resource) =>
         meta.TryGetValue(key, out var value) && value.Length > 0 ? value : throw new InvalidOperationException($"Note {resource} is missing \"{key}\".");
