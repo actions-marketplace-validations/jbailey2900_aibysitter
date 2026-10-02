@@ -5,8 +5,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Aibysitter.Web.Pages.Rules;
 
-public class RuleModel(LintEngine engine, PullRequestReviewer reviewer) : PageModel
+public class RuleModel(LintEngine engine, PullRequestReviewer reviewer, Aibysitter.Web.Linting.RuleFixHints fixHints) : PageModel
 {
+    /// <summary>What the rule tells you to do, from its own bad example.</summary>
+    public IReadOnlyList<string> FixHints => fixHints.For(Doc.Id);
+
     public RuleDoc Doc { get; private set; } = null!;
 
     public Severity Severity { get; private set; }

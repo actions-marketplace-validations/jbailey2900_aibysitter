@@ -23,6 +23,7 @@ try
     builder.Services.AddHealthChecks();
     builder.Services.AddSingleton(_ => new LintEngine());
     builder.Services.AddSingleton<Aibysitter.Web.Linting.LintService>();
+    builder.Services.AddSingleton<RuleFixHints>();
     builder.Services.AddHttpClient<RawGitHubFetcher>(client =>
         {
             client.Timeout = Timeout.InfiniteTimeSpan;

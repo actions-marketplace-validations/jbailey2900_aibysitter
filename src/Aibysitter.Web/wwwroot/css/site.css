@@ -275,6 +275,8 @@ button.link-button[type="submit"] {
     filter: none;
 }
 
+.file-fix { display: block; color: var(--mute); }
+
 .provenance { color: var(--mute); font-size: var(--text-sm); }
 
 .legacy {

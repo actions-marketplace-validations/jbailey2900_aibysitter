@@ -41,11 +41,22 @@
     <dd>@Model.Doc.Flags</dd>
 </dl>
 
-<h2>Flagged</h2>
+<h2>Before</h2>
 <pre><code>@Model.Doc.BadExample</code></pre>
 
-<h2>Passes</h2>
+<h2>After</h2>
 <pre><code>@Model.Doc.GoodExample</code></pre>
+
+@if (Model.FixHints.Count > 0)
+{
+    <h2>Fix</h2>
+    <ul class="fix-hints">
+        @foreach (var hint in Model.FixHints)
+        {
+            <li>@hint</li>
+        }
+    </ul>
+}
 
 @if (Model.Doc.Id is "R015" or "R016")
 {
