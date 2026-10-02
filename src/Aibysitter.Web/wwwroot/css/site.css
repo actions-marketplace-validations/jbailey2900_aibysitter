@@ -259,6 +259,16 @@ main { padding-top: var(--space-section); padding-bottom: var(--space-section); 
 .rules-picker legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .rules-picker label { display: block; font-size: var(--text-sm); break-inside: avoid; }
 
+.config-form fieldset { border: 0; padding: 0; margin: 0 0 var(--space-xl); min-width: 0; }
+.config-form legend { padding: 0; margin-bottom: var(--space-sm); color: var(--ink); font-weight: 500; }
+.config-form .choices { columns: 2 22ch; }
+.config-form .choices label, .config-form label.choice { font-size: var(--text-sm); font-weight: 400; break-inside: avoid; margin-bottom: var(--space-xs); }
+.config-form textarea, .config-form input[type="text"] { margin-bottom: var(--space-sm); }
+.config-actions { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-top: var(--space-xl); }
+button.secondary[type="submit"] { background: var(--paper); border-color: var(--hairline-strong); color: var(--ink); }
+.errors { color: var(--fail); }
+#config-output { margin-top: var(--space-xl); }
+
 .url-form { margin-top: var(--space-xl); }
 .also-found { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-sm); margin-bottom: var(--space-md); }
 .inline-form { display: inline; margin: 0; }

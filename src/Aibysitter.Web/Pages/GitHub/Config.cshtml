@@ -1,0 +1,96 @@
+@page
+@model Aibysitter.Web.Pages.GitHub.ConfigModel
+@using Aibysitter.Rules.PullRequests
+@{
+    ViewData["Title"] = "GitHub App config";
+}
+
+<h1>Generate a config file</h1>
+<p class="lede">Builds <code>@RepoConfig.FilePath</code> for the <a asp-page="/GitHub">GitHub App</a>. Commit it to the repository's default branch or to a pull request.</p>
+
+<form method="post" id="config-form" class="config-form">
+    <input type="hidden" name="Posted" value="true" />
+    <fieldset>
+        <legend>Checks to run</legend>
+        <div class="choices">
+            @foreach (var check in Model.Checks)
+            {
+                <label><input type="checkbox" name="Enabled" value="@check.Id" checked="@(Model.IsEnabled(check.Id) ? "checked" : null)" /> @check.Id @check.Name</label>
+            }
+        </div>
+    </fieldset>
+    <fieldset aria-describedby="rules-help">
+        <legend>Rules P014 runs on rules files</legend>
+        <p class="note" id="rules-help">Unchecked rules are skipped inside P014. <code>aibysitter-disable</code> comments in a rules file apply first.</p>
+        <div class="choices">
+            @foreach (var rule in Model.Rules)
+            {
+                <label><input type="checkbox" name="Enabled" value="@rule.Id" checked="@(Model.IsEnabled(rule.Id) ? "checked" : null)" /> @rule.Id @rule.Name</label>
+            }
+        </div>
+    </fieldset>
+    <label for="Scope">Scope</label>
+    <textarea asp-for="Scope" rows="5" spellcheck="false" placeholder="src/**&#10;tests/**" aria-describedby="scope-help"></textarea>
+    <p class="note" id="scope-help">One glob per line, from the repository root. <code>**</code> matches any number of folders, <code>*</code> and <code>?</code> match within one folder. Case-sensitive. Empty: P004 is off.</p>
+    <span asp-validation-for="Scope" class="error"></span>
+    <fieldset>
+        <legend>Conclusion</legend>
+        <label class="choice"><input type="radio" name="Conclusion" value="@ConclusionMode.Advisory" checked="@(Model.Conclusion == ConclusionMode.Advisory ? "checked" : null)" /> <code>advisory</code>: findings report as neutral.</label>
+        <label class="choice"><input type="radio" name="Conclusion" value="@ConclusionMode.FailOnErrors" checked="@(Model.Conclusion == ConclusionMode.FailOnErrors ? "checked" : null)" /> <code>fail-on-errors</code>: the check fails when any Error finding exists.</label>
+    </fieldset>
+    <label for="TestPath">Test a path</label>
+    <input asp-for="TestPath" type="text" spellcheck="false" placeholder="src/Orders/OrderService.cs" aria-describedby="path-help" />
+    <p class="note" id="path-help">Optional. Shows whether a changed file at this path is in scope.</p>
+    <span asp-validation-for="TestPath" class="error"></span>
+    <div class="config-actions">
+        <button type="submit">Generate</button>
+        <button type="submit" class="secondary" asp-page-handler="Download">Download @Aibysitter.Web.Pages.GitHub.ConfigModel.DownloadName</button>
+    </div>
+</form>
+
+<div id="config-output" aria-live="polite">
+@if (Model.Json is { } json)
+{
+    @if (Model.Errors.Count > 0)
+    {
+        <h2>Errors</h2>
+        <ul class="errors">
+            @foreach (var error in Model.Errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    }
+    @if (Model.PathTest is { } test)
+    {
+        <p class="path-test">
+            @if (!test.HasScope)
+            {
+                <text><code>@test.Path</code>: no scope set; P004 is off.</text>
+            }
+            else if (test.MatchedGlob is { } glob)
+            {
+                <text><code>@test.Path</code> is in scope (matches <code>@glob</code>).</text>
+            }
+            else
+            {
+                <text><code>@test.Path</code> is outside scope; P004 flags it.</text>
+            }
+        </p>
+    }
+    <h2><code>@RepoConfig.FilePath</code></h2>
+    <p class="view-switch">
+        <button type="button" class="button" data-copy="config-json" data-copy-status="copy-status" hidden>Copy</button>
+        <span id="copy-status" class="note" aria-live="polite"></span>
+    </p>
+    <pre id="config-json"><code>@json</code></pre>
+    @if (Model.ConfigFileOutOfScope)
+    {
+        <p class="note">Scope does not include <code>@RepoConfig.FilePath</code>; a pull request that edits it gets a P004 finding.</p>
+    }
+}
+</div>
+
+@section Scripts {
+    <script type="module" src="~/js/copy.mjs" asp-append-version="true"></script>
+}
