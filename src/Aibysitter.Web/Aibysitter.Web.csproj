@@ -37,6 +37,15 @@
     <RulesPatternsFile>wwwroot/js/generated/rules-patterns.mjs</RulesPatternsFile>
   </PropertyGroup>
 
+  <!--
+    The generated folder never comes from the wwwroot glob: once a build has written the file, the glob would add it
+    as wwwroot\js\generated\... on Windows next to the target's wwwroot/js/generated/..., and static web assets fails
+    with a duplicate key (MSB4018 in DiscoverPrecompressedAssets). ExportRulesPatterns adds it exactly once.
+  -->
+  <ItemGroup>
+    <Content Remove="wwwroot/js/generated/**" />
+  </ItemGroup>
+
   <Target Name="ExportRulesPatterns" AfterTargets="ResolveProjectReferences" BeforeTargets="AssignTargetPaths" Condition="'$(DesignTimeBuild)' != 'true'">
     <MSBuild Projects="..\Aibysitter.Rules.Browser\Aibysitter.Rules.Browser.csproj" Targets="GetTargetPath">
       <Output TaskParameter="TargetOutputs" ItemName="_RulesPatternsExporter" />
@@ -47,7 +56,6 @@
     </PropertyGroup>
     <Exec Command="&quot;$(_DotNetHost)&quot; &quot;@(_RulesPatternsExporter)&quot; &quot;$(RulesPatternsFile)&quot;" />
     <ItemGroup>
-      <Content Remove="$(RulesPatternsFile)" />
       <Content Include="$(RulesPatternsFile)" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
   </Target>
