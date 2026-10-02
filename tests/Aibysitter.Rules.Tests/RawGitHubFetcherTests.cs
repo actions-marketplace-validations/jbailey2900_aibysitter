@@ -6,7 +6,7 @@ namespace Aibysitter.Rules.Tests;
 
 public class RawGitHubFetcherTests
 {
-    private static readonly RepoRef Repo = new("o", "r", false);
+    internal static readonly RepoRef Repo = new("o", "r", false);
 
     /// <summary>Answers by full URL; unknown URLs get 404. Records every request.</summary>
     internal sealed class FakeRaw : HttpMessageHandler

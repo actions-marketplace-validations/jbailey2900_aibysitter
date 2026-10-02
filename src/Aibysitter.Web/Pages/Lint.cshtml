@@ -35,7 +35,7 @@
 <form method="post" asp-page-handler="Url" id="url-form" class="url-form">
     <label for="repo">Or lint a public GitHub repository</label>
     <input id="repo" name="repo" type="text" value="@Model.RepoText" placeholder="owner/repo or https://github.com/owner/repo" spellcheck="false" aria-describedby="repo-help" />
-    <p class="note" id="repo-help">Reads @string.Join(", ", RawGitHubFetcher.FileNames) from the default branch, first found, through raw.githubusercontent.com. Nothing is stored or logged.</p>
+    <p class="note" id="repo-help">Reads @string.Join(", ", RawGitHubFetcher.FileNames) from the default branch, first found, through raw.githubusercontent.com. Stores the score for score history (<a asp-page="/Privacy">Privacy</a>).</p>
     <button type="submit">Lint repository</button>
 </form>
 
@@ -120,6 +120,11 @@
             }
         </tbody>
     </table>
+}
+
+@if (Model.History is { Count: > 0 } history && Model.UrlLint is { Repo: { } historyRepo, FileName: { } historyFile })
+{
+    <partial name="_ScoreHistory" model="(Aibysitter.Web.Data.ScoreHistoryKey.Repo(historyRepo), historyFile, history, Model.HistoryBadgeUrl!)" />
 }
 </div>
 

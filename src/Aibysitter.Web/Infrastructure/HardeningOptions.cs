@@ -15,3 +15,12 @@ public sealed class LintRateLimitSettings
 
     public int WindowSeconds { get; set; } = 60;
 }
+
+public sealed class BadgeRateLimitSettings
+{
+    public const string SectionName = "RateLimiting:Badge";
+
+    public int PermitLimit { get; set; } = 60;
+
+    public int WindowSeconds { get; set; } = 60;
+}

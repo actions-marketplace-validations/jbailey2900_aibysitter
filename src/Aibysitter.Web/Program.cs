@@ -1,5 +1,6 @@
 using Aibysitter.Web.Linting;
 using Aibysitter.Rules;
+using Aibysitter.Web.Data;
 using Aibysitter.Web.Gallery;
 using Aibysitter.Web.GitHub;
 using Aibysitter.Web.Infrastructure;
@@ -40,6 +41,8 @@ try
     builder.Services.AddAibysitterHardening(builder.Configuration);
     builder.Services.AddAibysitterDataProtection(builder.Configuration);
     builder.Services.AddAibysitterGitHubApp(builder.Configuration);
+    builder.Services.AddAibysitterScoreHistory(builder.Configuration);
+    builder.Services.AddSingleton<BadgeService>();
 
     var app = builder.Build();
 
@@ -66,6 +69,7 @@ try
     app.MapRegistry();
     app.MapGalleryDownloads();
     app.MapSeo();
+    app.MapBadges();
 
     app.Run();
 }

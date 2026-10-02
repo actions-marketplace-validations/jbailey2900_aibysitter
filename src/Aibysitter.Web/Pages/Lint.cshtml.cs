@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Aibysitter.Rules;
+using Aibysitter.Web.Data;
+using Aibysitter.Web.Infrastructure;
 using Aibysitter.Web.Gallery;
 using Aibysitter.Web.Linting;
 using Aibysitter.Web.Samples;
@@ -9,7 +11,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Aibysitter.Web.Pages;
 
-public class LintModel(LintService lint, GalleryCatalog galleryCatalog, RawGitHubFetcher fetcher) : PageModel
+public class LintModel(LintService lint, GalleryCatalog galleryCatalog, RawGitHubFetcher fetcher, IScoreHistory history, SiteOptions site) : PageModel
 {
     public const int MaxContentLength = LintLimits.MaxContentLength;
 
@@ -53,6 +55,14 @@ public class LintModel(LintService lint, GalleryCatalog galleryCatalog, RawGitHu
 
     /// <summary>Set after a lint-by-URL request.</summary>
     public UrlLintResult? UrlLint { get; private set; }
+
+    /// <summary>Recent scores for the repository and file just linted by URL, newest first; null when score history is off or nothing was found.</summary>
+    public IReadOnlyList<ScorePoint>? History { get; private set; }
+
+    public const int HistoryCount = 10;
+
+    /// <summary>Badge URL for the file shown in <see cref="History"/>; <c>?file=</c> only when it is not the file the badge picks by default.</summary>
+    public string? HistoryBadgeUrl { get; private set; }
 
     /// <summary>True when the page shows the built-in sample's results on load.</summary>
     public bool IsSample { get; private set; }
@@ -106,10 +116,26 @@ public class LintModel(LintService lint, GalleryCatalog galleryCatalog, RawGitHu
         {
             RulesText = fetched.Content;
             Format = RulesFormats.FromFileName(fetched.FileName!) ?? RulesFormat.Auto;
-            Show(lint.Lint(RulesText!, Format, [], "url"));
+            var outcome = lint.Lint(RulesText!, Format, [], "url");
+            Show(outcome);
+            await RecordAsync(ScoreHistoryKey.Repo(parsed!), fetched.FileName!, outcome.Score, cancellationToken);
+            var isDefault = RawGitHubFetcher.FileNames.First(n => n == fetched.FileName || fetched.OtherFiles.Contains(n)) == fetched.FileName;
+            HistoryBadgeUrl = site.Url(BadgeEndpoints.Path(parsed!, isDefault ? null : fetched.FileName));
         }
 
         return Page();
+    }
+
+    /// <summary>Only reached for a file fetched without credentials, so only public repositories are stored.</summary>
+    private async Task RecordAsync(string repo, string fileName, LintScore score, CancellationToken cancellationToken)
+    {
+        if (!history.Enabled)
+        {
+            return;
+        }
+
+        await history.RecordAsync(new ScoreRecord(repo, fileName, RulesetVersion.Current, score.Value, score.Grade, ScoreSource.LintByUrl), cancellationToken);
+        History = await history.RecentAsync(repo, fileName, HistoryCount, cancellationToken);
     }
 
     private void Show(LintOutcome outcome)

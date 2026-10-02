@@ -22,6 +22,7 @@ jobs:
     runs-on: [self-hosted, windows, "${{ vars.RUNNER_LABEL }}"]
     env:
       SITE_PATH: ${{ vars.SITE_PATH }}
+      DB_CONNECTION: ${{ vars.DB_CONNECTION }}
     defaults:
       run:
         shell: powershell
@@ -30,6 +31,7 @@ jobs:
         run: |
           if ([string]::IsNullOrWhiteSpace($env:SITE_PATH)) { throw "Repository variable SITE_PATH is not set." }
           if (-not (Test-Path -LiteralPath $env:SITE_PATH -PathType Container)) { throw "SITE_PATH '$env:SITE_PATH' does not exist." }
+          if ([string]::IsNullOrWhiteSpace($env:DB_CONNECTION)) { throw "Repository variable DB_CONNECTION is not set." }
           $sdks = & dotnet --list-sdks 2>$null
           if (-not ($sdks -match '^10\.0\.')) { throw ".NET 10 SDK not found on runner. Installed SDKs: $($sdks -join '; ')" }
 
@@ -45,6 +47,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $patterns = Join-Path $publish 'wwwroot/js/generated/rules-patterns.mjs'
           if (-not (Test-Path -LiteralPath $patterns -PathType Leaf)) { throw "Publish output is missing $patterns." }
+
+      - name: Build migrations bundle
+        run: |
+          $bundleDir = Join-Path $env:RUNNER_TEMP 'aibysitter-efbundle'
+          if (Test-Path -LiteralPath $bundleDir) { Remove-Item -LiteralPath $bundleDir -Recurse -Force }
+          dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet ef migrations bundle --project src/Aibysitter.Web --configuration Release --output (Join-Path $bundleDir 'efbundle.exe') --force
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # Before the site goes offline: a failed migration leaves the current site serving. Migrations must be additive.
+      - name: Apply database migrations
+        run: |
+          & (Join-Path $env:RUNNER_TEMP 'aibysitter-efbundle\efbundle.exe') --connection $env:DB_CONNECTION
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Take site offline
         run: |

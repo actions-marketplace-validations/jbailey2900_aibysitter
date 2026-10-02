@@ -11,7 +11,7 @@ public class TrustPagesTests(WebApplicationFactory<Program> factory)
     [InlineData("/Privacy", "Logs record repository, pull request number, commit, delivery ID and finding count for 14 days. No file contents are logged.")]
     [InlineData("/Privacy", "Holds a queue file for the duration of a review")]
     [InlineData("/Privacy", "<td>Checks</td>")]
-    [InlineData("/Privacy", "Lint by URL: the server fetches the file from raw.githubusercontent.com")]
+    [InlineData("/Privacy", "Lint by URL and badges: the server fetches the file from raw.githubusercontent.com, so GitHub sees the request come from this site. For public files it finds, it stores the repository name, file name, score, grade, ruleset version and time, kept up to 400 days, and shows them as score history. Private repositories cannot be read, so nothing is stored for them. The repository name is not logged.")]
     [InlineData("/Privacy", "Installed GitHub Apps")]
     [InlineData("/Privacy", "Share links put the text, format and rule choices in the URL after #. Browsers do not send that part to the server. Anyone with the link can read the text.")]
     [InlineData("/About", "Jon Bailey")]

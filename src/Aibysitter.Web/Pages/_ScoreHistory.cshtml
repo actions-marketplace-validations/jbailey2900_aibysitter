@@ -1,0 +1,28 @@
+@using System.Globalization
+@using Aibysitter.Rules
+@model (string Repo, string FileName, IReadOnlyList<Aibysitter.Web.Data.ScorePoint> Points, string BadgeUrl)
+<section class="score-history" aria-labelledby="score-history-heading">
+    <h2 id="score-history-heading">Recent scores for @Model.Repo, @Model.FileName</h2>
+    <table class="history">
+        <thead>
+            <tr>
+                <th>Time (UTC)</th>
+                <th>Score</th>
+                <th>Grade</th>
+                <th>Ruleset</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var point in Model.Points)
+            {
+                <tr class="@(point.RulesetVersion == RulesetVersion.Current ? null : "older-ruleset")">
+                    <td><time datetime="@point.CreatedUtc.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)">@point.CreatedUtc.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)</time></td>
+                    <td>@point.Score</td>
+                    <td>@point.Grade</td>
+                    <td>v@(point.RulesetVersion)@(point.RulesetVersion == RulesetVersion.Current ? "" : " (older)")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="note">Badge for a README: <code>@Model.BadgeUrl</code></p>
+</section>
