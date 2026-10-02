@@ -15,7 +15,7 @@ Change the repository list later under **Configure** for Aibysitter: personal ac
 
 The default conclusion is `advisory`. Every review completes as `success` (no findings) or `neutral` (findings). Nothing blocks a merge.
 
-- The check is named **Aibysitter**, in the pull request's **Checks** tab.
+- The check is named **Aibysitter review**, in the pull request's **Checks** tab. GitHub lists it as **Aibysitter / Aibysitter review**.
 - The summary has one row per check with its finding count, then notes and config errors.
 - Each finding is an annotation on the changed line, in **Files changed**. Findings on removed files are listed in the summary.
 
@@ -75,14 +75,14 @@ Precedence: comments in the file, then rule IDs in `disable`, then `"disable": [
 ## Failing the build
 
 1. Set `"conclusion": "fail-on-errors"`.
-2. Under **Settings → Branches** (or **Rules → Rulesets**), require the **Aibysitter** status check on the default branch.
+2. Under **Settings → Branches** (or **Rules → Rulesets**), require the **Aibysitter review** status check on the default branch.
 3. Disable noisy checks first: P012 (debug leftovers), P011 (CI config edited), R013 (prose paragraphs). P012 and P011 are Info; they never fail the check, but they add annotations.
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| No **Aibysitter** check appears | Repository not selected, or the App lacks Checks permission | Add the repository under **Configure**; accept any pending permission request |
+| No **Aibysitter review** check appears | Repository not selected, or the App lacks Checks permission | Add the repository under **Configure**; accept any pending permission request |
 | Check stays **Queued** | The review is waiting behind others, or the server is restarting | Wait a few minutes. Still queued: push a commit. App owner: redeliver the webhook (App settings → Advanced → Recent deliveries) |
 | Summary says "R006 skipped" | The repository file list is too large for one GitHub request | None; R006 does not run on that repository |
 | Unexpected P004 findings | `scope` does not cover the path | Add the glob to `scope`, or remove `scope` |

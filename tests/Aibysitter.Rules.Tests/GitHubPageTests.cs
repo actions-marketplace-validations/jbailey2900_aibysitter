@@ -22,6 +22,16 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task CheckRunName_IsAibysitterReview_OnPageAndPrivacy()
+    {
+        var client = factory.CreateClient();
+
+        Assert.Equal("Aibysitter review", Aibysitter.Web.GitHub.GitHubOptions.CheckRunName);
+        Assert.Contains("It posts a check named Aibysitter review, with", await client.GetStringAsync("/GitHub"));
+        Assert.Contains("<td>Creating and completing the Aibysitter review check run</td>", await client.GetStringAsync("/Privacy"));
+    }
+
+    [Fact]
     public async Task GitHubPage_HasNoInstallLink_UntilAppIsPublic()
     {
         var html = await factory.CreateClient().GetStringAsync("/GitHub");
