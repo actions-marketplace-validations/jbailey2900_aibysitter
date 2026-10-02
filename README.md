@@ -36,7 +36,7 @@ Rules: [aibysitting.net/Rules](https://aibysitting.net/Rules). Ruleset version a
 
 ## GitHub App
 
-Reviews pull requests and posts a check named `Aibysitter`, with an annotation on each flagged line.
+Reviews pull requests and posts a check named `Aibysitter review`, with an annotation on each flagged line.
 
 | ID | Check | Severity |
 |---|---|---|

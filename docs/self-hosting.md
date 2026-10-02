@@ -78,7 +78,7 @@ Review queue, with `ReviewQueue__Path` set:
 - Unreadable job files move to `failed/` in the folder and are logged.
 - Redelivering a webhook re-queues its saved job against the existing check run. If the job is being reviewed, the redelivery does nothing.
 
-Without `ReviewQueue__Path`, a review lost to a recycle or crash leaves the `Aibysitter` check in `queued`. Recover by redelivering the webhook from the App's advanced settings or pushing a new commit.
+Without `ReviewQueue__Path`, a review lost to a recycle or crash leaves the `Aibysitter review` check in `queued`. Recover by redelivering the webhook from the App's advanced settings or pushing a new commit.
 
 ## Publishing
 
