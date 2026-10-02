@@ -269,6 +269,9 @@ button.secondary[type="submit"] { background: var(--paper); border-color: var(--
 .errors { color: var(--fail); }
 #config-output { margin-top: var(--space-xl); }
 
+.share { margin-top: var(--space-xl); }
+.share-actions { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-md); margin: var(--space-sm) 0; }
+
 .url-form { margin-top: var(--space-xl); }
 .also-found { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-sm); margin-bottom: var(--space-md); }
 .inline-form { display: inline; margin: 0; }

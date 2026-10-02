@@ -13,6 +13,7 @@ public class TrustPagesTests(WebApplicationFactory<Program> factory)
     [InlineData("/Privacy", "<td>Checks</td>")]
     [InlineData("/Privacy", "Lint by URL: the server fetches the file from raw.githubusercontent.com")]
     [InlineData("/Privacy", "Installed GitHub Apps")]
+    [InlineData("/Privacy", "Share links put the text, format and rule choices in the URL after #. Browsers do not send that part to the server. Anyone with the link can read the text.")]
     [InlineData("/About", "Jon Bailey")]
     [InlineData("/About", "The repository is private until launch.")]
     [InlineData("/About", "href=\"https://github.com/jbailey2900\"")]

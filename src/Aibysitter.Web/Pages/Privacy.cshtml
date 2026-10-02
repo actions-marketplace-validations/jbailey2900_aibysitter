@@ -10,6 +10,7 @@
 <ul>
     <li>With JavaScript on, the file is linted in your browser. The text is not sent.</li>
     <li>With JavaScript off, the server lints it. The text is never stored or logged. Request logs record IP address, path and status for 14 days.</li>
+    <li>Share links put the text, format and rule choices in the URL after #. Browsers do not send that part to the server. Anyone with the link can read the text.</li>
     <li>Lint by URL: the server fetches the file from raw.githubusercontent.com, so GitHub sees the request come from this site. The repository name and file are not stored or logged.</li>
     <li>One cookie: the lint form's anti-forgery token. No analytics, no tracking scripts.</li>
 </ul>
