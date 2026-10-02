@@ -177,7 +177,7 @@ public class FormatWebTests(WebApplicationFactory<Program> factory) : IClassFixt
 
     [Theory]
     [InlineData("python-fastapi-cursorrules", ".cursorrules", "text/plain")]
-    [InlineData("nextjs-typescript-cursor", "storefront.mdc", "text/markdown")]
+    [InlineData("nextjs-typescript-cursor", "nextjs.mdc", "text/markdown")]
     [InlineData("minimal-starter-windsurf", ".windsurfrules", "text/plain")]
     public async Task Download_DotAndMdcFiles(string id, string file, string mediaType)
     {
@@ -193,7 +193,7 @@ public class FormatWebTests(WebApplicationFactory<Program> factory) : IClassFixt
         var html = await factory.CreateClient().GetStringAsync("/Gallery/nextjs-typescript-cursor");
 
         Assert.Contains("<dd>Cursor rule (.mdc)</dd>", html);
-        Assert.Contains("<code>.cursor/rules/storefront.mdc</code>", html);
+        Assert.Contains("<code>.cursor/rules/nextjs.mdc</code>", html);
     }
 
     [Fact]

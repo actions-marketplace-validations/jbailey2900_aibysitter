@@ -102,9 +102,11 @@ Sections for a rules file, grouped by stack: [aibysitting.net/Packs](https://aib
 
 A pack is a folder under [`src/Aibysitter.Packs/Content/`](src/Aibysitter.Packs/Content/):
 
-- `pack.json`: `schemaVersion` (1), `id` (kebab-case, the folder name), `title`, `description`, `tags`, `targets` (formats the pack is written for), `license`, optional `source` (the gallery entry it came from).
+- `pack.json`: `schemaVersion` (1), `id` (kebab-case, the folder name), `title`, `description`, `tags`, `targets` (formats the pack is written for), `license`, optional `standalone` (`true`: the pack is used only on its own; `starter` is one).
 - `intro.md` (optional): text under the H1, written only when the pack is used alone.
 - `NN-name.md`: one section each, in file order. One H2 heading and its body; no H1.
+
+Pack text never names a rules file directly; it writes `{{rules-file}}`, replaced with the output path (`CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/<pack>.mdc`, ...). Loading rejects literal rules-file names and unknown `{{...}}` tokens.
 
 Composition: `# title`, the intro when one pack is chosen, then sections in pack order. A heading in more than one pack becomes one section at its first position, with later packs' lines added and repeated list items dropped. Cursor `.mdc` output gets `description` and `alwaysApply: true` frontmatter.
 
@@ -148,7 +150,7 @@ Example rules files, each linted and scored: [aibysitting.net/Gallery](https://a
 - `GET /gallery/{id}/badge.svg`: score badge
 - `GET /registry.json`: all entries, schema version 1
 
-Entries live in [`src/Aibysitter.Web/Gallery/Content/`](src/Aibysitter.Web/Gallery/Content/), one folder per entry: `entry.json` plus the rules file.
+Entries live in [`src/Aibysitter.Web/Gallery/Content/`](src/Aibysitter.Web/Gallery/Content/), one folder per entry holding only `entry.json`: metadata, `file` (and `path` for `.mdc`), `pack`, and optional `title`. The content is that rules pack composed in the entry's format, so the gallery and `aibysitter init --packs <pack> --format <format>` produce the same file.
 
 ## Repository layout
 

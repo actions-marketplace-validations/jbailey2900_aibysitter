@@ -119,6 +119,22 @@ public sealed partial class PackCatalog
 
         if (string.IsNullOrWhiteSpace(manifest.License)) errors.Add($"{folder}/pack.json: license is required");
 
+        foreach (var (name, text) in files.Where(f => f.Key.EndsWith(".md", StringComparison.Ordinal)).OrderBy(f => f.Key, StringComparer.Ordinal))
+        {
+            foreach (Match token in TokenRegex().Matches(text))
+            {
+                if (token.Value != PackComposer.RulesFileToken)
+                {
+                    errors.Add($"{folder}/{name}: unknown token {token.Value}");
+                }
+            }
+
+            if (RulesFileNameRegex().Match(text) is { Success: true } named)
+            {
+                errors.Add($"{folder}/{name}: names a rules file ({named.Value}); write {PackComposer.RulesFileToken} so it matches the chosen format");
+            }
+        }
+
         var sections = new List<PackSection>();
         foreach (var (name, text) in files.Where(f => f.Key is not ("pack.json" or "intro.md")).OrderBy(f => f.Key, StringComparer.Ordinal))
         {
@@ -200,6 +216,13 @@ public sealed partial class PackCatalog
 
     [GeneratedRegex(@"^(?<order>\d{2})-(?<id>[a-z0-9]+(?:-[a-z0-9]+)*)\.md$")]
     private static partial Regex SectionFileRegex();
+
+    [GeneratedRegex(@"\{\{[^}]*\}\}")]
+    private static partial Regex TokenRegex();
+
+    /// <summary>Rules file names that depend on the output format.</summary>
+    [GeneratedRegex(@"(?<![\w.-])(?:CLAUDE\.md|AGENTS\.md|GEMINI\.md|copilot-instructions\.md|\.cursorrules|\.windsurfrules|[\w-]+\.mdc)(?![\w-]|\.\w)")]
+    private static partial Regex RulesFileNameRegex();
 
     [GeneratedRegex("^#{1,2} ")]
     private static partial Regex HeadingRegex();

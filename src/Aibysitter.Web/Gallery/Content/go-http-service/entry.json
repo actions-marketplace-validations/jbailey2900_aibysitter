@@ -3,7 +3,15 @@
   "name": "Go HTTP service",
   "description": "Standard-library HTTP service with method-pattern routing, pgx and sqlc, slog logging, and table-driven tests.",
   "category": "Go",
-  "tags": ["Go", "net/http", "PostgreSQL", "sqlc", "slog"],
+  "tags": [
+    "Go",
+    "net/http",
+    "PostgreSQL",
+    "sqlc",
+    "slog"
+  ],
   "file": "AGENTS.md",
-  "license": "CC0-1.0"
+  "license": "CC0-1.0",
+  "pack": "go-http-service",
+  "title": "Go HTTP service"
 }

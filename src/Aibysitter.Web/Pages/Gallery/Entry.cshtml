@@ -11,6 +11,10 @@
 
 <h1>@e.Name</h1>
 <p class="lede">@e.Description</p>
+@if (e.PackId is { } packId)
+{
+    <p class="note">Composed from the <a href="/Packs#@packId"><code>@packId</code></a> rules pack. Same file from the CLI: <code>aibysitter init --packs @packId --format @Aibysitter.Packs.PackComposer.ShortNames.First(n => n.Value == e.Format).Key</code></p>
+}
 <partial name="_Provenance" />
 
 <dl class="facts">

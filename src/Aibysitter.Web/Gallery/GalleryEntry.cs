@@ -18,6 +18,9 @@ public sealed record GalleryEntry(
     RulesFormat Format,
     string? RepoPath = null)
 {
+    /// <summary>Rules pack the content is composed from; null for file-based (test) entries.</summary>
+    public string? PackId { get; init; }
+
     public IReadOnlyList<string> Lines { get; } = Content.Replace("\r\n", "\n").TrimEnd('\n').Split('\n');
 
     public string DownloadPath => $"/gallery/{Id}/{FileName}";
@@ -29,6 +32,6 @@ public sealed record GalleryEntry(
     /// <summary>Single-file formats superseded by rules folders: .cursorrules and .windsurfrules.</summary>
     public bool IsLegacyFormat => Format is RulesFormat.CursorRules or RulesFormat.WindsurfRules;
 
-    /// <summary>Where the file goes in a repository, e.g. <c>.cursor/rules/storefront.mdc</c>.</summary>
+    /// <summary>Where the file goes in a repository, e.g. <c>.cursor/rules/nextjs.mdc</c>.</summary>
     public string InstallPath => RepoPath ?? RulesFormats.InstallPath(Format, FileName);
 }
