@@ -17,5 +17,5 @@
     "WindsurfRules"
   ],
   "license": "CC0-1.0",
-  "standalone": true
+  "source": "minimal-starter"
 }

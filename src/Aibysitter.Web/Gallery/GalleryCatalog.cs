@@ -1,14 +1,13 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Aibysitter.Packs;
 using Aibysitter.Rules;
 
 namespace Aibysitter.Web.Gallery;
 
 /// <summary>
-/// Rules-file gallery from embedded <c>gallery/&lt;id&gt;/entry.json</c> files. An entry with <c>pack</c> is that rules pack
-/// composed in the entry's format; an entry without one carries its rules file (test fixtures only). Loaded and linted once per process.
+/// Rules-file gallery built from embedded resources under <c>gallery/&lt;id&gt;/</c> (entry.json + the rules file).
+/// Loaded and linted once per process.
 /// </summary>
 public sealed partial class GalleryCatalog
 {
@@ -17,23 +16,13 @@ public sealed partial class GalleryCatalog
     private readonly Lazy<IReadOnlyList<GalleryEntry>> entries;
 
     public GalleryCatalog(LintEngine engine)
-        : this(engine, new PackCatalog())
-    {
-    }
-
-    public GalleryCatalog(LintEngine engine, PackCatalog packs)
-        : this(engine, typeof(GalleryCatalog).Assembly, packs)
+        : this(engine, typeof(GalleryCatalog).Assembly)
     {
     }
 
     public GalleryCatalog(LintEngine engine, Assembly assembly)
-        : this(engine, assembly, new PackCatalog())
     {
-    }
-
-    public GalleryCatalog(LintEngine engine, Assembly assembly, PackCatalog packs)
-    {
-        entries = new Lazy<IReadOnlyList<GalleryEntry>>(() => Load(engine, assembly, packs));
+        entries = new Lazy<IReadOnlyList<GalleryEntry>>(() => Load(engine, assembly));
     }
 
     public IReadOnlyList<GalleryEntry> All => entries.Value;
@@ -44,7 +33,7 @@ public sealed partial class GalleryCatalog
 
     public IReadOnlyList<string> Tags => All.SelectMany(e => e.Tags).Distinct(StringComparer.Ordinal).Order(StringComparer.OrdinalIgnoreCase).ToList();
 
-    private static IReadOnlyList<GalleryEntry> Load(LintEngine engine, Assembly assembly, PackCatalog packs)
+    private static IReadOnlyList<GalleryEntry> Load(LintEngine engine, Assembly assembly)
     {
         var resources = assembly.GetManifestResourceNames()
             .Select(raw => (Raw: raw, Path: raw.Replace('\\', '/')))
@@ -66,32 +55,13 @@ public sealed partial class GalleryCatalog
                 ?? throw new InvalidOperationException($"Gallery entry '{folder}': entry.json is empty.");
             Validate(folder, manifest);
 
+            if (!resources.TryGetValue($"{ResourcePrefix}{folder}/{manifest.File}", out var fileResource))
+            {
+                throw new InvalidOperationException($"Gallery entry '{folder}': file '{manifest.File}' not found.");
+            }
+
+            var content = Read(assembly, fileResource);
             var format = RulesFormats.FromFileName(manifest.Path ?? manifest.File!)!.Value;
-            string content;
-            if (manifest.Pack is { } packId)
-            {
-                var pack = packs.Find(packId) ?? throw new InvalidOperationException($"Gallery entry '{folder}': pack '{packId}' not found.");
-                if (!pack.Manifest.Targets.Contains(format.ToString()))
-                {
-                    throw new InvalidOperationException($"Gallery entry '{folder}': pack '{packId}' does not target {format}.");
-                }
-
-                if (resources.ContainsKey($"{ResourcePrefix}{folder}/{manifest.File}"))
-                {
-                    throw new InvalidOperationException($"Gallery entry '{folder}': has both a pack and a '{manifest.File}' file.");
-                }
-
-                content = PackComposer.Compose([pack], format, manifest.Title, manifest.Path ?? manifest.File);
-            }
-            else if (resources.TryGetValue($"{ResourcePrefix}{folder}/{manifest.File}", out var fileResource))
-            {
-                content = Read(assembly, fileResource);
-            }
-            else
-            {
-                throw new InvalidOperationException($"Gallery entry '{folder}': no pack and file '{manifest.File}' not found.");
-            }
-
             var findings = engine.Lint(content, format);
             list.Add(new GalleryEntry(
                 manifest.Id!,
@@ -105,10 +75,7 @@ public sealed partial class GalleryCatalog
                 findings.Select(f => new GalleryFinding(f, severities[f.RuleId].Severity, severities[f.RuleId].Title)).ToList(),
                 engine.Score(findings),
                 format,
-                manifest.Path)
-            {
-                PackId = manifest.Pack,
-            });
+                manifest.Path));
         }
 
         return list.OrderBy(e => e.Category, StringComparer.OrdinalIgnoreCase).ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToList();
@@ -145,9 +112,7 @@ public sealed partial class GalleryCatalog
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     /// <param name="Path">Repository path when the file name alone does not identify the format (.mdc under .cursor/rules/).</param>
-    /// <param name="Pack">Rules pack the content is composed from.</param>
-    /// <param name="Title">H1 of the composed file; default <see cref="PackComposer.DefaultTitle"/>.</param>
-    private sealed record Manifest(string? Id, string? Name, string? Description, string? Category, List<string>? Tags, string? File, string? License, string? Path = null, string? Pack = null, string? Title = null);
+    private sealed record Manifest(string? Id, string? Name, string? Description, string? Category, List<string>? Tags, string? File, string? License, string? Path = null);
 
     [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$")]
     private static partial Regex IdRegex();

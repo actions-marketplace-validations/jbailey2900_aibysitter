@@ -3,14 +3,7 @@
   "name": "Monorepo root",
   "description": "Root AGENTS.md for a pnpm and Turborepo workspace: commands, package boundaries, scope limits, and Changesets.",
   "category": "General",
-  "tags": [
-    "Monorepo",
-    "pnpm",
-    "Turborepo",
-    "Changesets"
-  ],
+  "tags": ["Monorepo", "pnpm", "Turborepo", "Changesets"],
   "file": "AGENTS.md",
-  "license": "CC0-1.0",
-  "pack": "monorepo",
-  "title": "pnpm and Turborepo monorepo"
+  "license": "CC0-1.0"
 }

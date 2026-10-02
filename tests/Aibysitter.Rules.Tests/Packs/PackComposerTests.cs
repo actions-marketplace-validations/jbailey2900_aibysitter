@@ -55,40 +55,12 @@ public class PackComposerTests
         Assert.Equal(RulesFormat.CursorMdc, engine.Analyze(text).Format);
     }
 
-    [Theory]
-    [InlineData(RulesFormat.ClaudeMd, "CLAUDE.md")]
-    [InlineData(RulesFormat.AgentsMd, "AGENTS.md")]
-    [InlineData(RulesFormat.CopilotInstructions, ".github/copilot-instructions.md")]
-    [InlineData(RulesFormat.CursorMdc, ".cursor/rules/monorepo.mdc")]
-    [InlineData(RulesFormat.WindsurfRules, ".windsurfrules")]
-    public void RulesFileToken_IsTheOutputPath(RulesFormat format, string path)
-    {
-        var text = PackComposer.Compose([Catalog.Find("monorepo")!], format);
-
-        Assert.Contains($"A package can have its own `{path}`.", text);
-        Assert.DoesNotContain("{{", text);
-    }
-
     [Fact]
-    public void RulesFileToken_UsesExplicitPath_InSectionsToo()
+    public void StarterPack_EqualsGalleryEntry_ExceptTitle()
     {
-        var pack = Make("a", "Intro names `{{rules-file}}`.", "## Notes\n- Keep `{{rules-file}}` under 200 lines.");
+        var gallery = new Aibysitter.Web.Gallery.GalleryCatalog(new LintEngine()).Find("minimal-starter")!.Content.Replace("\r\n", "\n");
 
-        Assert.Equal(
-            "# Project rules\n\nIntro names `docs/AGENTS.md`.\n\n## Notes\n- Keep `docs/AGENTS.md` under 200 lines.\n",
-            PackComposer.Compose([pack], RulesFormat.AgentsMd, rulesFile: "docs/AGENTS.md"));
-    }
-
-    [Fact]
-    public void StandalonePack_CannotBeCombined()
-    {
-        var starter = Catalog.Find("starter")!;
-
-        Assert.Equal([starter], PackComposer.StandaloneConflicts([Catalog.Find("monorepo")!, starter]));
-        Assert.Empty(PackComposer.StandaloneConflicts([starter]));
-        var ex = Assert.Throws<ArgumentException>(() => PackComposer.Compose([starter, Catalog.Find("monorepo")!], RulesFormat.ClaudeMd));
-        Assert.StartsWith("starter is used on its own only.", ex.Message);
-        Assert.StartsWith("# Project rules\n\nFill in the bracketed parts.", PackComposer.Compose([starter], RulesFormat.ClaudeMd));
+        Assert.Equal(gallery, PackComposer.Compose([Catalog.Find("starter")!], RulesFormat.ClaudeMd));
     }
 
     [Theory]
@@ -121,18 +93,17 @@ public class PackComposerTests
     [Fact]
     public void CursorMdc_TwoPacks_DefaultFileName()
     {
-        Assert.Equal(".cursor/rules/project-rules.mdc", PackComposer.DefaultPath(RulesFormat.CursorMdc, [Catalog.Find("go-http-service")!, Catalog.Find("monorepo")!]));
+        Assert.Equal(".cursor/rules/project-rules.mdc", PackComposer.DefaultPath(RulesFormat.CursorMdc, [Catalog.Find("starter")!, Catalog.Find("monorepo")!]));
     }
 
     [Fact]
     public void RealPacks_Composed_Together_HaveOneSectionPerHeading()
     {
-        var text = PackComposer.Compose([Catalog.Find("dotnet-razor-pages")!, Catalog.Find("python-fastapi")!], RulesFormat.ClaudeMd);
+        var text = PackComposer.Compose([Catalog.Find("dotnet-razor-pages")!, Catalog.Find("starter")!], RulesFormat.ClaudeMd);
         var headings = text.Split('\n').Where(l => l.StartsWith("## ", StringComparison.Ordinal)).ToList();
 
         Assert.Equal(headings.Count, headings.Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.Contains("## Done", headings);
-        Assert.Contains("- `ruff check`, `ruff format --check`, `mypy`, and `pytest` all pass.", text);
-        Assert.DoesNotContain("ASP.NET Core Razor Pages on .NET 10.", text);
+        Assert.DoesNotContain("Fill in the bracketed parts.", text);
     }
 }

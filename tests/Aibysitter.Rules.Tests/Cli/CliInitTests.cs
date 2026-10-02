@@ -38,7 +38,7 @@ public sealed class CliInitTests : IDisposable
     public void Init_TwoPacks_TitleAndCursorMdc_CreatesFolders_LintsSameAsLintCommand()
     {
         var path = P("repo/.cursor/rules/app.mdc");
-        var result = CliTests.Run(["init", "--packs=dotnet-razor-pages,aspnet-web-api", "--format=cursor", "--title", "Orders portal", "--output", path]);
+        var result = CliTests.Run(["init", "--packs=dotnet-razor-pages,starter", "--format=cursor", "--title", "Orders portal", "--output", path]);
         var text = File.ReadAllText(path);
         var lint = CliTests.Run(["lint", path]);
 
@@ -84,7 +84,6 @@ public sealed class CliInitTests : IDisposable
     [InlineData(new[] { "init", "--packs", "starter", "--format", "claude", "extra" }, "init takes options only; got \"extra\".")]
     [InlineData(new[] { "init", "--packs", "starter", "--format", "claude", "--bogus" }, "Unknown option \"--bogus\".")]
     [InlineData(new[] { "packs", "x" }, "packs takes no arguments; got \"x\".")]
-    [InlineData(new[] { "init", "--packs", "monorepo,starter", "--format", "claude" }, "starter is a standalone pack; use it on its own.")]
     public void UsageErrors_Exit2(string[] args, string message)
     {
         var result = CliTests.Run(args);

@@ -52,7 +52,7 @@ jobs:
           set -e
           test "$DISCOVER_FINDINGS" -gt 0
           jq -e '.files | map(.file) | index("tests/action-fixtures/lowgrade/GEMINI.md") != null' "$DISCOVER_REPORT"
-          jq -e '.files | map(.file) | index("tests/fixtures/gallery/flawed-example/CLAUDE.md") != null' "$DISCOVER_REPORT"
+          jq -e '.files | map(.file) | index("src/Aibysitter.Web/Gallery/Content/minimal-starter/CLAUDE.md") != null' "$DISCOVER_REPORT"
           test "$GLOB_GRADE" = A
           test "$GLOB_SCORE" = 90
           test "$GLOB_FINDINGS" = 1
