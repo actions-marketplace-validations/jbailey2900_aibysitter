@@ -31,6 +31,7 @@ public class LintPageBrowserEngineTests(WebApplicationFactory<Program> factory)
     [Theory]
     [InlineData("/js/lint-page.mjs")]
     [InlineData("/js/lint-engine.mjs")]
+    [InlineData("/js/share-link.mjs")]
     [InlineData("/js/generated/rules-patterns.mjs")]
     public async Task Modules_AreServedAsJavaScript(string path)
     {
