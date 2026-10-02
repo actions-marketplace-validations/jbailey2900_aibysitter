@@ -3,7 +3,15 @@
   "name": "ASP.NET Core Razor Pages + EF Core",
   "description": "Server-rendered .NET 10 web app with Razor Pages, EF Core on SQL Server, and xUnit page tests.",
   "category": ".NET",
-  "tags": ["C#", "Razor Pages", "EF Core", "SQL Server", "xUnit"],
+  "tags": [
+    "C#",
+    "Razor Pages",
+    "EF Core",
+    "SQL Server",
+    "xUnit"
+  ],
   "file": "CLAUDE.md",
-  "license": "CC0-1.0"
+  "license": "CC0-1.0",
+  "pack": "dotnet-razor-pages",
+  "title": "ASP.NET Core Razor Pages"
 }

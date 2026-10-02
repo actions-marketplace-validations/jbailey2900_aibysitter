@@ -1,9 +1,17 @@
 {
   "id": "nextjs-typescript",
   "name": "Next.js app (TypeScript)",
-  "description": "App Router storefront with Server Components by default, Server Actions, Zod validation, Vitest, and Playwright.",
+  "description": "App Router app with Server Components by default, Server Actions, Zod validation, Vitest, and Playwright.",
   "category": "JavaScript",
-  "tags": ["TypeScript", "Next.js", "React", "Tailwind CSS", "pnpm"],
+  "tags": [
+    "TypeScript",
+    "Next.js",
+    "React",
+    "Tailwind CSS",
+    "pnpm"
+  ],
   "file": "AGENTS.md",
-  "license": "CC0-1.0"
+  "license": "CC0-1.0",
+  "pack": "nextjs-typescript",
+  "title": "Next.js with TypeScript"
 }

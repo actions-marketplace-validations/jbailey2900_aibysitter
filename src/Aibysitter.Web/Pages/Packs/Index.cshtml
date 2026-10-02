@@ -20,7 +20,7 @@
             <h2>@pack.Manifest.Title</h2>
             <p class="entry-meta">
                 <span class="score-label">Aibysitter lint score</span> <span class="grade grade-@view.Score.Grade.ToLowerInvariant()">@view.Score.Grade @view.Score.Value</span>
-                <span><code>@pack.Id</code>, @view.Sections.Count sections</span>
+                <span><code>@pack.Id</code>, @view.Sections.Count sections@(pack.Manifest.Standalone ? ", used on its own" : "")</span>
             </p>
             <p>@pack.Manifest.Description</p>
             <ul class="tags" aria-label="Tags">

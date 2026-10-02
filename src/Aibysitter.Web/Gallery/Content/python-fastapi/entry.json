@@ -3,7 +3,15 @@
   "name": "Python FastAPI service",
   "description": "Async FastAPI service with SQLAlchemy 2.0, Alembic migrations, strict typing, and money stored in minor units.",
   "category": "Python",
-  "tags": ["Python", "FastAPI", "SQLAlchemy", "pytest", "uv"],
+  "tags": [
+    "Python",
+    "FastAPI",
+    "SQLAlchemy",
+    "pytest",
+    "uv"
+  ],
   "file": "CLAUDE.md",
-  "license": "CC0-1.0"
+  "license": "CC0-1.0",
+  "pack": "python-fastapi",
+  "title": "Python FastAPI service"
 }

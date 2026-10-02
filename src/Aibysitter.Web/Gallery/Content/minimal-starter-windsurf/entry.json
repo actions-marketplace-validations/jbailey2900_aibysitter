@@ -3,7 +3,12 @@
   "name": "Minimal starter, .windsurfrules",
   "description": "The stack-neutral starter as a Windsurf workspace rules file: same content.",
   "category": "General",
-  "tags": ["Template", "Any stack", "Windsurf"],
+  "tags": [
+    "Template",
+    "Any stack",
+    "Windsurf"
+  ],
   "file": ".windsurfrules",
-  "license": "CC0-1.0"
+  "license": "CC0-1.0",
+  "pack": "starter"
 }

@@ -17,6 +17,5 @@
     "CursorRules",
     "WindsurfRules"
   ],
-  "license": "CC0-1.0",
-  "source": "go-http-service"
+  "license": "CC0-1.0"
 }

@@ -3,7 +3,11 @@
   "name": "Minimal starter",
   "description": "A short, stack-neutral template: stack, commands, six working rules, and a definition of done.",
   "category": "General",
-  "tags": ["Template", "Any stack"],
+  "tags": [
+    "Template",
+    "Any stack"
+  ],
   "file": "CLAUDE.md",
-  "license": "CC0-1.0"
+  "license": "CC0-1.0",
+  "pack": "starter"
 }

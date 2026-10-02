@@ -49,22 +49,24 @@ public class PackCatalogTests
         Assert.True(errors.Count == 0, string.Join("\n", errors));
     }
 
-    /// <summary>Packs were split from gallery entries; sections follow the entry's H2 headings in order, and the intro exists when the entry has one.</summary>
     [Fact]
-    public void Packs_MatchTheirGallerySource_Headings()
+    public void EveryPack_IsUsedByAGalleryEntry()
     {
-        var gallery = new GalleryCatalog(Engine);
-        foreach (var pack in Catalog.All)
-        {
-            var source = gallery.Find(pack.Manifest.Source!);
-            Assert.True(source is not null, $"{pack.Id}: source {pack.Manifest.Source} not in the gallery");
-            var lines = source!.Content.Replace("\r\n", "\n").Split('\n');
-            var headings = lines.Where(l => l.StartsWith("## ", StringComparison.Ordinal)).Select(l => l[3..].Trim()).ToList();
-            var hasIntro = lines.Skip(1).TakeWhile(l => !l.StartsWith("## ", StringComparison.Ordinal)).Any(l => l.Trim().Length > 0);
+        var used = new GalleryCatalog(Engine).All.Select(e => e.PackId).ToHashSet();
 
-            Assert.Equal(headings, pack.Sections.Select(s => s.Heading).ToList());
-            Assert.Equal(hasIntro, pack.Intro is not null);
-        }
+        Assert.All(Catalog.All, p => Assert.Contains(p.Id, used));
+    }
+
+    [Fact]
+    public void Starter_IsStandalone_OthersAreNot()
+    {
+        Assert.Equal(["starter"], Catalog.All.Where(p => p.Manifest.Standalone).Select(p => p.Id));
+    }
+
+    [Fact]
+    public void Monorepo_Intro_UsesRulesFileToken()
+    {
+        Assert.Contains("A package can have its own `{{rules-file}}`.", Catalog.Find("monorepo")!.Intro);
     }
 
     [Fact]
@@ -120,6 +122,31 @@ public class PackCatalogTests
             "demo/intro.md: must be non-empty text without headings",
             "other: pack.json is missing",
         ], ex.Errors);
+    }
+
+    [Theory]
+    [InlineData("- Keep `AGENTS.md` short.", "names a rules file (AGENTS.md)")]
+    [InlineData("- See CLAUDE.md.", "names a rules file (CLAUDE.md)")]
+    [InlineData("- Edit .cursorrules only.", "names a rules file (.cursorrules)")]
+    [InlineData("- Rules live in `.cursor/rules/app.mdc`.", "names a rules file (app.mdc)")]
+    [InlineData("- Use {{project}} here.", "unknown token {{project}}")]
+    public void Validation_RulesFileNames_NeedTheToken(string line, string error)
+    {
+        var ex = Invalid(new() { ["demo/pack.json"] = Manifest, ["demo/01-a.md"] = "## A\n" + line + "\n" });
+
+        Assert.Contains(ex.Errors, e => e.StartsWith("demo/01-a.md: " + error, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validation_TokenAndLookalikes_AreAccepted()
+    {
+        var catalog = new PackCatalog(new Dictionary<string, string>
+        {
+            ["demo/pack.json"] = Manifest,
+            ["demo/01-a.md"] = "## A\n- Keep `{{rules-file}}` short.\n- Edit MYCLAUDE.md.notes and README.md.\n",
+        });
+
+        Assert.Single(catalog.All);
     }
 
     [Fact]
