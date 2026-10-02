@@ -6,7 +6,7 @@ using Aibysitter.Rules;
 
 namespace Aibysitter.Cli;
 
-/// <summary><c>aibysitter</c> entry point. Offline; uses <see cref="LintEngine"/> directly.</summary>
+/// <summary><c>aibysitter</c> entry point. Offline; uses <see cref="LintEngine"/> and the embedded packs directly.</summary>
 public static class CliApp
 {
     public const int Ok = 0;
@@ -40,10 +40,12 @@ public static class CliApp
 
         Usage:
           aibysitter lint <file|-> [options]
+          aibysitter init --packs <ids> --format <name> [--title <text>] [--output <path>] [--force]
+          aibysitter packs
           aibysitter --version
           aibysitter --help
 
-        Options:
+        lint options:
           --format <name>       {string.Join(", ", Enum.GetNames<RulesFormat>())}.
                                 Default: from the file path, else detected from content.
           --disable <ids>       Rule IDs to skip, comma-separated, for example R002,R005.
@@ -51,7 +53,14 @@ public static class CliApp
           --fail-on-error       Exit 1 when any Error finding remains.
           --fail-below <grade>  Exit 1 when the grade is below A, B, C or D.
 
-        Exit codes: 0 ok, 1 threshold failed, 2 usage error, 3 file not readable.
+        init: writes a rules file composed from packs, then prints its score.
+          --packs <ids>         Pack IDs, comma-separated, in order. 'aibysitter packs' lists them.
+          --format <name>       claude, agents, gemini, copilot, cursor, cursorrules, windsurf.
+          --title <text>        H1 of the file. Default: Project rules.
+          --output <path>       Default: where the format goes, for example CLAUDE.md or .cursor/rules/<pack>.mdc.
+          --force               Overwrite an existing file.
+
+        Exit codes: 0 ok, 1 threshold failed, 2 usage error, 3 file not readable or not writable.
         """;
 
     public static int Run(string[] args, TextReader stdin, TextWriter stdout, TextWriter stderr)
@@ -67,6 +76,10 @@ public static class CliApp
             case ["--version"]:
                 stdout.WriteLine(VersionLine);
                 return Ok;
+            case ["packs", .. var packsArgs]:
+                return InitCommand.Packs(packsArgs, stdout, m => UsageFail(stderr, m));
+            case ["init", .. var initArgs]:
+                return InitCommand.Init(initArgs, stdout, stderr, m => UsageFail(stderr, m));
             case ["lint", .. var rest]:
                 var (options, error) = LintOptions.Parse(rest);
                 return options is null ? UsageFail(stderr, error!) : Lint(options, stdin, stdout, stderr);

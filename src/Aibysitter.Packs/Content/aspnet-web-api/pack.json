@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "aspnet-web-api",
+  "title": "ASP.NET Core web API",
+  "description": "Minimal APIs on .NET 10 with EF Core and PostgreSQL: endpoints, errors, data, authorization and tests.",
+  "tags": [
+    ".NET",
+    "ASP.NET Core",
+    "EF Core",
+    "PostgreSQL"
+  ],
+  "targets": [
+    "ClaudeMd",
+    "AgentsMd",
+    "GeminiMd",
+    "CopilotInstructions",
+    "CursorMdc",
+    "CursorRules",
+    "WindsurfRules"
+  ],
+  "license": "CC0-1.0",
+  "source": "aspnet-web-api"
+}

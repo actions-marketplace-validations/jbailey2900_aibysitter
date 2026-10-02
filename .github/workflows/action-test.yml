@@ -7,7 +7,7 @@ name: Action test
 on:
   pull_request:
     branches: [main]
-    paths: [action.yml, action/**, tests/action-fixtures/**, src/Aibysitter.Cli/**, src/Aibysitter.Rules/**, .github/workflows/action-test.yml]
+    paths: [action.yml, action/**, tests/action-fixtures/**, src/Aibysitter.Cli/**, src/Aibysitter.Rules/**, src/Aibysitter.Packs/**, .github/workflows/action-test.yml]
 
 concurrency:
   group: action-test-${{ github.ref }}

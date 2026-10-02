@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "starter",
+  "title": "Starter",
+  "description": "Stack-neutral template: stack, commands, working rules and a definition of done, with bracketed parts to fill in.",
+  "tags": [
+    "Template",
+    "Any stack"
+  ],
+  "targets": [
+    "ClaudeMd",
+    "AgentsMd",
+    "GeminiMd",
+    "CopilotInstructions",
+    "CursorMdc",
+    "CursorRules",
+    "WindsurfRules"
+  ],
+  "license": "CC0-1.0",
+  "source": "minimal-starter"
+}

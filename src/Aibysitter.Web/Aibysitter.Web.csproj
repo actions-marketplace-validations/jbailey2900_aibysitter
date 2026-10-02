@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aibysitter.Rules\Aibysitter.Rules.csproj" />
+    <ProjectReference Include="..\Aibysitter.Packs\Aibysitter.Packs.csproj" />
     <ProjectReference Include="..\Aibysitter.Rules.Browser\Aibysitter.Rules.Browser.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 

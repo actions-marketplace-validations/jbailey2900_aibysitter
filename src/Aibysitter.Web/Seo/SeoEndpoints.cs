@@ -20,8 +20,8 @@ public static class SeoEndpoints
             Text(context, SiteMapXml(map, site), "application/xml; charset=utf-8"));
         endpoints.MapGet("/robots.txt", (HttpContext context, SiteOptions site) =>
             Text(context, RobotsTxt(site), "text/plain; charset=utf-8"));
-        endpoints.MapGet("/llms.txt", (HttpContext context, SiteOptions site) =>
-            Text(context, LlmsTxt.Build(site), "text/plain; charset=utf-8"));
+        endpoints.MapGet("/llms.txt", (HttpContext context, SiteOptions site, Aibysitter.Packs.PackCatalog packs) =>
+            Text(context, LlmsTxt.Build(site, packs), "text/plain; charset=utf-8"));
         return endpoints;
     }
 

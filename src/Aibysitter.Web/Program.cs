@@ -4,6 +4,7 @@ using Aibysitter.Web.Data;
 using Aibysitter.Web.Gallery;
 using Aibysitter.Web.GitHub;
 using Aibysitter.Web.Infrastructure;
+using Aibysitter.Web.RulesPacks;
 using Aibysitter.Web.Seo;
 using Serilog;
 
@@ -38,6 +39,8 @@ try
     builder.Services.AddSingleton<Aibysitter.Web.Gallery.GalleryCatalog>();
     builder.Services.AddSingleton<Aibysitter.Web.Notes.NoteCatalog>();
     builder.Services.AddSingleton<Aibysitter.Web.Seo.SiteMap>();
+    builder.Services.AddSingleton(_ => new Aibysitter.Packs.PackCatalog());
+    builder.Services.AddSingleton<Aibysitter.Web.RulesPacks.PackScores>();
     builder.Services.AddAibysitterHardening(builder.Configuration);
     builder.Services.AddAibysitterDataProtection(builder.Configuration);
     builder.Services.AddAibysitterGitHubApp(builder.Configuration);
@@ -70,6 +73,7 @@ try
     app.MapGalleryDownloads();
     app.MapSeo();
     app.MapBadges();
+    app.MapPackRegistry();
 
     app.Run();
 }

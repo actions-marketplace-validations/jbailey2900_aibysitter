@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "go-http-service",
+  "title": "Go HTTP service",
+  "description": "Go service on net/http with PostgreSQL through pgx and sqlc: layout, handlers, errors, logging and tests.",
+  "tags": [
+    "Go",
+    "PostgreSQL",
+    "sqlc"
+  ],
+  "targets": [
+    "ClaudeMd",
+    "AgentsMd",
+    "GeminiMd",
+    "CopilotInstructions",
+    "CursorMdc",
+    "CursorRules",
+    "WindsurfRules"
+  ],
+  "license": "CC0-1.0",
+  "source": "go-http-service"
+}

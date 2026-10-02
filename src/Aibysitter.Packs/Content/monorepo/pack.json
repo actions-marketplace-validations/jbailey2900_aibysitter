@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "monorepo",
+  "title": "pnpm and Turborepo monorepo",
+  "description": "Root rules for a pnpm workspaces and Turborepo monorepo: commands, workspace, scope, versioning and pull requests.",
+  "tags": [
+    "TypeScript",
+    "pnpm",
+    "Turborepo",
+    "Monorepo"
+  ],
+  "targets": [
+    "ClaudeMd",
+    "AgentsMd",
+    "GeminiMd",
+    "CopilotInstructions",
+    "CursorMdc",
+    "CursorRules",
+    "WindsurfRules"
+  ],
+  "license": "CC0-1.0",
+  "source": "monorepo-root"
+}

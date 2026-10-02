@@ -569,6 +569,7 @@ dd { margin: 0; max-width: var(--measure); }
 
 .filters a:hover,
 .tags a:hover { border-color: var(--hairline-strong); color: var(--ink); }
+.pack .tags li { padding: 0 var(--space-sm); border: 1px solid var(--hairline); border-radius: var(--radius); color: var(--body); font-size: var(--text-sm); }
 
 .filters a[aria-current="page"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 
@@ -582,6 +583,15 @@ dd { margin: 0; max-width: var(--measure); }
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: var(--space-xxl);
 }
+
+.packs { list-style: none; padding: 0; margin: var(--space-xxl) 0 0; }
+.pack-sections { list-style: none; padding: 0; margin: var(--space-md) 0 0; }
+.pack-sections li { border-top: 1px solid var(--hairline); }
+.pack-sections summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding: var(--space-sm) 0; cursor: pointer; }
+.pack-sections .rendered { padding-bottom: var(--space-md); }
+.pack-sections .rendered code { overflow-wrap: anywhere; }
+.pack { min-width: 0; }
+.pack pre { max-width: 100%; }
 
 .entry {
     border-top: 1px solid var(--hairline);

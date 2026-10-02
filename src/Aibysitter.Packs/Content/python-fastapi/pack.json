@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "python-fastapi",
+  "title": "Python FastAPI service",
+  "description": "FastAPI with async SQLAlchemy, PostgreSQL and Alembic, run through uv: layout, API, money, code style and tests.",
+  "tags": [
+    "Python",
+    "FastAPI",
+    "SQLAlchemy",
+    "PostgreSQL",
+    "uv"
+  ],
+  "targets": [
+    "ClaudeMd",
+    "AgentsMd",
+    "GeminiMd",
+    "CopilotInstructions",
+    "CursorMdc",
+    "CursorRules",
+    "WindsurfRules"
+  ],
+  "license": "CC0-1.0",
+  "source": "python-fastapi"
+}

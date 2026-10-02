@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "nextjs-typescript",
+  "title": "Next.js with TypeScript",
+  "description": "Next.js App Router, strict TypeScript and Tailwind CSS with pnpm: structure, TypeScript, styling, server code and tests.",
+  "tags": [
+    "TypeScript",
+    "Next.js",
+    "React",
+    "Tailwind CSS",
+    "pnpm"
+  ],
+  "targets": [
+    "ClaudeMd",
+    "AgentsMd",
+    "GeminiMd",
+    "CopilotInstructions",
+    "CursorMdc",
+    "CursorRules",
+    "WindsurfRules"
+  ],
+  "license": "CC0-1.0",
+  "source": "nextjs-typescript"
+}

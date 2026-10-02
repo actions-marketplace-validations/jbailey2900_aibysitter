@@ -86,12 +86,27 @@ dotnet tool install --global Aibysitter.Cli --add-source artifacts
 
 ```
 aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fail-on-error] [--fail-below <A|B|C|D>]
+aibysitter init --packs starter,aspnet-web-api --format claude [--title <text>] [--output <path>] [--force]
+aibysitter packs
 ```
 
 - Format: `--format`, else from the file path (as in the list above), else detected from content. `-` reads standard input.
 - `--json`: the `/api/lint` response fields, plus `file`.
-- Exit codes: 0 ok, 1 a `--fail-*` threshold failed, 2 usage error, 3 file not readable. Without a `--fail-*` flag the exit code is 0 whatever the findings.
+- `init` writes a rules file composed from rules packs (below), then prints its score. `--format`: claude, agents, gemini, copilot, cursor, cursorrules, windsurf. Default output: where that format goes (`CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/<pack>.mdc`, ...). An existing file needs `--force`.
+- Exit codes: 0 ok, 1 a `--fail-*` threshold failed, 2 usage error, 3 file not readable or not writable. Without a `--fail-*` flag the exit code is 0 whatever the findings.
 - No length limit.
+
+## Rules packs
+
+Sections for a rules file, grouped by stack: [aibysitting.net/Packs](https://aibysitting.net/Packs), with each section's lint score. Machine-readable: `GET /packs/registry.json` (schema version 1). Content is CC0.
+
+A pack is a folder under [`src/Aibysitter.Packs/Content/`](src/Aibysitter.Packs/Content/):
+
+- `pack.json`: `schemaVersion` (1), `id` (kebab-case, the folder name), `title`, `description`, `tags`, `targets` (formats the pack is written for), `license`, optional `source` (the gallery entry it came from).
+- `intro.md` (optional): text under the H1, written only when the pack is used alone.
+- `NN-name.md`: one section each, in file order. One H2 heading and its body; no H1.
+
+Composition: `# title`, the intro when one pack is chosen, then sections in pack order. A heading in more than one pack becomes one section at its first position, with later packs' lines added and repeated list items dropped. Cursor `.mdc` output gets `description` and `alwaysApply: true` frontmatter.
 
 ## GitHub Action
 
@@ -141,6 +156,7 @@ Entries live in [`src/Aibysitter.Web/Gallery/Content/`](src/Aibysitter.Web/Galle
 |---|---|
 | `src/Aibysitter.Rules` | Lint rules, scoring, pull request checks |
 | `src/Aibysitter.Cli` | `aibysitter` dotnet tool |
+| `src/Aibysitter.Packs` | Rules packs (content), loader, validation, composer |
 | `action.yml`, `action/` | GitHub Action wrapping the CLI; fixtures in `tests/action-fixtures` |
 | `src/Aibysitter.Rules.Browser` | Build-time exporter: rule patterns and constants for the browser lint engine |
 | `src/Aibysitter.Web` | ASP.NET Core Razor Pages site, GitHub App webhook, gallery, notes (`Notes/Content`); browser lint engine in `wwwroot/js` |

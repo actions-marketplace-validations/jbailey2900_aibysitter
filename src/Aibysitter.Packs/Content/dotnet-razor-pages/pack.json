@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "dotnet-razor-pages",
+  "title": "ASP.NET Core Razor Pages",
+  "description": "Razor Pages on .NET 10 with EF Core and SQL Server: layout, pages, data access, logging and tests.",
+  "tags": [
+    ".NET",
+    "ASP.NET Core",
+    "Razor Pages",
+    "EF Core",
+    "SQL Server"
+  ],
+  "targets": [
+    "ClaudeMd",
+    "AgentsMd",
+    "GeminiMd",
+    "CopilotInstructions",
+    "CursorMdc",
+    "CursorRules",
+    "WindsurfRules"
+  ],
+  "license": "CC0-1.0",
+  "source": "dotnet-razor-pages"
+}
