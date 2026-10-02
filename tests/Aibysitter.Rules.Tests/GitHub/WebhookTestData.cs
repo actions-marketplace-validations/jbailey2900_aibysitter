@@ -17,7 +17,7 @@ internal static class WebhookTestData
             pull_request = new { number = 7, head = new { sha } },
         });
 
-    public static HttpRequestMessage Request(string eventName, string json, string? signature = null)
+    public static HttpRequestMessage Request(string eventName, string json, string? signature = null, string? deliveryId = null)
     {
         var body = Encoding.UTF8.GetBytes(json);
         var request = new HttpRequestMessage(HttpMethod.Post, GitHubWebhookEndpoint.Path)
@@ -26,7 +26,7 @@ internal static class WebhookTestData
         };
         request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
         request.Headers.Add("X-GitHub-Event", eventName);
-        request.Headers.Add("X-GitHub-Delivery", Guid.NewGuid().ToString());
+        request.Headers.Add("X-GitHub-Delivery", deliveryId ?? Guid.NewGuid().ToString());
         request.Headers.Add(WebhookSignature.HeaderName, signature ?? WebhookSignature.Compute(Secret, body));
         return request;
     }

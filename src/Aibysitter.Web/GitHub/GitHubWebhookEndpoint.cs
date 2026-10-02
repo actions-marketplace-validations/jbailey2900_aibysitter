@@ -18,6 +18,7 @@ public static class GitHubWebhookEndpoint
         IOptions<GitHubOptions> options,
         IGitHubGateway gateway,
         ReviewQueue queue,
+        IReviewJobStore store,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
@@ -68,10 +69,46 @@ public static class GitHubWebhookEndpoint
             return Results.NoContent();
         }
 
+        return store.Find(deliveryId, out var existing) switch
+        {
+            StoredJobState.InProgress => InProgress(deliveryId, logger),
+            StoredJobState.Pending => Requeue(existing!, queue, logger),
+            _ => await QueueNewAsync(pr!, deliveryId, gateway, store, queue, logger, cancellationToken),
+        };
+    }
+
+    private static IResult InProgress(string deliveryId, ILogger logger)
+    {
+        logger.LogInformation("GitHub delivery {DeliveryId}: review already in progress", deliveryId);
+        return Results.Accepted();
+    }
+
+    /// <summary>Redelivery of a saved job: queue it again against its existing check run.</summary>
+    private static IResult Requeue(ReviewJob job, ReviewQueue queue, ILogger logger)
+    {
+        if (!queue.TryEnqueue(job))
+        {
+            logger.LogError("GitHub delivery {DeliveryId}: review queue full; saved job kept for the next start", job.DeliveryId);
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+
+        logger.LogInformation("GitHub delivery {DeliveryId}: re-queued review of {PullRequest} as check run {CheckRunId}", job.DeliveryId, job.PullRequest, job.CheckRunId);
+        return Results.Accepted();
+    }
+
+    private static async Task<IResult> QueueNewAsync(
+        PullRequestRef pr,
+        string deliveryId,
+        IGitHubGateway gateway,
+        IReviewJobStore store,
+        ReviewQueue queue,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
         long checkRunId;
         try
         {
-            checkRunId = await gateway.CreateQueuedCheckRunAsync(pr!, cancellationToken);
+            checkRunId = await gateway.CreateQueuedCheckRunAsync(pr, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -79,22 +116,52 @@ public static class GitHubWebhookEndpoint
             return Results.StatusCode(StatusCodes.Status502BadGateway);
         }
 
-        if (!queue.TryEnqueue(new ReviewJob(pr!, checkRunId, deliveryId)))
+        var job = new ReviewJob(pr, checkRunId, JobDeliveryId(deliveryId, store, logger));
+        try
+        {
+            store.Save(job);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            logger.LogError(ex, "GitHub delivery {DeliveryId}: could not save review job; closing check run {CheckRunId}", deliveryId, checkRunId);
+            return await CloseUnavailableAsync(job, gateway, "Review job could not be saved", logger, cancellationToken);
+        }
+
+        if (!queue.TryEnqueue(job))
         {
             logger.LogError("GitHub delivery {DeliveryId}: review queue full; closing check run {CheckRunId}", deliveryId, checkRunId);
-            try
-            {
-                await gateway.CompleteCheckRunAsync(pr!, checkRunId, CheckRunReport.ForError(new InvalidOperationException("Review queue full")), cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "GitHub delivery {DeliveryId}: could not close check run {CheckRunId}", deliveryId, checkRunId);
-            }
-
-            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+            store.TryAcquire(job)?.Complete();
+            return await CloseUnavailableAsync(job, gateway, "Review queue full", logger, cancellationToken);
         }
 
         logger.LogInformation("GitHub delivery {DeliveryId}: queued review of {PullRequest} as check run {CheckRunId}", deliveryId, pr, checkRunId);
         return Results.Accepted();
+    }
+
+    /// <summary>File names need a GUID; GitHub always sends one. A missing or malformed header gets a new one.</summary>
+    private static string JobDeliveryId(string deliveryId, IReviewJobStore store, ILogger logger)
+    {
+        if (!store.IsDurable || Guid.TryParse(deliveryId, out _))
+        {
+            return deliveryId;
+        }
+
+        var generated = Guid.NewGuid().ToString("D");
+        logger.LogWarning("GitHub delivery ID \"{DeliveryId}\" is not a GUID; stored as {Generated}", deliveryId, generated);
+        return generated;
+    }
+
+    private static async Task<IResult> CloseUnavailableAsync(ReviewJob job, IGitHubGateway gateway, string reason, ILogger logger, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await gateway.CompleteCheckRunAsync(job.PullRequest, job.CheckRunId, CheckRunReport.ForError(new InvalidOperationException(reason)), cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "GitHub delivery {DeliveryId}: could not close check run {CheckRunId}", job.DeliveryId, job.CheckRunId);
+        }
+
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
     }
 }

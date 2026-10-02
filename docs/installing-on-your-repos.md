@@ -83,6 +83,6 @@ Precedence: comments in the file, then rule IDs in `disable`, then `"disable": [
 | Symptom | Cause | Fix |
 |---|---|---|
 | No **Aibysitter** check appears | Repository not selected, or the App lacks Checks permission | Add the repository under **Configure**; accept any pending permission request |
-| Check stays **Queued** | The review was lost to a server restart | Push a commit. App owner: redeliver the webhook (App settings → Advanced → Recent deliveries) |
+| Check stays **Queued** | The review is waiting behind others, or the server is restarting | Wait a few minutes. Still queued: push a commit. App owner: redeliver the webhook (App settings → Advanced → Recent deliveries) |
 | Summary says "R006 skipped" | The repository file list is too large for one GitHub request | None; R006 does not run on that repository |
 | Unexpected P004 findings | `scope` does not cover the path | Add the glob to `scope`, or remove `scope` |

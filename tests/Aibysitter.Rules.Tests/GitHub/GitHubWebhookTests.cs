@@ -13,10 +13,17 @@ namespace Aibysitter.Rules.Tests.GitHub;
 public class GitHubWebhookTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
-    private (HttpClient Client, IServiceProvider Services) Create(FakeGitHubGateway fake, bool runWorker, string appId = "1")
+    internal static (HttpClient Client, IServiceProvider Services) Create(
+        WebApplicationFactory<Program> factory,
+        FakeGitHubGateway fake,
+        bool runWorker,
+        string appId = "1",
+        string? queuePath = null,
+        Action<IServiceCollection>? configure = null)
     {
         var app = factory.WithWebHostBuilder(b => b
             .UseSetting("GitHub:AppId", appId)
+            .UseSetting("ReviewQueue:Path", queuePath ?? string.Empty)
             .UseSetting("GitHub:WebhookSecret", Secret)
             .UseSetting("GitHub:PrivateKeyPath", "unused.pem")
             .ConfigureServices(s =>
@@ -30,12 +37,17 @@ public class GitHubWebhookTests(WebApplicationFactory<Program> factory)
                         s.Remove(worker);
                     }
                 }
+
+                configure?.Invoke(s);
             }));
 
         return (app.CreateClient(), app.Services);
     }
 
-    private static async Task<ReviewJob?> TryDequeue(IServiceProvider services)
+    private (HttpClient Client, IServiceProvider Services) Create(FakeGitHubGateway fake, bool runWorker, string appId = "1") =>
+        Create(factory, fake, runWorker, appId);
+
+    internal static async Task<ReviewJob?> TryDequeue(IServiceProvider services)
     {
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
         try
