@@ -93,6 +93,32 @@ aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fai
 - Exit codes: 0 ok, 1 a `--fail-*` threshold failed, 2 usage error, 3 file not readable. Without a `--fail-*` flag the exit code is 0 whatever the findings.
 - No length limit.
 
+## GitHub Action
+
+`action.yml` lints rules files with the CLI and posts a check run named `Aibysitter rules` with an annotation per finding. Not on the Marketplace yet; while the repository is private, other repositories of the same owner can use it once Settings → Actions → General → Access allows it.
+
+```yaml
+permissions:
+  contents: read
+  checks: write
+steps:
+  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+  - uses: jbailey2900/aibysitter@main
+    with:
+      fail-on-error: "true"
+```
+
+| Input | Default | |
+|---|---|---|
+| `files` | empty | Paths or globs, space- or newline-separated. Empty: the supported rules files tracked in the repository. |
+| `fail-on-error` | `false` | Fail when any Error finding remains. |
+| `fail-below` | empty | Fail when a file's grade is below A, B, C or D. |
+| `token` | `github.token` | Needs `checks: write`. Without it, annotations are written to the log (GitHub shows 10 per type per step) and the job summary lists all findings. |
+
+Outputs: `grade` and `score` (lowest across files), `findings` (total), `report` (path to the merged JSON).
+
+Check conclusion: `failure` when a threshold fails, `neutral` with findings, `success` with none or no files. Annotation levels: Error → failure, Warning → warning, Info → notice. The CLI is built from source on each run (about a minute) until it is published.
+
 ## Score history and badges
 
 Lint by URL stores each public result: repository, file, score, grade, ruleset version and time. The result page lists the last 10 for that repository and file. Kept up to 400 days, at most 500 rows per repository and file. Private repositories cannot be read, so nothing is stored for them.
@@ -115,6 +141,7 @@ Entries live in [`src/Aibysitter.Web/Gallery/Content/`](src/Aibysitter.Web/Galle
 |---|---|
 | `src/Aibysitter.Rules` | Lint rules, scoring, pull request checks |
 | `src/Aibysitter.Cli` | `aibysitter` dotnet tool |
+| `action.yml`, `action/` | GitHub Action wrapping the CLI; fixtures in `tests/action-fixtures` |
 | `src/Aibysitter.Rules.Browser` | Build-time exporter: rule patterns and constants for the browser lint engine |
 | `src/Aibysitter.Web` | ASP.NET Core Razor Pages site, GitHub App webhook, gallery, notes (`Notes/Content`); browser lint engine in `wwwroot/js` |
 | `tests/Aibysitter.Rules.Tests` | xUnit tests; fixtures in `tests/fixtures` |

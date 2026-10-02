@@ -1,0 +1,75 @@
+name: Aibysitter rules lint
+description: Lints rules files for AI coding agents (CLAUDE.md, AGENTS.md, Cursor rules, Copilot instructions, GEMINI.md, .windsurfrules) and annotates findings.
+author: Jon Bailey
+
+inputs:
+  files:
+    description: Paths or globs, separated by spaces or new lines. Empty finds the supported rules files tracked in the repository.
+    required: false
+    default: ""
+  fail-on-error:
+    description: Fail when any Error finding remains.
+    required: false
+    default: "false"
+  fail-below:
+    description: Fail when a file's grade is below A, B, C or D.
+    required: false
+    default: ""
+  token:
+    description: Token for the check run. Needs checks write; without it, annotations go to the log.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  grade:
+    description: Lowest grade across the files.
+    value: ${{ steps.lint.outputs.grade }}
+  score:
+    description: Lowest score across the files.
+    value: ${{ steps.lint.outputs.score }}
+  findings:
+    description: Total findings across the files.
+    value: ${{ steps.lint.outputs.findings }}
+  report:
+    description: Path to the merged JSON report.
+    value: ${{ steps.lint.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Build aibysitter CLI
+      shell: bash
+      run: dotnet build "$GITHUB_ACTION_PATH/src/Aibysitter.Cli/Aibysitter.Cli.csproj" --configuration Release --output "$RUNNER_TEMP/aibysitter-cli" --nologo --verbosity quiet
+
+    - name: Lint rules files
+      id: lint
+      shell: bash
+      env:
+        INPUT_FILES: ${{ inputs.files }}
+        INPUT_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+        INPUT_FAIL_BELOW: ${{ inputs.fail-below }}
+        AIBYSITTER_CLI: dotnet ${{ runner.temp }}/aibysitter-cli/Aibysitter.Cli.dll
+        AIBYSITTER_OUT: ${{ runner.temp }}/aibysitter
+      run: bash "$GITHUB_ACTION_PATH/action/lint.sh"
+
+    - name: Post annotations
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPORT: ${{ steps.lint.outputs.report }}
+      run: bash "$GITHUB_ACTION_PATH/action/post.sh"
+
+    - name: Check thresholds
+      shell: bash
+      env:
+        STATUS: ${{ steps.lint.outputs.status }}
+      run: |
+        case "$STATUS" in
+          ok) ;;
+          threshold) echo "::error title=aibysitter::A fail-on-error or fail-below threshold failed. See the job summary."; exit 1 ;;
+          *) echo "::error title=aibysitter::Linting failed. See the job summary."; exit 1 ;;
+        esac
