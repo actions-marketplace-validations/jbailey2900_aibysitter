@@ -34,7 +34,7 @@ public class ReviewCommentTests
         Assert.Equal(errors, list.Count);
         if (errors > 0)
         {
-            Assert.Equal(".github/aibysitter.json: \"comment\" must be true or false", list[0]);
+            Assert.Equal(".github/aibysitter.json: \"comment\" must be true or false", list[0].Message);
         }
     }
 

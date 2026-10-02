@@ -42,7 +42,7 @@ public class RepoConfigTests
         var (config, errors) = RepoConfig.Parse("{ \"scope\": [ ");
 
         Assert.Same(RepoConfig.Default, config);
-        Assert.StartsWith(".github/aibysitter.json: invalid JSON", Assert.Single(errors));
+        Assert.StartsWith(".github/aibysitter.json: invalid JSON", Assert.Single(errors).Message);
     }
 
     [Theory]
@@ -61,7 +61,7 @@ public class RepoConfigTests
     {
         var (_, errors) = RepoConfig.Parse(json);
 
-        Assert.Contains(errors, e => e.Contains(expected));
+        Assert.Contains(errors, e => e.Message.Contains(expected));
     }
 
     [Fact]

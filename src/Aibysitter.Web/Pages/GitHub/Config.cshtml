@@ -59,7 +59,7 @@
         <ul class="errors">
             @foreach (var error in Model.Errors)
             {
-                <li>@error</li>
+                <li>Line @error.Line: @error.Message</li>
             }
         </ul>
     }

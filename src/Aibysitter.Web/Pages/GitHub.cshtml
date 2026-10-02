@@ -52,7 +52,7 @@
         <tbody>
             <tr>
                 <td><code>scope</code></td>
-                <td>Path globs from the repository root. <code>**</code> matches any number of folders, <code>*</code> and <code>?</code> match within one folder. Case-sensitive. Turns on P004.</td>
+                <td>Path globs from the repository root. <code>**</code> matches any number of folders and must be a whole segment (<code>**/*.cs</code>, not <code>**.cs</code>); <code>*</code> and <code>?</code> match within one folder. Case-sensitive. Not supported: <code>{a,b}</code>, <code>[...]</code>, <code>!</code>, <code>\</code>. Turns on P004.</td>
                 <td>Not set; P004 is off</td>
             </tr>
             <tr>
@@ -72,7 +72,7 @@
             </tr>
         </tbody>
     </table>
-    <p>The config file is itself a changed file: a pull request that edits it outside the declared scope gets a P004 finding. Invalid entries fall back to their defaults and are listed in the check summary.</p>
+    <p>The config file is itself a changed file: a pull request that edits it outside the declared scope gets a P004 finding. Invalid entries fall back to their defaults, are listed in the check summary and are annotated on their line of the config file. Under <code>fail-on-errors</code>, any config error fails the check.</p>
     <p><a asp-page="/GitHub/Config">Generate a config file</a></p>
 </section>
 

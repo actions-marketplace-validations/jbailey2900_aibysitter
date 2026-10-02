@@ -24,10 +24,11 @@ public static class ReviewComment
 
     public static string Build(CheckRunReport report, PullRequestRef pr, long checkRunId)
     {
-        var listed = Math.Min(MaxFindings, report.Annotations.Count);
+        var findings = report.Annotations.Where(a => !a.IsConfigError).ToList();
+        var listed = Math.Min(MaxFindings, findings.Count);
         while (true)
         {
-            var body = Compose(report, pr, checkRunId, listed);
+            var body = Compose(report, findings, pr, checkRunId, listed);
             if (body.Length <= MaxLength)
             {
                 return body;
@@ -43,22 +44,22 @@ public static class ReviewComment
         }
     }
 
-    private static string Compose(CheckRunReport report, PullRequestRef pr, long checkRunId, int listed)
+    private static string Compose(CheckRunReport report, IReadOnlyList<CheckRunAnnotation> findings, PullRequestRef pr, long checkRunId, int listed)
     {
         var text = new StringBuilder();
         text.Append(Marker).Append('\n');
         text.Append($"**Aibysitter review: {report.Title}** · commit `{pr.HeadSha[..Math.Min(7, pr.HeadSha.Length)]}`\n\n");
         text.Append(report.Summary).Append('\n');
 
-        if (report.Annotations.Count > 0)
+        if (findings.Count > 0)
         {
             text.Append("\nFindings:\n\n");
-            foreach (var a in report.Annotations.Take(listed))
+            foreach (var a in findings.Take(listed))
             {
                 text.Append($"- [`{a.Path}:{a.Line}`]({FileUrl(pr, a.Path, a.Line)}) {a.Title}: {OneLine(a.Message)}\n");
             }
 
-            var more = report.Annotations.Count - listed;
+            var more = findings.Count - listed;
             if (more > 0)
             {
                 text.Append($"\nand {more} more in the check run.\n");

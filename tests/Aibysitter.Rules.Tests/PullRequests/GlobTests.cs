@@ -22,7 +22,6 @@ public class GlobTests
     [InlineData("/src/**", "src/A.cs", true)]
     [InlineData("docs/a.b", "docs/aXb", false)]
     [InlineData("Src/**", "src/A.cs", false)]
-    [InlineData("src/**.cs", "src/a/B.cs", true)]
     public void IsMatch(string pattern, string path, bool expected)
     {
         Assert.Equal(expected, new Glob(pattern).IsMatch(path));
