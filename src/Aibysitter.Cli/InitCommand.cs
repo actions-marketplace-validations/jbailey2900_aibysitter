@@ -150,6 +150,11 @@ internal static class InitCommand
             return (null, $"Pack {string.Join(", ", unsupported)} does not target {RulesFormats.DisplayName(format.Value)}.");
         }
 
+        if (PackComposer.StandaloneConflicts(packs.Select(id => catalog.Find(id)!).ToList()) is { Count: > 0 } standalone)
+        {
+            return (null, $"{string.Join(", ", standalone.Select(p => p.Id))} is a standalone pack; use it on its own.");
+        }
+
         return (new Options(packs, format.Value, title, output, force), null);
     }
 }
