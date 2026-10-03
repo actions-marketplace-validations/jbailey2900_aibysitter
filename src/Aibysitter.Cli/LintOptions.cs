@@ -5,13 +5,15 @@ namespace Aibysitter.Cli;
 /// <param name="Path">File path, or <see cref="LintOptions.Stdin"/>.</param>
 /// <param name="Format">Set by <c>--format</c>; null resolves from the path, then from content.</param>
 /// <param name="FailBelow">Grade letter from <c>--fail-below</c>.</param>
+/// <param name="StdinPath">Set by <c>--stdin-path</c>: names standard input for format detection and the report.</param>
 internal sealed record LintOptions(
     string Path,
     RulesFormat? Format,
     IReadOnlyList<string> Disable,
     bool Json,
     bool FailOnError,
-    char? FailBelow)
+    char? FailBelow,
+    string? StdinPath = null)
 {
     public const string Stdin = "-";
 
@@ -25,6 +27,7 @@ internal sealed record LintOptions(
         var disable = new List<string>();
         bool json = false, failOnError = false, optionsEnded = false;
         char? failBelow = null;
+        string? stdinPath = null;
 
         for (var i = 0; i < args.Count; i++)
         {
@@ -80,6 +83,14 @@ internal sealed record LintOptions(
 
                     disable.AddRange(ids.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
                     break;
+                case "--stdin-path":
+                    stdinPath = Value();
+                    if (string.IsNullOrWhiteSpace(stdinPath))
+                    {
+                        return (null, "--stdin-path needs a path, for example --stdin-path CLAUDE.md.");
+                    }
+
+                    break;
                 case "--fail-below":
                     var grade = Value()?.Trim().ToUpperInvariant();
                     if (grade is not { Length: 1 } || !Grades.Contains(grade[0]))
@@ -94,8 +105,13 @@ internal sealed record LintOptions(
             }
         }
 
-        return path is null
-            ? (null, "lint needs a file path, or - to read standard input.")
-            : (new LintOptions(path, format, disable, json, failOnError, failBelow), null);
+        if (path is null)
+        {
+            return (null, "lint needs a file path, or - to read standard input.");
+        }
+
+        return stdinPath is not null && path != Stdin
+            ? (null, "--stdin-path is for standard input; use - as the file.")
+            : (new LintOptions(path, format, disable, json, failOnError, failBelow, stdinPath), null);
     }
 }

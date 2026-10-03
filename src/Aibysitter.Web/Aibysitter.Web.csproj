@@ -22,6 +22,7 @@
     <EmbeddedResource Include="Gallery\Content\**\*" Exclude="Gallery\Content\LICENSE" LogicalName="gallery/%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="Notes\Content\*.md" LogicalName="notes/%(Filename)%(Extension)" />
     <EmbeddedResource Include="Incidents\Content\*.md" LogicalName="incidents/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\hooks\pre-commit;..\..\hooks\claude-code-settings.json" LogicalName="hooks/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

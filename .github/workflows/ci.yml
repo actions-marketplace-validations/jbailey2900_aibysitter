@@ -69,7 +69,7 @@ jobs:
         run: dotnet build Aibysitter.slnx --no-restore --configuration Release -warnaserror
 
       - name: Catalog tests
-        run: dotnet test tests/Aibysitter.Rules.Tests --no-build --configuration Release --filter "Category=Catalog" --verbosity normal --logger "trx;LogFileName=results.trx" --results-directory TestResults
+        run: dotnet test tests/Aibysitter.Rules.Tests --no-build --configuration Release --filter "Category=Catalog|Category=Hooks" --verbosity normal --logger "trx;LogFileName=results.trx" --results-directory TestResults
 
       - name: Annotate failed tests
         if: failure()

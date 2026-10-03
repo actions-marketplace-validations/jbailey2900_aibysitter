@@ -3,6 +3,7 @@ using Aibysitter.Rules;
 using Aibysitter.Web.Data;
 using Aibysitter.Web.Gallery;
 using Aibysitter.Web.GitHub;
+using Aibysitter.Web.Hooks;
 using Aibysitter.Web.Infrastructure;
 using Aibysitter.Web.RulesPacks;
 using Aibysitter.Web.Seo;
@@ -78,6 +79,7 @@ try
     app.MapSeo();
     app.MapBadges();
     app.MapPackRegistry();
+    app.MapHookFiles();
 
     app.Run();
 }

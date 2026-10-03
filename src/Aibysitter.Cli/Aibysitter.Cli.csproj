@@ -9,7 +9,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>aibysitter</ToolCommandName>
     <PackageId>Aibysitter.Cli</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>Jon Bailey</Authors>
     <Description>Lints rules files for AI coding agents (CLAUDE.md, AGENTS.md, Cursor rules, Copilot instructions, GEMINI.md, .windsurfrules). Same rules and scoring as aibysitting.net. Runs offline.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

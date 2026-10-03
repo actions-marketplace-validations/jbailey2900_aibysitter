@@ -42,6 +42,7 @@ public static class CliApp
           aibysitter lint <file|-> [options]
           aibysitter init --packs <ids> --format <name> [--title <text>] [--output <path>] [--force]
           aibysitter packs
+          aibysitter hook claude-code [--disable <ids>]
           aibysitter --version
           aibysitter --help
 
@@ -52,6 +53,7 @@ public static class CliApp
           --json                JSON output, same fields as the /api/lint response plus "file".
           --fail-on-error       Exit 1 when any Error finding remains.
           --fail-below <grade>  Exit 1 when the grade is below A, B, C or D.
+          --stdin-path <path>   With -, names standard input: the format comes from this path and the report uses it.
 
         init: writes a rules file composed from packs, then prints its score.
           --packs <ids>         Pack IDs, comma-separated, in order. 'aibysitter packs' lists them.
@@ -59,6 +61,10 @@ public static class CliApp
           --title <text>        H1 of the file. Default: Project rules.
           --output <path>       Default: where the format goes, for example CLAUDE.md or .cursor/rules/<pack>.mdc.
           --force               Overwrite an existing file.
+
+        hook claude-code: Claude Code PostToolUse hook. Reads the hook JSON on standard input; when the edited
+          file is a rules file with Error or Warning findings, prints them to standard error and exits 2 so Claude
+          fixes them. Otherwise exits 0. Extra flags also come from AIBYSITTER_HOOK_ARGS (--disable only).
 
         Exit codes: 0 ok, 1 threshold failed, 2 usage error, 3 file not readable or not writable.
         """;
@@ -80,6 +86,10 @@ public static class CliApp
                 return InitCommand.Packs(packsArgs, stdout, m => UsageFail(stderr, m));
             case ["init", .. var initArgs]:
                 return InitCommand.Init(initArgs, stdout, stderr, m => UsageFail(stderr, m));
+            case ["hook", "claude-code", .. var hookArgs]:
+                return HookCommand.ClaudeCode(hookArgs, stdin, stderr);
+            case ["hook", ..]:
+                return UsageFail(stderr, "hook needs a name: claude-code.");
             case ["lint", .. var rest]:
                 var (options, error) = LintOptions.Parse(rest);
                 return options is null ? UsageFail(stderr, error!) : Lint(options, stdin, stdout, stderr);
@@ -115,9 +125,9 @@ public static class CliApp
             return FileError;
         }
 
-        var format = options.Format ?? (isStdin ? null : PathFormat.Resolve(options.Path)) ?? RulesFormat.Auto;
+        var label = isStdin ? options.StdinPath ?? StdinLabel : options.Path;
+        var format = options.Format ?? (isStdin && options.StdinPath is null ? null : PathFormat.Resolve(label)) ?? RulesFormat.Auto;
         var report = LintReport.Create(engine, text.TrimStart('﻿'), format, disabled);
-        var label = isStdin ? StdinLabel : options.Path;
 
         stdout.Write(options.Json ? ToJson(label, report) : TextReport.Write(label, report));
         return CheckThresholds(options, report, stderr);

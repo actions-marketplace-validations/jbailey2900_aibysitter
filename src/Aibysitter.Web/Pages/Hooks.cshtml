@@ -1,0 +1,58 @@
+@page
+@using Aibysitter.Web.Hooks
+@{
+    ViewData["Title"] = "Hooks";
+    ViewData["Description"] = "Lint rules files before they are committed, and after Claude Code edits them, with the aibysitter CLI.";
+}
+
+<h1>Hooks</h1>
+<p>Two hooks run the <code>aibysitter</code> CLI on rules files: a Git pre-commit hook on staged files, and a Claude Code hook after each edit. Both run offline with the same rules and scoring as the <a asp-page="/Lint">lint page</a>.</p>
+
+<section class="section">
+    <h2>CLI</h2>
+    <p>Both hooks need <code>aibysitter</code> on <code>PATH</code>. The CLI is a .NET tool, not yet published to NuGet. Build it from source:</p>
+    <pre><code>dotnet pack src/Aibysitter.Cli -o ./nupkg
+dotnet tool install --global Aibysitter.Cli --add-source ./nupkg</code></pre>
+</section>
+
+<section class="section">
+    <h2>Git pre-commit</h2>
+    <p>Lints the staged content of each staged rules file, not the working copy: <code>CLAUDE.md</code>, <code>AGENTS.md</code> and <code>GEMINI.md</code> in any folder, <code>.github/copilot-instructions.md</code>, <code>.cursorrules</code>, <code>.windsurfrules</code>, and <code>.mdc</code> files under <code>.cursor/rules/</code>. Other files are ignored.</p>
+    <ol>
+        <li>Save <a href="@HookFiles.Url(HookFiles.PreCommit)">pre-commit</a> as <code>.git/hooks/pre-commit</code>.</li>
+        <li>Make it executable: <code>chmod +x .git/hooks/pre-commit</code>. Git for Windows runs it as is.</li>
+    </ol>
+    <table class="stack">
+        <thead>
+            <tr>
+                <th>Setting</th>
+                <th>Effect</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>AIBYSITTER_HOOK_ARGS</code></td>
+                <td><code>aibysitter lint</code> flags. Default <code>--fail-on-error</code>. Example: <code>--fail-below B --disable R004</code>.</td>
+            </tr>
+            <tr>
+                <td><code>AIBYSITTER</code></td>
+                <td>CLI command. Default <code>aibysitter</code>.</td>
+            </tr>
+        </tbody>
+    </table>
+    <p>A failed threshold blocks the commit and prints the findings. Skip once with <code>git commit --no-verify</code>. When the CLI is not found, the hook prints a warning and lets the commit through.</p>
+    <pre><code>@HookFiles.Get(HookFiles.PreCommit)</code></pre>
+</section>
+
+<section class="section">
+    <h2>Claude Code</h2>
+    <p>A <code>PostToolUse</code> hook runs <code>aibysitter hook claude-code</code> after each edit. When the edited file is a rules file with Error or Warning findings, the hook prints them and exits 2, so Claude reads them and fixes the file. Info findings, clean files and other files exit 0. Malformed hook input exits 0.</p>
+    <ol>
+        <li>Merge <a href="@HookFiles.Url(HookFiles.ClaudeCodeSettings)">claude-code-settings.json</a> into <code>.claude/settings.json</code> in the repository, or <code>~/.claude/settings.json</code> for every project.</li>
+        <li>Skip rules with <code>aibysitter hook claude-code --disable R004</code> in the command, or <code>AIBYSITTER_HOOK_ARGS="--disable R004"</code>.</li>
+    </ol>
+    <pre><code>@HookFiles.Get(HookFiles.ClaudeCodeSettings)</code></pre>
+    <p>Output sent to Claude for a <code>CLAUDE.md</code> with "Always use tabs." and "Never use tabs.", one line per finding:</p>
+    <pre><code>aibysitter: CLAUDE.md has 1 finding to fix (score 90/100 A):
+CLAUDE.md:3 R003 Error: Contradicts line 2: &quot;use tabs&quot; is both required and forbidden. Fix: Keep one instruction and delete the other.</code></pre>
+</section>
