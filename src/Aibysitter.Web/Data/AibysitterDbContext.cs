@@ -9,6 +9,8 @@ public sealed class AibysitterDbContext(DbContextOptions<AibysitterDbContext> op
 
     public DbSet<ScoreHistoryEntry> ScoreHistory => Set<ScoreHistoryEntry>();
 
+    public DbSet<UsageStatEntry> UsageStats => Set<UsageStatEntry>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var entry = modelBuilder.Entity<ScoreHistoryEntry>();
@@ -30,5 +32,13 @@ public sealed class AibysitterDbContext(DbContextOptions<AibysitterDbContext> op
             .HasDatabaseName("IX_ScoreHistory_Repo_File_Created")
             .IsDescending(false, false, true)
             .IncludeProperties(e => new { e.RulesetVersion, e.Score, e.Grade });
+
+        var usage = modelBuilder.Entity<UsageStatEntry>();
+        usage.ToTable("UsageStats", "dbo", t =>
+            t.HasCheckConstraint("CK_UsageStats_Metric", $"[Metric] IN ({string.Join(", ", Stats.UsageMetric.All.Select(m => $"'{m}'"))})"));
+        usage.HasKey(e => new { e.Date, e.Metric, e.Key });
+        usage.Property(e => e.Date).HasColumnType("date");
+        usage.Property(e => e.Metric).HasMaxLength(16).IsUnicode(false);
+        usage.Property(e => e.Key).HasMaxLength(32).IsUnicode(false);
     }
 }

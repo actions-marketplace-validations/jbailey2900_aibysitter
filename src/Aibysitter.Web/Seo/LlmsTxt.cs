@@ -40,6 +40,7 @@ public static class LlmsTxt
         Link(text, site, "Changelog", "/Rules/Changelog", "ruleset and check changes by version");
         Link(text, site, "Gallery", "/Gallery", "public-domain rules files, each scored");
         Link(text, site, "Incidents", "/Incidents", "postmortems of AI coding agent changes, with the checks that would have caught them; CC BY 4.0");
+        Link(text, site, "Stats", "/Stats", "daily usage counts: lints, findings by rule, App reviews, badge requests");
         Link(text, site, "Privacy", "/Privacy", "what is read, kept and logged");
         return text.ToString();
     }

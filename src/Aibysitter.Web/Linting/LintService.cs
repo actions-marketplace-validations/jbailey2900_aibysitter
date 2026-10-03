@@ -13,7 +13,7 @@ public sealed record LintOutcome(
     LintReport Report);
 
 /// <summary>Server-side lint for the form and the API: optional disabled rules, scoring, and one log line without the text.</summary>
-public sealed class LintService(LintEngine engine, ILogger<LintService> logger)
+public sealed class LintService(LintEngine engine, ILogger<LintService> logger, Stats.IUsageCounter? usage = null)
 {
     public IReadOnlyList<IRule> Rules => engine.Rules;
 
@@ -36,6 +36,15 @@ public sealed class LintService(LintEngine engine, ILogger<LintService> logger)
             score,
             disabled,
             LintReport.From(result, score, disabled, active.SeverityOf));
+
+        if (usage is not null && Stats.UsageMetric.LintSources.Contains(source))
+        {
+            usage.Increment(Stats.UsageMetric.Lint, source);
+            foreach (var finding in result.Findings)
+            {
+                usage.Increment(Stats.UsageMetric.Finding, finding.RuleId);
+            }
+        }
 
         logger.LogInformation(
             "Linted {Length} chars as {Format} ({Source}), {FindingCount} findings, {SuppressedCount} suppressed, {DisabledCount} rules off, score {Score}",

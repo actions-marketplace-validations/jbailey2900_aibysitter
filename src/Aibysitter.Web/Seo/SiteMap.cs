@@ -16,7 +16,7 @@ public sealed class SiteMap(GalleryCatalog gallery, NoteCatalog notes, IncidentC
     public static readonly IReadOnlyList<string> FixedPages =
     [
         "/", "/Lint", "/Gallery", "/Packs", "/Rules", "/Rules/Methodology", "/Rules/Changelog",
-        "/GitHub", "/GitHub/Config", "/API", "/Notes", "/Incidents", "/About", "/Privacy",
+        "/GitHub", "/GitHub/Config", "/API", "/Notes", "/Incidents", "/Stats", "/About", "/Privacy",
     ];
 
     public IReadOnlyList<SiteMapEntry> Entries =>

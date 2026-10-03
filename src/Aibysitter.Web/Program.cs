@@ -6,6 +6,7 @@ using Aibysitter.Web.GitHub;
 using Aibysitter.Web.Infrastructure;
 using Aibysitter.Web.RulesPacks;
 using Aibysitter.Web.Seo;
+using Aibysitter.Web.Stats;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -47,6 +48,7 @@ try
     builder.Services.AddAibysitterDataProtection(builder.Configuration);
     builder.Services.AddAibysitterGitHubApp(builder.Configuration);
     builder.Services.AddAibysitterScoreHistory(builder.Configuration);
+    builder.Services.AddAibysitterUsageStats(builder.Configuration);
     builder.Services.AddSingleton<BadgeService>();
 
     var app = builder.Build();
