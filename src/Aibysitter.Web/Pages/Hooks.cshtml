@@ -40,6 +40,7 @@ dotnet tool install --global Aibysitter.Cli --add-source ./nupkg</code></pre>
             </tr>
         </tbody>
     </table>
+    <p>Before committing, <code>aibysitter fix --dry-run CLAUDE.md</code> shows the R005, R011 and R012 fixes as a diff; <code>aibysitter fix CLAUDE.md</code> applies them.</p>
     <p>A failed threshold blocks the commit and prints the findings. Skip once with <code>git commit --no-verify</code>. When the CLI is not found, the hook prints a warning and lets the commit through.</p>
     <pre><code>@HookFiles.Get(HookFiles.PreCommit)</code></pre>
 </section>
