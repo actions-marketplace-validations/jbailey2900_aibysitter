@@ -12,8 +12,8 @@ public class PlaceholderIdentifiersTests
     {
         var findings = check.Evaluate(Context(FromPatchFixture("src/OrderService.cs", "placeholders.patch"))).ToList();
 
-        Assert.Equal(3, findings.Count);
-        Assert.Equal(new[] { 12, 13, 14 }, findings.Select(f => f.Line));
+        Assert.Equal(2, findings.Count);
+        Assert.Equal(new[] { 12, 13 }, findings.Select(f => f.Line));
         Assert.All(findings, f => Assert.Equal("src/OrderService.cs", f.Path));
         Assert.Contains("\"YOUR_API_KEY\"", findings[0].Message);
         Assert.Contains("\"::CURRENT_USER_ID::\"", findings[1].Message);

@@ -7,13 +7,13 @@ public sealed partial class AssertNothingTests : IPullRequestCheck
 {
     public string Id => "P003";
     public string Title => "Assert-nothing tests";
-    public Severity Severity => Severity.Error;
+    public Severity Severity => Severity.Warning;
 
     public IEnumerable<PullRequestFinding> Evaluate(PullRequestContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        foreach (var file in context.Files.Where(f => f.Status != FileChangeStatus.Removed && f.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)))
+        foreach (var file in context.Files.Where(f => f.Status != FileChangeStatus.Removed && f.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) && !CodeText.IsGenerated(f)))
         {
             var content = file.HeadContent ?? (file.Status == FileChangeStatus.Added ? string.Join("\n", file.AddedLines.Select(l => l.Text)) : null);
             if (content is null)

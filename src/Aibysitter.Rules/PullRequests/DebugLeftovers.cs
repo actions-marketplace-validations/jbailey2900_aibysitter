@@ -14,6 +14,15 @@ public sealed partial class DebugLeftovers : AddedLinePatternCheck
 
     protected override bool AppliesTo(string path) => FileKinds.IsCode(path) && !FileKinds.IsTestFile(path);
 
+    /// <summary>print( in Python files under a scripts/ or tools/ folder is program output, not a finding.</summary>
+    protected override IEnumerable<string> Keep(ChangedFile file, string line, IReadOnlyList<string> matches) =>
+        ScriptFolderRegex().IsMatch(file.Path.Replace('\\', '/'))
+            ? matches.Where(m => !m.StartsWith("print", StringComparison.Ordinal))
+            : matches;
+
+    [GeneratedRegex(@"(?:^|/)(?:scripts|tools)/[^/]+(?:/[^/]+)*\.py$", RegexOptions.IgnoreCase)]
+    private static partial Regex ScriptFolderRegex();
+
     /// <summary>
     /// console.log / console.debug, debugger;, Debug.WriteLine, print(, breakpoint(), pdb.set_trace(), import pdb,
     /// binding.pry, Rust dbg!. Lines that are only a comment are skipped.

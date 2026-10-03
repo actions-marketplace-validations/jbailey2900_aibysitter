@@ -24,11 +24,11 @@
 
 <figure class="terminal" aria-label="Example check run">
     <pre><code><span class="t-prompt">check</span> Aibysitter review  <span class="t-prompt">conclusion</span> neutral
-<span class="t-sum">4 findings (3 errors, 1 warning)</span>
+<span class="t-sum">4 findings (2 errors, 2 warnings)</span>
 <span class="t-loc">docs/notes.txt:1           </span> <span class="t-sev t-error">failure</span> <span class="t-rule">P004</span>  Outside declared scope (added): docs/notes.txt
 <span class="t-loc">src/OrderService.cs:5      </span> <span class="t-sev t-error">failure</span> <span class="t-rule">P001</span>  Placeholder left in change: "YOUR_API_KEY"
 <span class="t-loc">src/OrderService.cs:9      </span> <span class="t-sev t-warning">warning</span> <span class="t-rule">P002</span>  Stub left in change: "throw new NotImplementedException("
-<span class="t-loc">tests/CalculatorTests.cs:14</span> <span class="t-sev t-error">failure</span> <span class="t-rule">P003</span>  Test "Multiply_Works" has no assertion.</code></pre>
+<span class="t-loc">tests/CalculatorTests.cs:14</span> <span class="t-sev t-warning">warning</span> <span class="t-rule">P003</span>  Test "Multiply_Works" has no assertion.</code></pre>
     <figcaption>Check run from a test pull request seeded with one example of each check, under the advisory setting.</figcaption>
 </figure>
 
