@@ -6,17 +6,16 @@ public sealed record FixResult(string Text, IReadOnlyList<Finding> Fixed);
 
 /// <summary>
 /// Mechanical fixes, repeated until none apply (at most <see cref="MaxPasses"/> passes):
-/// R012 appends a closing fence matching the opening at end of file; R005 deletes the repeated line;
+/// R012 appends a closing fence matching the opening at end of file;
 /// R011 deletes the empty heading and the blank lines after it. Suppressed findings and disabled rules are not fixed.
 /// </summary>
 public static class RulesFileFixer
 {
     public const int MaxPasses = 5;
-    public const string DuplicateLines = "R005";
     public const string EmptySections = "R011";
     public const string UnclosedCodeFence = "R012";
 
-    public static readonly IReadOnlyList<string> FixableRules = [DuplicateLines, EmptySections, UnclosedCodeFence];
+    public static readonly IReadOnlyList<string> FixableRules = [EmptySections, UnclosedCodeFence];
 
     public static FixResult Fix(LintEngine engine, string text, RulesFormat format, IReadOnlyCollection<string> disabled)
     {

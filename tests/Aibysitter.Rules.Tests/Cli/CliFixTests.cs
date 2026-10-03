@@ -6,7 +6,7 @@ namespace Aibysitter.Rules.Tests.Cli;
 public sealed class CliFixTests : IDisposable
 {
     private const string Broken = "# Rules\n- Run tests before commit.\n- run tests before commit.\n## Testing\n## Style\n- Use tabs.\nRun:\n```\ndotnet test\n";
-    private const string Fixed = "# Rules\n- Run tests before commit.\n## Style\n- Use tabs.\nRun:\n```\ndotnet test\n```\n";
+    private const string Fixed = "# Rules\n- Run tests before commit.\n- run tests before commit.\n## Style\n- Use tabs.\nRun:\n```\ndotnet test\n```\n";
 
     private readonly string dir = Directory.CreateTempSubdirectory("aibysitter-fix-").FullName;
 
@@ -28,7 +28,7 @@ public sealed class CliFixTests : IDisposable
 
         Assert.Equal(0, result.Exit);
         Assert.Equal(Fixed, File.ReadAllText(path));
-        Assert.Equal($"{path}: fixed 3 (R005 ×1, R011 ×1, R012 ×1); score 82 → 100.\n", result.Out);
+        Assert.Equal($"{path}: fixed 2 (R011 ×1, R012 ×1); score 82 → 96.\n", result.Out);
         Assert.Equal($"{path}: nothing to fix.\n", CliTests.Run(["fix", path]).Out);
     }
 
@@ -43,8 +43,8 @@ public sealed class CliFixTests : IDisposable
         Assert.Equal(Broken, File.ReadAllText(path));
         Assert.Equal(
             $"--- a/{path}\n+++ b/{path}\n"
-            + "@@ -1,9 +1,8 @@\n # Rules\n - Run tests before commit.\n-- run tests before commit.\n-## Testing\n ## Style\n - Use tabs.\n Run:\n ```\n dotnet test\n+```\n"
-            + $"{path}: would fix 3 (R005 ×1, R011 ×1, R012 ×1); score 82 → 100.\n",
+            + "@@ -1,9 +1,9 @@\n # Rules\n - Run tests before commit.\n - run tests before commit.\n-## Testing\n ## Style\n - Use tabs.\n Run:\n ```\n dotnet test\n+```\n"
+            + $"{path}: would fix 2 (R011 ×1, R012 ×1); score 82 → 96.\n",
             result.Out);
     }
 
@@ -62,7 +62,7 @@ public sealed class CliFixTests : IDisposable
     public void Diff_SeparateHunks_WhenChangesAreFarApart()
     {
         var middle = string.Concat(Enumerable.Range(1, 10).Select(i => $"- Rule number {i} applies to every file.\n"));
-        var text = "# Rules\n## Empty\n## Body\n" + middle + "- Rule number 1 applies to every file.\n";
+        var text = "# Rules\n## Empty\n## Body\n" + middle + "## Tail\n";
 
         var result = CliTests.Run(["fix", "-", "--dry-run", "--stdin-path", "CLAUDE.md"], text);
 
@@ -78,15 +78,15 @@ public sealed class CliFixTests : IDisposable
 
         Assert.Equal(0, result.Exit);
         Assert.Equal(Fixed, result.Out);
-        Assert.Equal("docs/CLAUDE.md: fixed 3 (R005 ×1, R011 ×1, R012 ×1); score 82 → 100.\n", result.Err);
+        Assert.Equal("docs/CLAUDE.md: fixed 2 (R011 ×1, R012 ×1); score 82 → 96.\n", result.Err);
     }
 
     [Fact]
     public void Disable_KeepsThatRule()
     {
-        var result = CliTests.Run(["fix", "-", "--disable", "R012,R011"], Broken);
+        var result = CliTests.Run(["fix", "-", "--disable", "R012"], Broken);
 
-        Assert.Equal(Broken.Replace("- run tests before commit.\n", ""), result.Out);
+        Assert.Equal(Broken.Replace("## Testing\n", ""), result.Out);
     }
 
     [Theory]
@@ -117,7 +117,6 @@ public class FixableRulePageTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
     [Theory]
-    [InlineData("R005", "deletes the repeated line and keeps the first.")]
     [InlineData("R011", "deletes the empty heading and the blank lines after it.")]
     [InlineData("R012", "adds a matching closing fence at the end of the file.")]
     public async Task FixableRules_SayHow(string id, string text)
@@ -132,5 +131,13 @@ public class FixableRulePageTests(WebApplicationFactory<Program> factory)
     public async Task OtherRules_NotFixable()
     {
         Assert.DoesNotContain("<dt>Fixable</dt>", await factory.CreateClient().GetStringAsync("/Rules/R002"));
+    }
+
+    [Fact]
+    public async Task R005_NotFixable()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Rules/R005");
+
+        Assert.DoesNotContain("<dt>Fixable</dt>", html);
     }
 }
