@@ -29,6 +29,9 @@ public class HedgedInstructionsTests
 
     [Theory]
     [InlineData("- Don't try to work around signing.")]
+    [InlineData("- Never move it, or `npm i` would try to fetch the package.")]
+    [InlineData("- Prefer to prepend to lists `[new | list]` not `list ++ [new]`.")]
+    [InlineData("- Isolating design's contribution where possible")]
     [InlineData("- Do NOT try to bypass the limit.")]
     [InlineData("- Never try to sanitize the list.")]
     [InlineData("- Every new tool must consider the undo flow.")]

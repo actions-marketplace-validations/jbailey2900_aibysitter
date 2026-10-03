@@ -31,6 +31,8 @@ public class VagueVerbsTests
     [InlineData("- Add or update tests as needed.")]
     [InlineData("1. Clean up after yourself.")]
     [InlineData("Run the suite. Then manage the cache.")]
+    [InlineData("- Always handle errors gracefully with proper HTTP status codes.")]
+    [InlineData("- Add to `marketplace.json` in the appropriate collection.")]
     public void Flags_InstructionPosition(string line)
     {
         Assert.Single(_rule.Evaluate(RulesFile.Parse(line)));
@@ -38,6 +40,14 @@ public class VagueVerbsTests
 
     [Theory]
     [InlineData("Commands handle npm package publishing.")]
+    [InlineData("- Handle errors gracefully with a dedicated error boundary.")]
+    [InlineData("- Optimize to reduce network waterfalls.")]
+    [InlineData("- Verify all functions were properly migrated.")]
+    [InlineData("- Ensure proper cleanup to avoid zombie processes.")]
+    [InlineData("- Include `scripts/` and `references/` as needed.")]
+    [InlineData("- Clean up temp secret files.")]
+    [InlineData("- `npm start` - ensure server starts successfully.")]
+    [InlineData("- `manage_custom_operation` — Manage custom operations for stateful resources")]
     [InlineData("**Model Management** (`core/manage/`):")]
     [InlineData("| Handle | Owner |")]
     [InlineData("- Ensure tests pass (`npx gulp test`).")]

@@ -3,12 +3,20 @@ using System.Text.RegularExpressions;
 namespace Aibysitter.Rules.Rules;
 
 /// <summary>
-/// Repeated lines of four or more words. Skips horizontal rules, table rows, and suppression comments.
-/// A heading counts as a repeat only under the same parent heading.
+/// Repeated instruction lines of four or more words: lines an instruction sentence overlaps
+/// (<see cref="InstructionText.InstructionLines"/>). Not counted: headings, horizontal rules, table rows, HTML comments,
+/// suppression comments, wrapped continuation lines (lowercase start after an unfinished prose line), indented code
+/// (four spaces or a tab after a blank line, not a list item). Not reported:
+/// lines that occur <see cref="TemplateCount"/> or more times (template lines), and repeats whose previous or next line
+/// has the same shape as the line beside the first occurrence, ignoring digits and inline code (repeated blocks such as
+/// parallel procedures).
 /// </summary>
 public sealed partial class DuplicateLines : IRule
 {
     public const int MinWords = 4;
+
+    /// <summary>Occurrences at which a repeated line is read as a template line.</summary>
+    public const int TemplateCount = 3;
 
     public string Id => "R005";
     public string Title => "Duplicate lines";
@@ -18,48 +26,80 @@ public sealed partial class DuplicateLines : IRule
     {
         ArgumentNullException.ThrowIfNull(file);
 
+        var lines = file.Lines;
+        var keys = lines.Select(l => l.IsBlank ? null : TextNormalizer.Normalize(l.Text)).ToList();
+        var shapes = keys.Select(k => k is null ? null : DigitsRegex().Replace(CodeSpanRegex().Replace(k, "`"), "0")).ToList();
+        var instructionLines = InstructionText.InstructionLines(file);
+        var candidates = Enumerable.Range(0, lines.Count).Where(i => IsCandidate(lines, i, instructionLines)).ToList();
+        var counts = candidates.GroupBy(i => keys[i]!, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
+
         var firstSeen = new Dictionary<string, int>(StringComparer.Ordinal);
-        var headingPath = new List<(int Level, string Key)>();
-
-        foreach (var line in file.Lines.Where(l => !l.IsBlank && !l.IsInCodeFence && !l.IsFrontmatter && !l.IsDirective))
+        foreach (var i in candidates)
         {
-            var key = TextNormalizer.Normalize(line.Text);
-
-            if (line.IsHeading)
+            var key = keys[i]!;
+            if (!firstSeen.TryGetValue(key, out var first))
             {
-                var level = HeadingLevelRegex().Match(line.Text).Groups[1].Value.Length;
-                headingPath.RemoveAll(h => h.Level >= level);
-                var parent = headingPath.Count == 0 ? string.Empty : headingPath[^1].Key;
-                headingPath.Add((level, key));
-                key = $"{parent}\u0000{key}";
+                firstSeen[key] = i;
+                continue;
             }
 
-            if (HorizontalRuleRegex().IsMatch(line.Text) || InstructionText.IsTableRow(line.Text) || WordCount(line.Text) < MinWords)
+            if (counts[key] >= TemplateCount || SameNeighbour(shapes, first, i, -1) || SameNeighbour(shapes, first, i, 1))
             {
                 continue;
             }
 
-            if (firstSeen.TryGetValue(key, out var first))
-            {
-                yield return new Finding(Id, line.Number, $"Duplicate of line {first}.", "Delete the repeated line.");
-            }
-            else
-            {
-                firstSeen[key] = line.Number;
-            }
+            yield return new Finding(Id, lines[i].Number, $"Duplicate of line {lines[first].Number}.", "Delete the repeated line.");
         }
     }
 
-    private static int WordCount(string text) => WordRegex().Count(TextNormalizer.Normalize(HeadingMarkRegex().Replace(text, string.Empty)));
+    private static bool IsCandidate(IReadOnlyList<RulesLine> lines, int i, IReadOnlySet<int> instructionLines)
+    {
+        var line = lines[i];
+        return instructionLines.Contains(line.Number)
+            && !InstructionText.IsHtmlComment(line.Text)
+            && !HorizontalRuleRegex().IsMatch(line.Text)
+            && WordCount(line.Text) >= MinWords
+            && !IsContinuation(lines, i)
+            && !IsIndentedCode(lines, i);
+    }
+
+    /// <summary>Indented four or more spaces (or a tab) after a blank line, and not a list item: an indented code block.</summary>
+    private static bool IsIndentedCode(IReadOnlyList<RulesLine> lines, int i) =>
+        i > 0 && lines[i - 1].IsBlank && IndentedRegex().IsMatch(lines[i].Text) && !InstructionText.IsListItem(lines[i].Text);
+
+    /// <summary>Lowercase start, not a list item, after a prose line that does not end a sentence or introduce a list.</summary>
+    private static bool IsContinuation(IReadOnlyList<RulesLine> lines, int i) =>
+        i > 0
+        && lines[i - 1].IsProse
+        && !InstructionText.IsListItem(lines[i].Text)
+        && LowercaseStartRegex().IsMatch(lines[i].Text)
+        && !SentenceEndRegex().IsMatch(lines[i - 1].Text);
+
+    private static bool SameNeighbour(IReadOnlyList<string?> keys, int first, int repeat, int offset)
+    {
+        int a = first + offset, b = repeat + offset;
+        return a >= 0 && b >= 0 && a < keys.Count && b < keys.Count && b != first && keys[a] is not null && keys[a] == keys[b];
+    }
+
+    private static int WordCount(string text) => WordRegex().Count(TextNormalizer.Normalize(text));
 
     [GeneratedRegex(@"^\s{0,3}(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$")]
     private static partial Regex HorizontalRuleRegex();
 
-    [GeneratedRegex(@"^\s{0,3}(#{1,6})\s")]
-    private static partial Regex HeadingLevelRegex();
+    [GeneratedRegex(@"`[^`]*`")]
+    private static partial Regex CodeSpanRegex();
 
-    [GeneratedRegex(@"^\s{0,3}#{1,6}\s+")]
-    private static partial Regex HeadingMarkRegex();
+    [GeneratedRegex(@"\d+")]
+    private static partial Regex DigitsRegex();
+
+    [GeneratedRegex(@"^(?: {4}|\t)")]
+    private static partial Regex IndentedRegex();
+
+    [GeneratedRegex(@"^\s*[a-z]")]
+    private static partial Regex LowercaseStartRegex();
+
+    [GeneratedRegex(@"[.!?:]\s*$")]
+    private static partial Regex SentenceEndRegex();
 
     [GeneratedRegex(@"[\p{L}\p{N}][\p{L}\p{N}'_.-]*")]
     private static partial Regex WordRegex();

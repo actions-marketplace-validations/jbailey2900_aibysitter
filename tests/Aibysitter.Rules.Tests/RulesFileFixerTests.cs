@@ -13,7 +13,6 @@ public class RulesFileFixerTests
         Engine.Lint(text, RulesFormat.ClaudeMd).Select(f => f.RuleId).Where(RulesFileFixer.FixableRules.Contains);
 
     [Theory]
-    [InlineData("R005", "- Run tests before commit.")]
     [InlineData("R011", "# Rules\n## Style\n- Use tabs.")]
     [InlineData("R012", "Run:\n```\ndotnet test\n- Use tabs.\n```")]
     public void RuleDocBadExample_Fixed(string id, string expected)
@@ -26,11 +25,13 @@ public class RulesFileFixerTests
     }
 
     [Fact]
-    public void Duplicates_InCodeOrUnderOtherParents_Untouched()
+    public void DuplicateLines_NotFixed()
     {
-        const string text = "# Rules\n## Api\n### Testing rules here\n- x\n## Web\n### Testing rules here\n- y\n```\n- Run tests before commit.\n- Run tests before commit.\n```\n";
+        const string text = "# Rules\n- Run tests before commit.\n- Run tests before commit.\n";
 
+        Assert.Contains("R005", Engine.Lint(text, RulesFormat.ClaudeMd).Select(f => f.RuleId));
         Assert.Equal(text, Fix(text).Text);
+        Assert.DoesNotContain("R005", RulesFileFixer.FixableRules);
     }
 
     [Fact]
@@ -50,29 +51,29 @@ public class RulesFileFixerTests
     }
 
     [Fact]
-    public void UnclosedFence_AndDuplicateBeforeIt_BothFixed_FenceFirst()
+    public void UnclosedFence_AndEmptySectionBeforeIt_BothFixed_FenceFirst()
     {
-        var result = Fix("# Rules\n- Run tests before commit.\n- Run tests before commit.\n```\nmake\n- Run tests before commit.\n");
+        var result = Fix("# Rules\n## Empty\n## Build\n```\nmake\n");
 
-        Assert.Equal("# Rules\n- Run tests before commit.\n```\nmake\n- Run tests before commit.\n```\n", result.Text);
-        Assert.Equal(["R012", "R005"], result.Fixed.Select(f => f.RuleId));
+        Assert.Equal("# Rules\n## Build\n```\nmake\n```\n", result.Text);
+        Assert.Equal(["R012", "R011"], result.Fixed.Select(f => f.RuleId));
     }
 
     [Fact]
     public void SuppressedAndDisabled_Untouched()
     {
-        const string suppressed = "# Rules\n- Run tests before commit.\n<!-- aibysitter-disable-next-line R005 -->\n- Run tests before commit.\n";
+        const string suppressed = "# Rules\n<!-- aibysitter-disable-next-line R011 -->\n## Empty\n## Style\n- Use tabs.\n";
         Assert.Equal(suppressed, Fix(suppressed).Text);
 
-        const string duplicate = "# Rules\n- Run tests before commit.\n- Run tests before commit.\n";
-        Assert.Equal(duplicate, Fix(duplicate, "R005").Text);
+        const string empty = "# Rules\n## Empty\n## Style\n- Use tabs.\n";
+        Assert.Equal(empty, Fix(empty, "R011").Text);
     }
 
     [Fact]
     public void Preserves_Crlf_Bom_AndMissingTrailingNewline()
     {
-        Assert.Equal("﻿# Rules\r\n- Run tests before commit.\r\n", Fix("﻿# Rules\r\n- Run tests before commit.\r\n- run tests before commit.\r\n").Text);
-        Assert.Equal("# Rules\n- Run tests before commit.", Fix("# Rules\n- Run tests before commit.\n- Run tests before commit.").Text);
+        Assert.Equal("﻿# Rules\r\n## Style\r\n- Use tabs.\r\n", Fix("﻿# Rules\r\n## Empty\r\n## Style\r\n- Use tabs.\r\n").Text);
+        Assert.Equal("# Rules\n## Style\n- Use tabs.", Fix("# Rules\n## Empty\n## Style\n- Use tabs.").Text);
     }
 
     [Fact]

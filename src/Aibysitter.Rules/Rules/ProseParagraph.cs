@@ -4,11 +4,16 @@ namespace Aibysitter.Rules.Rules;
 
 /// <summary>
 /// Paragraphs (consecutive prose lines that are not list items, list-item continuation lines, table rows, or
-/// block quotes) longer than <see cref="MaxWords"/> words. Reported at the paragraph's first line.
+/// block quotes) longer than <see cref="MaxWords"/> words in which at least a quarter of the sentences are instructions
+/// (<see cref="InstructionText.IsInstruction"/>). Files that are documentation dumps are skipped. Reported at the
+/// paragraph's first line.
 /// </summary>
 public sealed partial class ProseParagraph : IRule
 {
     public const int MaxWords = 80;
+
+    /// <summary>A paragraph is flagged when at least one in this many of its sentences is an instruction.</summary>
+    public const int MinInstructionShareDenominator = 4;
 
     public string Id => "R013";
     public string Title => "Prose paragraph";
@@ -18,8 +23,14 @@ public sealed partial class ProseParagraph : IRule
     {
         ArgumentNullException.ThrowIfNull(file);
 
+        if (InstructionText.IsDocumentationDump(file))
+        {
+            yield break;
+        }
+
         var start = 0;
         var words = 0;
+        var text = new System.Text.StringBuilder();
         var inList = false;
         foreach (var line in file.Lines.Append(null))
         {
@@ -40,10 +51,11 @@ public sealed partial class ProseParagraph : IRule
                 }
 
                 words += WordRegex().Count(InstructionText.WithoutCode(line.Text));
+                text.Append(line.Text.Trim()).Append(' ');
                 continue;
             }
 
-            if (words > MaxWords)
+            if (words > MaxWords && HasInstruction(text.ToString()))
             {
                 yield return new Finding(
                     Id,
@@ -53,7 +65,15 @@ public sealed partial class ProseParagraph : IRule
             }
 
             words = 0;
+            text.Clear();
         }
+    }
+
+    /// <summary>At least one in <see cref="MinInstructionShareDenominator"/> of the paragraph's sentences is an instruction.</summary>
+    private static bool HasInstruction(string paragraph)
+    {
+        var sentences = InstructionText.Sentences(paragraph.Trim()).ToList();
+        return sentences.Count(InstructionText.IsInstruction) * MinInstructionShareDenominator >= sentences.Count;
     }
 
     private static bool IsParagraphLine(RulesLine line) =>

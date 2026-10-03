@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aibysitter.Rules.Tests" />
+    <InternalsVisibleTo Include="Aibysitter.Rules.Browser" />
+  </ItemGroup>
+
 </Project>

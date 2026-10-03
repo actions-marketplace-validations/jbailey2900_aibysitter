@@ -4,7 +4,7 @@ using Aibysitter.Rules;
 namespace Aibysitter.Cli;
 
 /// <summary>
-/// <c>aibysitter fix</c>: R005, R011 and R012. Writes the file in place; <c>--dry-run</c> prints a unified diff and exits 1
+/// <c>aibysitter fix</c>: R011 and R012. Writes the file in place; <c>--dry-run</c> prints a unified diff and exits 1
 /// when there are changes. With <c>-</c>, the fixed text (or the diff) goes to standard output and the summary to standard error.
 /// </summary>
 internal static class FixCommand
@@ -42,7 +42,7 @@ internal static class FixCommand
                     var ids = Value();
                     if (string.IsNullOrWhiteSpace(ids))
                     {
-                        return usageFail("--disable needs rule IDs, for example --disable R005.");
+                        return usageFail("--disable needs rule IDs, for example --disable R011.");
                     }
 
                     disable.AddRange(ids.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));

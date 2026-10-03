@@ -25,8 +25,15 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             var files = await gateway.GetChangedFilesAsync(pr, cancellationToken);
             var (config, configErrors) = RepoConfig.Parse(await gateway.GetFileContentAsync(pr, RepoConfig.FilePath, cancellationToken));
 
-            // Rules files are fetched first so the shared cap never starves P014.
+            var notes = new List<string>();
+            var tree = await TreeForRulesFilesAsync(pr, files, config, cancellationToken);
+            var symlinks = files.Where(f => RulesFileLint.IsRulesFile(f) && tree?.Symlinks.Contains(f.Path) == true).ToList();
+            notes.AddRange(symlinks.Select(SymlinkNote));
+
+            // Rules files are fetched first so the shared cap never starves P014. Symlinked rules files are not fetched:
+            // GitHub returns the target's content under the link's path.
             var toFetch = files.Where(NeedsHeadContent)
+                .Where(f => !symlinks.Contains(f))
                 .OrderBy(f => RulesFileLint.IsRulesFile(f) ? 0 : 1)
                 .Take(MaxContentFetches)
                 .Select(f => f.Path)
@@ -40,8 +47,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
                     : file);
             }
 
-            var notes = new List<string>();
-            var (repo, unchanged) = await BuildRepoViewAsync(pr, files, enriched, config, notes, cancellationToken);
+            var (repo, unchanged) = await BuildRepoViewAsync(pr, files, enriched, config, tree, notes, cancellationToken);
 
             var review = reviewer.Review(new PullRequestContext(enriched, config, repo, unchanged));
             var report = CheckRunReport.Build(review, reviewer.Checks, enriched, config, configErrors, notes);
@@ -81,6 +87,17 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
         }
     }
 
+    /// <summary>The head tree when P014 is enabled and the PR adds or changes a rules file; used to find symlinks.</summary>
+    private async Task<RepoTree?> TreeForRulesFilesAsync(PullRequestRef pr, IReadOnlyList<ChangedFile> files, RepoConfig config, CancellationToken cancellationToken) =>
+        config.IsEnabled(RulesFileLint.CheckId) && files.Any(RulesFileLint.IsRulesFile)
+            ? await gateway.GetTreeAsync(pr, cancellationToken)
+            : null;
+
+    internal static string SymlinkNote(ChangedFile file) =>
+        file.AddedLines.FirstOrDefault()?.Text.Trim() is { Length: > 0 } target
+            ? $"P014 skipped {file.Path}: symlink to {target}."
+            : $"P014 skipped {file.Path}: symlink.";
+
     /// <summary>
     /// File list and the few files R006 needs. Fetched only when P014 and R006 are enabled and the PR changes a rules
     /// file or removes / renames something.
@@ -90,6 +107,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
         IReadOnlyList<ChangedFile> files,
         IReadOnlyList<ChangedFile> enriched,
         RepoConfig config,
+        RepoTree? tree,
         List<string> notes,
         CancellationToken cancellationToken)
     {
@@ -105,7 +123,8 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             return (null, []);
         }
 
-        var paths = await gateway.GetFilePathsAsync(pr, cancellationToken);
+        tree ??= changedRules.Count == 0 ? await gateway.GetTreeAsync(pr, cancellationToken) : null;
+        var paths = tree?.Paths;
         if (paths is null)
         {
             notes.Add("R006 skipped: the repository file list is too large for GitHub to return in full.");
@@ -118,7 +137,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
         var unchanged = new List<ChangedFile>();
         if (removed.Any)
         {
-            foreach (var path in paths.Where(p => !changedPaths.Contains(p) && RulesFormats.FromFileName(p) is not null)
+            foreach (var path in paths.Where(p => !changedPaths.Contains(p) && !tree!.Symlinks.Contains(p) && RulesFormats.FromFileName(p) is not null)
                 .OrderBy(p => p.Count(c => c == '/')).ThenBy(p => p, StringComparer.Ordinal).Take(MaxUnchangedRulesFiles))
             {
                 var text = await gateway.GetFileContentAsync(pr, path, cancellationToken);

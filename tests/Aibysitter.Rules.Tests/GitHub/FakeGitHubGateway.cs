@@ -15,6 +15,9 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
     /// <summary>File list at head; null simulates a truncated listing.</summary>
     public List<string>? Paths { get; set; } = [];
 
+    /// <summary>Paths in <see cref="Paths"/> that are symlinks.</summary>
+    public HashSet<string> Symlinks { get; } = new(StringComparer.Ordinal);
+
     public long NextCheckRunId { get; set; } = 777;
 
     public Exception? ThrowOnCreate { get; set; }
@@ -61,10 +64,10 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
         return Task.FromResult(Contents.GetValueOrDefault(path));
     }
 
-    public Task<IReadOnlyList<string>?> GetFilePathsAsync(PullRequestRef pr, CancellationToken cancellationToken)
+    public Task<RepoTree?> GetTreeAsync(PullRequestRef pr, CancellationToken cancellationToken)
     {
         Calls.Enqueue("tree");
-        return Task.FromResult<IReadOnlyList<string>?>(Paths);
+        return Task.FromResult(Paths is null ? null : new RepoTree(Paths, Symlinks));
     }
 
     public Task CompleteCheckRunAsync(PullRequestRef pr, long checkRunId, CheckRunReport report, CancellationToken cancellationToken)

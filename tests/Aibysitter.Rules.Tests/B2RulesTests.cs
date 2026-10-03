@@ -59,6 +59,25 @@ public class EmptySectionsTests
     public void CodeBlockCountsAsContent() => Assert.Empty(Lint("# Rules\n- x\n## Build\n```\ndotnet build\n```\n## Next\n- y\n"));
 
     [Fact]
+    public void ContentFixture_OnlyRealEmptySectionFlagged()
+    {
+        var finding = Assert.Single(new EmptySections().Evaluate(Fixtures.Load("v3/R011-content.md")));
+
+        Assert.Equal(17, finding.Line);
+    }
+
+    [Fact]
+    public void PlainTextFormats_AdjacentSameLevelHeadings_AreCommentBlock()
+    {
+        const string text = "# Project\n# Language: TypeScript\n# Runtime: Node.js >=22\n\nlanguage: TypeScript\n\n# Stack\n\nmore: x\n";
+
+        Assert.Empty(new EmptySections().Evaluate(RulesFile.Parse(text, RulesFormat.CursorRules)));
+        Assert.Empty(new EmptySections().Evaluate(RulesFile.Parse(text, RulesFormat.WindsurfRules)));
+        Assert.NotEmpty(new EmptySections().Evaluate(RulesFile.Parse("# Rules\n\n## Testing\n\n## Style\n- Use tabs.\n", RulesFormat.CursorRules)));
+        Assert.Equal(2, Assert.Single(new EmptySections().Evaluate(RulesFile.Parse(text, RulesFormat.ClaudeMd))).Line);
+    }
+
+    [Fact]
     public void CommentsOnly_CountAsEmpty() => Assert.Single(Lint("# Rules\n- x\n## Build\n<!-- later -->\n## Next\n- y\n"));
 }
 
@@ -66,7 +85,8 @@ public class ProseParagraphTests
 {
     private readonly ProseParagraph _rule = new();
 
-    private static string Words(int n) => string.Join(" ", Enumerable.Range(1, n).Select(i => $"word{i}"));
+    /// <summary>n words, opening with "Always" so the paragraph contains an instruction.</summary>
+    private static string Words(int n) => string.Join(" ", Enumerable.Range(1, n).Select(i => i == 1 ? "Always" : $"word{i}"));
 
     [Fact]
     public void Over80Words_Flagged_AtFirstLine()
@@ -97,6 +117,22 @@ public class ProseParagraphTests
     [Fact]
     public void ParagraphAfterList_Counted() =>
         Assert.Single(_rule.Evaluate(RulesFile.Parse($"- item\n  {Words(50)}\n\n{Words(90)}\n")));
+
+    [Fact]
+    public void MostlyDescriptiveParagraph_NotFlagged()
+    {
+        var text = string.Join(" ", Enumerable.Range(1, 9).Select(i => $"The gateway stage number {i} reads the queue and writes the index file.")) + " Keep the two in sync.";
+
+        Assert.Empty(_rule.Evaluate(RulesFile.Parse(text)));
+    }
+
+    [Fact]
+    public void DescriptiveParagraph_NotFlagged_InstructionParagraph_Flagged()
+    {
+        var finding = Assert.Single(_rule.Evaluate(Fixtures.Load("v3/R013-instruction-paragraph.md")));
+
+        Assert.Equal(7, finding.Line);
+    }
 
     [Fact]
     public void InlineCodeDoesNotInflateCount() =>

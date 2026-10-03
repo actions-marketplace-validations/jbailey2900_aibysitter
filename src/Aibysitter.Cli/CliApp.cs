@@ -56,8 +56,8 @@ public static class CliApp
           --fail-below <grade>  Exit 1 when the grade is below A, B, C or D.
           --stdin-path <path>   With -, names standard input: the format comes from this path and the report uses it.
 
-        fix: fixes R005 (deletes repeated lines), R011 (deletes empty headings) and R012 (closes the fence at end
-          of file), repeated until none apply. Writes the file in place. With -, writes the fixed text to standard output.
+        fix: fixes R011 (deletes empty headings) and R012 (closes the fence at end of file), repeated until none
+          apply. Writes the file in place. With -, writes the fixed text to standard output.
           --dry-run             Print a unified diff instead; exit 1 when there are changes.
 
         init: writes a rules file composed from packs, then prints its score.

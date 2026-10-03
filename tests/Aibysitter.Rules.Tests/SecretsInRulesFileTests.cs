@@ -62,8 +62,25 @@ public class SecretsInRulesFileTests
     [InlineData("mysql://root:Hunter2Prod@127.0.0.1:3306/app")]
     [InlineData("AKIAIOSFODNN7EXAMPLE")]
     [InlineData("Set the password in the PASSWORD environment variable.")]
+    [InlineData("redis://default:abc123@cache.internal:6379")]
+    [InlineData("rediss://user:pass@host:6380")]
+    [InlineData("Password=qwerty")]
     public void Placeholders_AndLocalhost_Ignored(string line)
     {
         Assert.Empty(_rule.Evaluate(RulesFile.Parse(line)));
+    }
+
+    [Fact]
+    public void ExampleCredentials_Fixture_OnlyRealValueFlagged()
+    {
+        var finding = Assert.Single(_rule.Evaluate(Fixtures.Load("v3/R009-example-credentials.md")));
+
+        Assert.Equal(5, finding.Line);
+    }
+
+    [Fact]
+    public void CommonValue_InsideLongerValue_StillFlagged()
+    {
+        Assert.Single(_rule.Evaluate(RulesFile.Parse("Password=Pass2024!x")));
     }
 }

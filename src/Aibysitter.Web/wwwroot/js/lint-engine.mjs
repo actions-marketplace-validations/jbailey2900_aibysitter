@@ -207,38 +207,138 @@ function hasConcreteTarget(after) {
     || trimEnd(after).endsWith(":");
 }
 
+function isInstruction(sentence) {
+  if (test("InstructionText.CatalogEntryRegex", sentence)) return false;
+  const c = content(sentence);
+  const keepLabel = trim(replace("InstructionText.ListMarkerRegex", trim(withoutCode(sentence)), "").replaceAll("**", "").replaceAll("__", ""));
+  if (test("InstructionText.ModalRegex", c)) return true;
+  if (clauses(sentence).some((cl) => test("InstructionText.ImperativeStartRegex", cl))) return true;
+  if (test("InstructionText.DirectiveLabelRegex", keepLabel)) return true;
+  const words = count("InstructionText.WordRegex", c);
+  return test("InstructionText.ListItemRegex", sentence) && !test("InstructionText.LabelRegex", keepLabel)
+    && words > 0 && words <= limits.terseRuleMaxWords
+    && !test("InstructionText.FiniteVerbRegex", c) && !test("InstructionText.DeterminerStartRegex", c);
+}
+const isListItem = (text) => test("InstructionText.ListItemRegex", text);
+const isHtmlComment = (text) => test("InstructionText.HtmlCommentRegex", text);
+const sentences = (text) => text.split(rx("InstructionText.SentenceSplitRegex"));
+
+const isDocumentationDump = (file) =>
+  file.lines.filter((l) => !l.isInCodeFence && test("InstructionText.MdxComponentRegex", l.text)).length >= limits.documentationDumpMinComponents;
+
+/** InstructionText.Units: list items with continuation lines, or runs of paragraph lines. */
+function units(file) {
+  const out = [];
+  if (isDocumentationDump(file)) return out;
+  let current = null;
+  for (const line of file.lines) {
+    if (!line.isProse || isTableRow(line.text)) {
+      current = null;
+      continue;
+    }
+    if (!current || isListItem(line.text)) {
+      current = [];
+      out.push(current);
+    }
+    current.push(line);
+  }
+  return out;
+}
+
+/** InstructionText.Join: trimmed lines joined with one space; start offset of each line's untrimmed text. */
+function joinUnit(unit) {
+  let text = "";
+  const starts = new Map();
+  for (const line of unit) {
+    if (text.length > 0) text += " ";
+    starts.set(line, text.length - (line.text.length - trimStart(line.text).length));
+    text += trim(line.text);
+  }
+  return { text, starts };
+}
+
+function sentenceSpans(text) {
+  const spans = [];
+  let start = 0;
+  for (const b of matchAll("InstructionText.SentenceSplitRegex", text)) {
+    spans.push({ start, length: b.index - start });
+    start = b.index + b[0].length;
+  }
+  spans.push({ start, length: text.length - start });
+  return spans;
+}
+
+/** InstructionText.InstructionLines: numbers of lines an instruction sentence overlaps. */
+function instructionLines(file) {
+  const result = new Set();
+  for (const unit of units(file)) {
+    const { text, starts } = joinUnit(unit);
+    const instructions = sentenceSpans(text).filter((sp) => isInstruction(text.substr(sp.start, sp.length)));
+    for (const line of unit) {
+      const start = starts.get(line) + (line.text.length - trimStart(line.text).length);
+      const end = start + trim(line.text).length;
+      if (instructions.some((sp) => sp.start < end && sp.start + sp.length > start)) result.add(line.number);
+    }
+  }
+  return result;
+}
+
 const after = (s, m) => s.slice(m.index + m[0].length);
 const proseLines = (file) => file.lines.filter((l) => l.isProse && !isTableRow(l.text));
 
 // ---- Rules ----
 
 function r001(file) {
-  return file.lines.filter((l) => l.isProse).flatMap((line) => {
-    const terms = matchAll("RationaleProse.PhraseRegex", line.text).map((m) => lowerInvariant(m[0]));
-    return terms.length === 0 ? [] : [finding("R001", line.number, `Rationale prose: ${quoted(terms)}`,
-      "Remove the explanation. State the instruction only.")];
-  });
+  const out = [];
+  for (const unit of units(file)) {
+    const { text, starts } = joinUnit(unit);
+    const spans = sentenceSpans(text);
+    const instruction = spans.map((sp) => isInstruction(text.substr(sp.start, sp.length)));
+    const inScope = isListItem(unit[0].text)
+      ? spans.map(() => instruction.includes(true))
+      : instruction.map((v, i) => v || (i > 0 && instruction[i - 1]));
+    for (const line of unit.filter((l) => !isHtmlComment(l.text))) {
+      const masked = line.text.replace(rx("RationaleProse.QuotedRegex", "g"), (m) => " ".repeat(m.length));
+      const terms = matchAll("RationaleProse.PhraseRegex", masked)
+        .filter((m) => inScope[sentenceIndex(spans, starts.get(line) + m.index)])
+        .map((m) => lowerInvariant(m[0]));
+      if (terms.length > 0) {
+        out.push(finding("R001", line.number, `Rationale prose: ${quoted(terms)}`, "Remove the explanation. State the instruction only."));
+      }
+    }
+  }
+  return out;
 }
 
-function vagueLeadVerb(clause) {
-  const verb = match("VagueVerbs.LeadVerbRegex", clause);
-  if (!verb) return [];
-  const rest = after(clause, verb);
-  const term = verb.groups.term;
-  const checkable = lowerInvariant(term) === "ensure" && test("VagueVerbs.CheckableObjectRegex", rest);
-  return trim(rest).length > 0 && !hasConcreteTarget(rest) && !checkable ? [lowerInvariant(term)] : [];
-}
-
-function vagueQualifiers(clause) {
-  if (!test("VagueVerbs.ImperativeRegex", clause)) return [];
-  return matchAll("VagueVerbs.QualifierRegex", clause)
-    .filter((q) => !hasConcreteTarget(after(clause, q)))
-    .map((q) => lowerInvariant(q[0]));
+function sentenceIndex(spans, offset) {
+  let i = 0;
+  while (i + 1 < spans.length && spans[i + 1].start <= offset) i++;
+  return i;
 }
 
 function r002(file) {
-  return proseLines(file).flatMap((line) => {
-    const terms = clauses(line.text).flatMap((c) => [...vagueLeadVerb(c), ...vagueQualifiers(c)]);
+  const lines = instructionLines(file);
+  return file.lines.filter((l) => lines.has(l.number)).flatMap((line) => {
+    const terms = [];
+    let codeSeen = false;
+    for (const clause of clauses(line.text)) {
+      const verb = match("VagueVerbs.LeadVerbRegex", clause);
+      const rest = verb ? after(clause, verb) : "";
+      const term = verb ? lowerInvariant(verb.groups.term) : "";
+      const checkableEnsure = !!verb && term === "ensure" && (codeSeen || test("VagueVerbs.CheckableObjectRegex", rest));
+      if (verb && trim(rest).length > 0 && !hasConcreteTarget(rest) && !test("VagueVerbs.ResourceObjectRegex", rest)
+        && !test("VagueVerbs.MethodOrPurposeRegex", rest) && !checkableEnsure) {
+        terms.push(term);
+      }
+      if (test("VagueVerbs.ImperativeRegex", clause) && !(term === "ensure" && codeSeen) && !test("VagueVerbs.VerificationRegex", clause)) {
+        for (const q of matchAll("VagueVerbs.QualifierRegex", clause)) {
+          const rest2 = after(clause, q);
+          const codeObject = test("VagueVerbs.AsNeededRegex", q[0]) && clause.slice(0, q.index).includes("CODE");
+          if (!hasConcreteTarget(rest2) && !test("VagueVerbs.QualifierContextRegex", rest2) && !codeObject) terms.push(lowerInvariant(q[0]));
+        }
+      }
+      codeSeen = codeSeen || clause.includes("CODE");
+    }
     return terms.length === 0 ? [] : [finding("R002", line.number, `Vague wording: ${quoted(terms)}`,
       "Name the concrete action, file, or command.")];
   });
@@ -271,32 +371,39 @@ function r004(file) {
     : [];
 }
 
-function duplicateWordCount(text) {
-  return count("DuplicateLines.WordRegex", normalize(replace("DuplicateLines.HeadingMarkRegex", text, "")));
-}
-
-function headingKey(line, key, headingPath) {
-  const level = match("DuplicateLines.HeadingLevelRegex", line.text)?.[1].length ?? 0;
-  for (let i = headingPath.length - 1; i >= 0; i--) if (headingPath[i].level >= level) headingPath.splice(i, 1);
-  const parent = headingPath.length === 0 ? "" : headingPath[headingPath.length - 1].key;
-  headingPath.push({ level, key });
-  return `${parent}\u0000${key}`;
-}
-
 function r005(file) {
+  const { lines } = file;
+  const keys = lines.map((l) => (l.isBlank ? null : normalize(l.text)));
+  const shapes = keys.map((k) => (k === null ? null : replace("DuplicateLines.DigitsRegex", replace("DuplicateLines.CodeSpanRegex", k, "`"), "0")));
+  const instr = instructionLines(file);
+  const isContinuation = (i) => i > 0 && lines[i - 1].isProse && !isListItem(lines[i].text)
+    && test("DuplicateLines.LowercaseStartRegex", lines[i].text) && !test("DuplicateLines.SentenceEndRegex", lines[i - 1].text);
+  const isIndentedCode = (i) => i > 0 && lines[i - 1].isBlank && test("DuplicateLines.IndentedRegex", lines[i].text) && !isListItem(lines[i].text);
+  const candidates = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (instr.has(line.number) && !isHtmlComment(line.text) && !test("DuplicateLines.HorizontalRuleRegex", line.text)
+      && count("DuplicateLines.WordRegex", normalize(line.text)) >= limits.duplicateMinWords
+      && !isContinuation(i) && !isIndentedCode(i)) candidates.push(i);
+  }
+  const counts = new Map();
+  for (const i of candidates) counts.set(keys[i], (counts.get(keys[i]) ?? 0) + 1);
+  const sameNeighbour = (first, repeat, offset) => {
+    const a = first + offset;
+    const b = repeat + offset;
+    return a >= 0 && b >= 0 && a < shapes.length && b < shapes.length && b !== first && shapes[a] !== null && shapes[a] === shapes[b];
+  };
   const firstSeen = new Map();
-  const headingPath = [];
   const out = [];
-  for (const line of file.lines.filter((l) => !l.isBlank && !l.isInCodeFence && !l.isFrontmatter && !l.isDirective)) {
-    let key = normalize(line.text);
-    if (line.isHeading) key = headingKey(line, key, headingPath);
-    if (test("DuplicateLines.HorizontalRuleRegex", line.text) || isTableRow(line.text)
-      || duplicateWordCount(line.text) < limits.duplicateMinWords) continue;
-    if (firstSeen.has(key)) {
-      out.push(finding("R005", line.number, `Duplicate of line ${firstSeen.get(key)}.`, "Delete the repeated line."));
-    } else {
-      firstSeen.set(key, line.number);
+  for (const i of candidates) {
+    const key = keys[i];
+    if (!firstSeen.has(key)) {
+      firstSeen.set(key, i);
+      continue;
     }
+    const first = firstSeen.get(key);
+    if (counts.get(key) >= limits.duplicateTemplateCount || sameNeighbour(first, i, -1) || sameNeighbour(first, i, 1)) continue;
+    out.push(finding("R005", lines[i].number, `Duplicate of line ${lines[first].number}.`, "Delete the repeated line."));
   }
   return out;
 }
@@ -310,13 +417,14 @@ function hedgesIn(clause) {
   const consider = match("HedgedInstructions.ConsiderRegex", clause);
   if (consider) {
     const rest = after(clause, consider);
-    if (!hasConcreteTarget(rest) && !test("HedgedInstructions.ConsiderObjectRegex", rest)) found.push("consider");
+    if (!hasConcreteTarget(rest) && !test("HedgedInstructions.ConsiderObjectRegex", rest) && !test("HedgedInstructions.LabelUseRegex", rest)) found.push("consider");
   }
   return found;
 }
 
 function r007(file) {
-  return proseLines(file).flatMap((line) => {
+  const lines = instructionLines(file);
+  return file.lines.filter((l) => lines.has(l.number)).flatMap((line) => {
     const hedges = clauses(replace("HedgedInstructions.QuotedRegex", line.text, " QUOTE ")).flatMap(hedgesIn);
     return hedges.length === 0 ? [] : [finding("R007", line.number, `Hedge: ${quoted(hedges)}`,
       "State the instruction without the hedge, or state the condition that makes it apply.")];
@@ -325,7 +433,10 @@ function r007(file) {
 
 function r008(file) {
   const total = file.lines.length;
-  const emphasis = file.lines.filter((l) => (l.isProse || l.isHeading) && test("EmphasisInflation.EmphasisRegex", withoutCode(l.text)));
+  const counted = file.lines.filter((l) => l.isProse || l.isHeading);
+  const rfc = counted.some((l) => test("EmphasisInflation.RfcKeywordsRegex", withoutCode(l.text)));
+  const key = rfc ? "EmphasisInflation.EmphasisWithoutKeywordsRegex" : "EmphasisInflation.EmphasisRegex";
+  const emphasis = counted.filter((l) => test(key, withoutCode(l.text)));
   const allowed = Math.max(limits.emphasisMinAllowed, Math.ceil(limits.emphasisPerHundred * total / 100));
   return emphasis.length > allowed
     ? [finding("R008", emphasis[allowed].number, `${emphasis.length} emphasis lines in ${total} lines; limit is ${allowed}.`,
@@ -356,7 +467,7 @@ function findSecrets(text) {
       const hasV = m.groups?.v !== undefined;
       const value = hasV ? m.groups.v : m[0];
       const column = (hasV ? m.indices.groups.v[0] : m.index) + 1;
-      if (test("SecretPatterns.PlaceholderRegex", value) || found.some((f) => f.column === column)) continue;
+      if (test("SecretPatterns.PlaceholderRegex", value) || test("SecretPatterns.CommonValueRegex", value) || found.some((f) => f.column === column)) continue;
       found.push({ kind, column, redacted: redact(value) });
     }
   }
@@ -382,26 +493,47 @@ function r010(file) {
 
 const headingLevel = (text) => match("EmptySections.LevelRegex", text)?.[1].length ?? 0;
 
-function sectionIsEmpty(lines, i, level) {
+function sectionIsEmpty(lines, empty, i) {
+  const level = headingLevel(lines[i].text);
   for (let j = i + 1; j < lines.length; j++) {
-    if (lines[j].isHeading) return headingLevel(lines[j].text) <= level;
-    if (!lines[j].isBlank && !lines[j].isDirective && !test("EmptySections.HtmlCommentRegex", lines[j].text)) return false;
+    if (lines[j].isHeading) {
+      const next = headingLevel(lines[j].text);
+      return next < level ? next > 1 || empty[j] : next === level;
+    }
+    if (!lines[j].isBlank && !isCommentLine(lines[j])) return false;
   }
   return true;
 }
 
+const isCommentLine = (line) => line.isDirective || isHtmlComment(line.text);
+const headingName = (text) => trim(replace("EmptySections.HeadingTextRegex", text, ""));
+
 function r011(file) {
   const { lines } = file;
+  const empty = new Array(lines.length).fill(false);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].isHeading) empty[i] = sectionIsEmpty(lines, empty, i);
+  }
+  const plainText = file.format === "CursorRules" || file.format === "WindsurfRules";
+  const sameLevel = (index, level) => index >= 0 && index < lines.length && lines[index].isHeading && headingLevel(lines[index].text) === level;
   const out = [];
   let seenHeading = false;
+  let introduced = false;
   for (let i = 0; i < lines.length; i++) {
-    if (!lines[i].isHeading) continue;
-    const level = headingLevel(lines[i].text);
-    const skip = level === 1 && !seenHeading;
+    const line = lines[i];
+    if (!line.isHeading) {
+      if (line.isProse && !isCommentLine(line)) introduced = trimEnd(line.text).endsWith(":");
+      continue;
+    }
+    const level = headingLevel(line.text);
+    const name = headingName(line.text);
+    const exempt = (level === 1 && !seenHeading)
+      || introduced
+      || name.includes("`") || (count("EmptySections.WordRegex", name) >= limits.headingInstructionMinWords && isInstruction(name))
+      || (plainText && (sameLevel(i - 1, level) || sameLevel(i + 1, level)));
     seenHeading = true;
-    if (skip || !sectionIsEmpty(lines, i, level)) continue;
-    const name = trim(replace("EmptySections.HeadingTextRegex", lines[i].text, ""));
-    out.push(finding("R011", lines[i].number, `Section "${name}" has no content.`,
+    if (!empty[i] || exempt) continue;
+    out.push(finding("R011", line.number, `Section "${name}" has no content.`,
       "Add the rules for this section, or delete the heading."));
   }
   return out;
@@ -417,11 +549,17 @@ function r012(file) {
 }
 
 function r013(file) {
+  if (isDocumentationDump(file)) return [];
   const max = limits.paragraphMaxWords;
+  const hasInstruction = (paragraph) => {
+    const all = sentences(trim(paragraph));
+    return all.filter(isInstruction).length * limits.paragraphInstructionShareDenominator >= all.length;
+  };
   const isNonParagraph = (l) => test("ProseParagraph.NonParagraphRegex", l.text);
   const out = [];
   let start = 0;
   let words = 0;
+  let text = "";
   let inList = false;
   for (const line of [...file.lines, null]) {
     if (line && isNonParagraph(line) && line.isProse) inList = true;
@@ -429,12 +567,14 @@ function r013(file) {
     if (line && !inList && line.isProse && !isTableRow(line.text) && !isNonParagraph(line)) {
       if (words === 0) start = line.number;
       words += count("ProseParagraph.WordRegex", withoutCode(line.text));
+      text += trim(line.text) + " ";
       continue;
     }
-    if (words > max) {
+    if (words > max && hasInstruction(text)) {
       out.push(finding("R013", start, `Paragraph of ${words} words; limit is ${max}.`, "Split it into list items, one instruction each."));
     }
     words = 0;
+    text = "";
   }
   return out;
 }

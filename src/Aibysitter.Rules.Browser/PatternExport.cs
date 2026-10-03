@@ -63,7 +63,12 @@ public static class PatternExport
             {
                 fileMaxLines = Rules.FileLength.MaxLines,
                 duplicateMinWords = Rules.DuplicateLines.MinWords,
+                duplicateTemplateCount = Rules.DuplicateLines.TemplateCount,
                 paragraphMaxWords = Rules.ProseParagraph.MaxWords,
+                headingInstructionMinWords = Rules.EmptySections.MinInstructionWords,
+                terseRuleMaxWords = InstructionText.MaxTerseRuleWords,
+                documentationDumpMinComponents = InstructionText.DocumentationDumpMinComponents,
+                paragraphInstructionShareDenominator = Rules.ProseParagraph.MinInstructionShareDenominator,
                 emphasisPerHundred = Rules.EmphasisInflation.PerHundredLines,
                 emphasisMinAllowed = Rules.EmphasisInflation.MinAllowed,
                 frontmatterMaxLines = Frontmatter.MaxLines,
