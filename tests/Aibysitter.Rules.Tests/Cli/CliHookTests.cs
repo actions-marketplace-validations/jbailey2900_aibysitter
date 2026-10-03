@@ -323,7 +323,7 @@ public class HooksPageTests(WebApplicationFactory<Program> factory)
     public async Task Page_ShowsFiles_ExampleMatchesRealOutput_Linked()
     {
         var client = factory.CreateClient();
-        var html = await client.GetStringAsync("/Hooks");
+        var html = (await client.GetStringAsync("/Hooks")).Replace("\r\n", "\n");
 
         Assert.Contains("<h1>Hooks</h1>", html);
         Assert.Contains("href=\"/hooks/pre-commit\"", html);
