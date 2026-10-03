@@ -41,6 +41,16 @@
     <dd>@Model.Doc.Summary</dd>
     <dt>Flags</dt>
     <dd>@Model.Doc.Flags</dd>
+    @if (Aibysitter.Web.Linting.RuleMeasurements.Find(Model.Doc.Id) is { } measured)
+    {
+        <dt>Measured false-positive rate</dt>
+        <dd>@Aibysitter.Web.Linting.RuleMeasurements.Describe(measured). <a asp-page="/Rules/Methodology" asp-fragment="false-positive-rates">Methodology</a></dd>
+    }
+    else if (Aibysitter.Web.Linting.RuleMeasurements.NotMeasuredReason(Model.Doc.Id) is { } reason)
+    {
+        <dt>Measured false-positive rate</dt>
+        <dd>@reason <a asp-page="/Rules/Methodology" asp-fragment="false-positive-rates">Methodology</a></dd>
+    }
     @if (Model.Doc.KnownLimits is { Count: > 0 } limits)
     {
         <dt>Known limits</dt>
