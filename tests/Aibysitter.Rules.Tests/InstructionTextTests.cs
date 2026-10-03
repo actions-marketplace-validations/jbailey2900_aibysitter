@@ -18,6 +18,11 @@ public class InstructionTextTests
     [InlineData("In this tutorial, you will extend the app.")]
     [InlineData("The last expression in a block is always returned.")]
     [InlineData("- Dependencies are displayed with status indicators.")]
+    [InlineData("`eval` and `new Function` never run in this sandbox.")]
+    [InlineData("We deliberately do not install it.")]
+    [InlineData("- `manage_state` — CRUD operations on stateful resources")]
+    [InlineData("- **improve-prompt**: Improve existing prompts")]
+    [InlineData("Only `--fresh` gets you that.")]
     public void NotInstructions(string text) => Assert.False(InstructionText.IsInstruction(text));
 
     [Fact]
@@ -32,5 +37,15 @@ public class InstructionTextTests
         var file = RulesFile.Parse("# T\n- one\n  cont\n- two\n\npara a\npara b\n| x |\nafter\n");
 
         Assert.Equal([[2, 3], [4], [6, 7], [9]], InstructionText.Units(file).Select(u => u.Select(l => l.Number).ToArray()).ToArray());
+    }
+
+    [Fact]
+    public void DocumentationDump_HasNoUnits()
+    {
+        var dump = string.Concat(Enumerable.Repeat("<Note>\n- Always run tests.\n</Note>\n", InstructionText.DocumentationDumpMinComponents / 2));
+        var short1 = string.Concat(Enumerable.Repeat("<Note>\n- Always run tests.\n</Note>\n", 3));
+
+        Assert.Empty(InstructionText.Units(RulesFile.Parse(dump)));
+        Assert.NotEmpty(InstructionText.Units(RulesFile.Parse(short1)));
     }
 }

@@ -5,8 +5,9 @@ namespace Aibysitter.Rules.Rules;
 /// <summary>
 /// Rationale phrases in an instruction: a list item (with its continuation lines) that contains an instruction sentence,
 /// or a paragraph sentence that is an instruction and the sentence after it (<see cref="InstructionText.IsInstruction"/>).
-/// Skips HTML comment lines, quoted text, phrases after "/" or a quote mark (templates), "just / only / simply / merely because",
-/// "because of", and "the reason" as a bare object (followed by punctuation, "and", "or" or end of line). One finding per line.
+/// Skips HTML comment lines, quoted text, phrases after "/" or a quote mark (templates), "just / only / simply / merely /
+/// solely / purely because", "because of", and "the reason" as an object (after report, give, state, log, include,
+/// record, show, name, note or "with", or followed by punctuation, "and", "or" or end of line). One finding per line.
 /// </summary>
 public sealed partial class RationaleProse : IRule
 {
@@ -58,6 +59,6 @@ public sealed partial class RationaleProse : IRule
     [GeneratedRegex(@"""[^""]*""|“[^”]*”|(?<=^|[\s(])'[^'\n]+'(?=[\s).,;:!?]|$)")]
     private static partial Regex QuotedRegex();
 
-    [GeneratedRegex(@"(?<![/""'“‘]\s*)(?<!\b(?:just|only|simply|merely)\s+)\b(?:because(?!\s+of\b)|so that|in order to|the reason(?!\s*(?:[.,;:)]|and\b|or\b|$))|this ensures|this helps|which means)\b", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?<![/""'“‘]\s*)(?<!\b(?:just|only|simply|merely|solely|purely)\s+)(?<!\b(?:report|reports|give|gives|state|states|log|logs|include|includes|record|records|show|shows|name|names|note|notes|with)\s+)\b(?:because(?!\s+of\b)|so that|in order to|the reason(?!\s*(?:[.,;:)]|and\b|or\b|$))|this ensures|this helps|which means)\b", RegexOptions.IgnoreCase)]
     private static partial Regex PhraseRegex();
 }

@@ -8,7 +8,8 @@ namespace Aibysitter.Rules.Rules;
 /// suppression comments, wrapped continuation lines (lowercase start after an unfinished prose line), indented code
 /// (four spaces or a tab after a blank line, not a list item). Not reported:
 /// lines that occur <see cref="TemplateCount"/> or more times (template lines), and repeats whose previous or next line
-/// also repeats the line beside the first occurrence (repeated blocks such as parallel procedures).
+/// has the same shape as the line beside the first occurrence, ignoring digits and inline code (repeated blocks such as
+/// parallel procedures).
 /// </summary>
 public sealed partial class DuplicateLines : IRule
 {
@@ -27,6 +28,7 @@ public sealed partial class DuplicateLines : IRule
 
         var lines = file.Lines;
         var keys = lines.Select(l => l.IsBlank ? null : TextNormalizer.Normalize(l.Text)).ToList();
+        var shapes = keys.Select(k => k is null ? null : DigitsRegex().Replace(CodeSpanRegex().Replace(k, "`"), "0")).ToList();
         var instructionLines = InstructionText.InstructionLines(file);
         var candidates = Enumerable.Range(0, lines.Count).Where(i => IsCandidate(lines, i, instructionLines)).ToList();
         var counts = candidates.GroupBy(i => keys[i]!, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
@@ -41,7 +43,7 @@ public sealed partial class DuplicateLines : IRule
                 continue;
             }
 
-            if (counts[key] >= TemplateCount || SameNeighbour(keys, first, i, -1) || SameNeighbour(keys, first, i, 1))
+            if (counts[key] >= TemplateCount || SameNeighbour(shapes, first, i, -1) || SameNeighbour(shapes, first, i, 1))
             {
                 continue;
             }
@@ -83,6 +85,12 @@ public sealed partial class DuplicateLines : IRule
 
     [GeneratedRegex(@"^\s{0,3}(?:(?:-\s*){3,}|(?:\*\s*){3,}|(?:_\s*){3,})$")]
     private static partial Regex HorizontalRuleRegex();
+
+    [GeneratedRegex(@"`[^`]*`")]
+    private static partial Regex CodeSpanRegex();
+
+    [GeneratedRegex(@"\d+")]
+    private static partial Regex DigitsRegex();
 
     [GeneratedRegex(@"^(?: {4}|\t)")]
     private static partial Regex IndentedRegex();

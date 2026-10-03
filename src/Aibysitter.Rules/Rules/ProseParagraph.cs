@@ -4,12 +4,16 @@ namespace Aibysitter.Rules.Rules;
 
 /// <summary>
 /// Paragraphs (consecutive prose lines that are not list items, list-item continuation lines, table rows, or
-/// block quotes) longer than <see cref="MaxWords"/> words that contain at least one instruction sentence
-/// (<see cref="InstructionText.IsInstruction"/>). Reported at the paragraph's first line.
+/// block quotes) longer than <see cref="MaxWords"/> words in which at least a quarter of the sentences are instructions
+/// (<see cref="InstructionText.IsInstruction"/>). Files that are documentation dumps are skipped. Reported at the
+/// paragraph's first line.
 /// </summary>
 public sealed partial class ProseParagraph : IRule
 {
     public const int MaxWords = 80;
+
+    /// <summary>A paragraph is flagged when at least one in this many of its sentences is an instruction.</summary>
+    public const int MinInstructionShareDenominator = 4;
 
     public string Id => "R013";
     public string Title => "Prose paragraph";
@@ -18,6 +22,11 @@ public sealed partial class ProseParagraph : IRule
     public IEnumerable<Finding> Evaluate(RulesFile file)
     {
         ArgumentNullException.ThrowIfNull(file);
+
+        if (InstructionText.IsDocumentationDump(file))
+        {
+            yield break;
+        }
 
         var start = 0;
         var words = 0;
@@ -60,8 +69,12 @@ public sealed partial class ProseParagraph : IRule
         }
     }
 
-    private static bool HasInstruction(string paragraph) =>
-        InstructionText.Sentences(paragraph).Any(InstructionText.IsInstruction);
+    /// <summary>At least one in <see cref="MinInstructionShareDenominator"/> of the paragraph's sentences is an instruction.</summary>
+    private static bool HasInstruction(string paragraph)
+    {
+        var sentences = InstructionText.Sentences(paragraph.Trim()).ToList();
+        return sentences.Count(InstructionText.IsInstruction) * MinInstructionShareDenominator >= sentences.Count;
+    }
 
     private static bool IsParagraphLine(RulesLine line) =>
         line.IsProse && !InstructionText.IsTableRow(line.Text) && !NonParagraphRegex().IsMatch(line.Text);

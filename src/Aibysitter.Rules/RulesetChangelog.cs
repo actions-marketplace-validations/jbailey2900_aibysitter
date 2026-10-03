@@ -11,15 +11,15 @@ public static class RulesetChangelog
     public static IReadOnlyList<ChangelogEntry> Ruleset { get; } =
     [
         new(3, new DateOnly(2026, 10, 3), "Instruction lines only; precision fixes from corpus pass 2", [
-            "Instruction sentence: a clause opens with a directive word or an imperative verb, or a label opens with one; or it contains must, should, shall, do not, never, need to, have to, is required, you can / could / may / might; or it is a short list item with no label, no verb form and no leading determiner (\"- One concept per file.\").",
-            "R001: only in a list item that contains an instruction sentence, or in an instruction sentence and the sentence after it. Skips quoted text, \"just / only / simply / merely because\", \"because of\", and \"the reason\" as a bare object.",
-            "R002: instruction lines only. Skips a named resource after clean up / handle / manage; \"ensure\" after inline code on the line; qualifiers followed by a gerund or a purpose or condition, or after more / most / less / least.",
-            "R005: repeated instruction lines only. Headings, HTML comments, wrapped continuation lines and indented code are not counted. Lines that occur three or more times, and repeated blocks, are not reported.",
-            "R007: instruction lines only. Skips \"can / could / may / might try to\" and \"consider\" used as a label.",
+            "Instruction sentence: a clause opens with a directive word or an imperative verb, or a label opens with a directive word; or it contains must, should, shall, need to, have to, is required, you can / could / may / might, or do not after no subject pronoun; or it is a short list item with no label, no verb form and no leading determiner, pronoun or gerund (\"- One concept per file.\"). Catalog entries (list items labelled with inline code or an identifier) and files with 20 or more MDX component lines are not instructions.",
+            "R001: only in a list item that contains an instruction sentence, or in an instruction sentence and the sentence after it. Skips quoted text, \"just / only / simply / merely / solely / purely because\", \"because of\", and \"the reason\" as an object.",
+            "R002: instruction lines only. Skips a named resource after clean up / handle / manage; a stated purpose or method after the verb; \"ensure\" after inline code or before \"to avoid / prevent\"; qualifiers in verify / check clauses, followed by a gerund or a purpose or condition, or after more / most / less / least; \"as needed\" after inline code.",
+            "R005: repeated instruction lines only. Headings, HTML comments, wrapped continuation lines and indented code are not counted. Lines that occur three or more times, and repeats in blocks of the same shape, are not reported.",
+            "R007: instruction lines only. Skips \"can / could / may / might / would / will try to\", \"prefer to\" with a named alternative, and \"consider\" used as a label.",
             "R008: MUST and REQUIRED are not counted in files that use RFC 2119 keywords.",
             "R009: pass, passwd, pwd, abc123, 123456, 12345678 and qwerty are placeholders.",
             "R011: a level-1 heading with content after a heading is content (embedded document). Exempt: headings that are instructions of four or more words or contain inline code; headings after a line ending in \":\"; adjacent same-level heading lines in .cursorrules and .windsurfrules.",
-            "R013: only paragraphs that contain an instruction sentence.",
+            "R013: only paragraphs in which at least a quarter of the sentences are instructions.",
         ]),
         new(2, Launch, "Manual Cursor rules move to R016 (Info)", [
             "R016 ManualCursorRule (Info): a Cursor rule with alwaysApply not true, no globs and no description. Message: \"Manual rule: Cursor includes it only when @-mentioned.\"",

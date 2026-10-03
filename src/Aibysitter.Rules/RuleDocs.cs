@@ -8,14 +8,14 @@ public static class RuleDocs
             "R001",
             "RationaleProse",
             "Instructions explain why instead of stating what.",
-            "\"because\", \"so that\", \"in order to\", \"the reason\", \"this ensures\", \"this helps\", \"which means\" in an instruction: a list item that contains an instruction sentence, or a paragraph sentence that is an instruction and the sentence after it. Instruction sentence: a clause opens with a directive word or an imperative verb (optionally after \"if / when / where / ideally … ,\"); or a label opens with one (\"Be concise:\"); or it contains must, should, shall, do not, never, need to, have to, is required, you can / could / may / might; or it is a list item of at most 12 words with no label, no verb form such as is / are / has / uses, and no leading determiner or pronoun (\"- One concept per file.\"). Skipped: descriptive prose; HTML comments; quoted text; phrases after \"/\" or a quote mark; \"just / only / simply / merely because\"; \"because of\"; \"the reason\" as a bare object.",
+            "\"because\", \"so that\", \"in order to\", \"the reason\", \"this ensures\", \"this helps\", \"which means\" in an instruction: a list item that contains an instruction sentence, or a paragraph sentence that is an instruction and the sentence after it. Instruction sentence: a clause opens with a directive word (always, never, must, do not …) or an imperative verb, optionally after \"if / when / where / ideally … ,\"; or a label opens with a directive word (\"Be concise:\"); or it contains must, should, shall, need to, have to, is required, you can / could / may / might, or do not (not after we / they / it / that …); or it is a list item of at most 12 words with no label, no verb form such as is / are / has / uses, and no leading determiner, pronoun or gerund (\"- One concept per file.\"). Not instructions: list items labelled with inline code or an identifier (catalog entries); files with 20 or more MDX component lines (pasted documentation). Skipped: descriptive prose; HTML comments; quoted text; phrases after \"/\" or a quote mark; \"just / only / simply / merely / solely / purely because\"; \"because of\"; \"the reason\" as an object.",
             "- Use tabs because the formatter expects them.",
             "- Use tabs."),
         new(
             "R002",
             "VagueVerbs",
             "Pattern-based: instructions use verbs with no checkable outcome.",
-            "\"handle\", \"manage\", \"deal with\", \"ensure\", \"improve\", \"optimize\", \"clean up\" opening an instruction, optionally after always / must / should / never / do not. \"properly\", \"appropriate(ly)\", \"as needed\" in an instruction. Instruction lines only (instruction sentence as in R001). Skipped: table rows; inline code, links, paths, file names; a term followed by code, a path, a parenthesized list, \"e.g.\", three or more listed items, or a colon; \"clean up / handle / manage\" followed by files, folders, directories, branches, containers, processes, worktrees, temp data, volumes, subscriptions, listeners or timers; \"ensure\" after inline code on the line, or followed by a checkable statement; a qualifier in an \"ensure\" clause after inline code, followed by a gerund (\"properly functioning\") or a purpose or condition (\"as needed for …\"), or after more / most / less / least; \"optimize for\"; \"where / when / if / as appropriate\".",
+            "\"handle\", \"manage\", \"deal with\", \"ensure\", \"improve\", \"optimize\", \"clean up\" opening an instruction, optionally after always / must / should / never / do not. \"properly\", \"appropriate(ly)\", \"as needed\" in an instruction. Instruction lines only (instruction sentence as in R001). Skipped: table rows; inline code, links, paths, file names; a term followed by code, a path, a parenthesized list, \"e.g.\", three or more listed items, or a colon; \"clean up / handle / manage\" followed by files, folders, directories, branches, containers, processes, worktrees, temp data, volumes, subscriptions, listeners or timers; a verb followed by a purpose (\"to …\") or a method (\"with / using / via / through …\", not \"with proper …\"); \"ensure\" after inline code on the line, or followed by a checkable statement or \"to avoid / prevent\"; a qualifier in an \"ensure\" clause after inline code, in a verify / check / confirm / test / assert clause, followed by a gerund (\"properly functioning\") or a purpose or condition (\"appropriately for …\"), or after more / most / less / least; \"as needed\" after inline code in the clause; \"optimize for\"; \"where / when / if / as appropriate\".",
             "- Handle errors properly.",
             "- Return 400 with a ProblemDetails body when validation fails."),
         new(
@@ -36,7 +36,7 @@ public static class RuleDocs
             "R005",
             "DuplicateLines",
             "The same instruction appears more than once.",
-            "Repeated instruction lines (instruction sentence as in R001) of four or more words, ignoring case, whitespace, and list markers. Excluded: headings, code blocks, indented code, horizontal rules, table rows, HTML comments, wrapped continuation lines. Not reported: a line that occurs three or more times (template), or a repeat whose previous or next line also repeats the line beside the first occurrence (repeated block, such as parallel procedures).",
+            "Repeated instruction lines (instruction sentence as in R001) of four or more words, ignoring case, whitespace, and list markers. Excluded: headings, code blocks, indented code, horizontal rules, table rows, HTML comments, wrapped continuation lines. Not reported: a line that occurs three or more times (template), or a repeat whose previous or next line has the same shape as the line beside the first occurrence, ignoring digits and inline code (repeated block, such as parallel procedures).",
             "- Run tests before commit.\n* run tests before commit.",
             "- Run tests before commit."),
         new(
@@ -51,7 +51,7 @@ public static class RuleDocs
             "R007",
             "HedgedInstructions",
             "A hedge makes the instruction optional.",
-            "\"try to\", \"if possible\", \"ideally\", \"where / when / whenever possible\", \"consider\", \"prefer to\", \"where / when / if / as appropriate\". Instruction lines only (instruction sentence as in R001). Skipped: table rows; inline code, links, paths, quoted text; \"try to\" after not / never / don't / can / could / may / might; \"consider\" unless it opens a clause or follows you can / could / may / should; \"consider whether / if / how\"; \"consider\" followed by =, : or / (a label); clauses opening with a third-person or plural subject.",
+            "\"try to\", \"if possible\", \"ideally\", \"where / when / whenever possible\", \"consider\", \"prefer to\", \"where / when / if / as appropriate\". Instruction lines only (instruction sentence as in R001). Skipped: table rows; inline code, links, paths, quoted text; \"try to\" after not / never / don't / can / could / may / might / would / will; \"prefer to\" with a named alternative (not, instead of, over, rather than); \"consider\" unless it opens a clause or follows you can / could / may / should; \"consider whether / if / how\"; \"consider\" followed by =, : or / (a label); clauses opening with a third-person or plural subject.",
             "- Try to keep functions short.",
             "- Keep functions under 40 lines."),
         new(
@@ -93,7 +93,7 @@ public static class RuleDocs
             "R013",
             "ProseParagraph",
             "Instructions are written as a long paragraph.",
-            "A paragraph over 80 words that contains an instruction sentence (as in R001). Paragraph: consecutive prose lines that are not list items, list-item continuation lines, table rows, or block quotes. Descriptive paragraphs are not flagged. Reported at the first line.",
+            "A paragraph over 80 words in which at least a quarter of the sentences are instruction sentences (as in R001). Paragraph: consecutive prose lines that are not list items, list-item continuation lines, table rows, or block quotes. Descriptive paragraphs and pasted documentation are not flagged. Reported at the first line.",
             string.Join(" ", Enumerable.Repeat("Run the tests before you commit and keep the build green.", 9)),
             "- Run `dotnet test` before commit.\n- Keep the build green."),
         new(

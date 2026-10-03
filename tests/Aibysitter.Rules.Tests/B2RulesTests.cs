@@ -119,6 +119,14 @@ public class ProseParagraphTests
         Assert.Single(_rule.Evaluate(RulesFile.Parse($"- item\n  {Words(50)}\n\n{Words(90)}\n")));
 
     [Fact]
+    public void MostlyDescriptiveParagraph_NotFlagged()
+    {
+        var text = string.Join(" ", Enumerable.Range(1, 9).Select(i => $"The gateway stage number {i} reads the queue and writes the index file.")) + " Keep the two in sync.";
+
+        Assert.Empty(_rule.Evaluate(RulesFile.Parse(text)));
+    }
+
+    [Fact]
     public void DescriptiveParagraph_NotFlagged_InstructionParagraph_Flagged()
     {
         var finding = Assert.Single(_rule.Evaluate(Fixtures.Load("v3/R013-instruction-paragraph.md")));

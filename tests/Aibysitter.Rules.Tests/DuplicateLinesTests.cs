@@ -57,4 +57,12 @@ public class DuplicateLinesTests
 
         Assert.Empty(_rule.Evaluate(RulesFile.Parse(text)));
     }
+
+    [Fact]
+    public void ParallelBlocks_SameShapeNeighbours_NotFlagged()
+    {
+        var text = "## Text\n- Call `streamText(a)`.\n- Include basic validation and try/catch.\n\n## Object\n- Call `generateObject(b)`.\n- Include basic validation and try/catch.\n";
+
+        Assert.Empty(_rule.Evaluate(RulesFile.Parse(text)));
+    }
 }

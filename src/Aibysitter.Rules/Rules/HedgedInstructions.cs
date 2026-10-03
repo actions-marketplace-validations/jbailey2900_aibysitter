@@ -5,7 +5,8 @@ namespace Aibysitter.Rules.Rules;
 /// <summary>
 /// Hedges that make an instruction optional, on lines an instruction sentence overlaps
 /// (<see cref="InstructionText.InstructionLines"/>). Evaluated per clause. Skips table rows, inline code, links, paths,
-/// quoted text, negated "try to", "can / could / may / might try to", "consider" outside suggestion position or used
+/// quoted text, negated "try to", "can / could / may / might / would / will try to", "prefer to" with a named alternative
+/// (not, instead of, over, rather than), "consider" outside suggestion position or used
 /// as a label (followed by "=", ":" or "/"), and clauses that open with a third-person or plural subject.
 /// </summary>
 public sealed partial class HedgedInstructions : IRule
@@ -50,7 +51,7 @@ public sealed partial class HedgedInstructions : IRule
 
     private static string Normalize(string value) => WhitespaceRegex().Replace(value.ToLowerInvariant(), " ");
 
-    [GeneratedRegex(@"(?<!\b(?:not|never|don't|n't|can|could|may|might)\s+)\btry\s+to\b|\bif\s+possible\b|\bideally\b|\b(?:where|when|whenever)\s+possible\b|\bprefer\s+to\b|\b(?:where|when|if|as)\s+appropriate\b", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?<!\b(?:not|never|don't|n't|can|could|may|might|would|will)\s+)\btry\s+to\b|\bif\s+possible\b|\bideally\b|\b(?:where|when|whenever)\s+possible\b|\bprefer\s+to\b(?!.*\b(?:not|instead\s+of|over|rather\s+than)\b)|\b(?:where|when|if|as)\s+appropriate\b", RegexOptions.IgnoreCase)]
     private static partial Regex HedgeRegex();
 
     /// <summary>"consider" as a suggestion: opening the clause, or after "you can / could / may / might / should".</summary>

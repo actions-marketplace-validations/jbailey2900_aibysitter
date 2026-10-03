@@ -208,6 +208,7 @@ function hasConcreteTarget(after) {
 }
 
 function isInstruction(sentence) {
+  if (test("InstructionText.CatalogEntryRegex", sentence)) return false;
   const c = content(sentence);
   const keepLabel = trim(replace("InstructionText.ListMarkerRegex", trim(withoutCode(sentence)), "").replaceAll("**", "").replaceAll("__", ""));
   if (test("InstructionText.ModalRegex", c)) return true;
@@ -222,9 +223,13 @@ const isListItem = (text) => test("InstructionText.ListItemRegex", text);
 const isHtmlComment = (text) => test("InstructionText.HtmlCommentRegex", text);
 const sentences = (text) => text.split(rx("InstructionText.SentenceSplitRegex"));
 
+const isDocumentationDump = (file) =>
+  file.lines.filter((l) => !l.isInCodeFence && test("InstructionText.MdxComponentRegex", l.text)).length >= limits.documentationDumpMinComponents;
+
 /** InstructionText.Units: list items with continuation lines, or runs of paragraph lines. */
 function units(file) {
   const out = [];
+  if (isDocumentationDump(file)) return out;
   let current = null;
   for (const line of file.lines) {
     if (!line.isProse || isTableRow(line.text)) {
@@ -321,13 +326,15 @@ function r002(file) {
       const rest = verb ? after(clause, verb) : "";
       const term = verb ? lowerInvariant(verb.groups.term) : "";
       const checkableEnsure = !!verb && term === "ensure" && (codeSeen || test("VagueVerbs.CheckableObjectRegex", rest));
-      if (verb && trim(rest).length > 0 && !hasConcreteTarget(rest) && !test("VagueVerbs.ResourceObjectRegex", rest) && !checkableEnsure) {
+      if (verb && trim(rest).length > 0 && !hasConcreteTarget(rest) && !test("VagueVerbs.ResourceObjectRegex", rest)
+        && !test("VagueVerbs.MethodOrPurposeRegex", rest) && !checkableEnsure) {
         terms.push(term);
       }
-      if (test("VagueVerbs.ImperativeRegex", clause) && !(term === "ensure" && codeSeen)) {
+      if (test("VagueVerbs.ImperativeRegex", clause) && !(term === "ensure" && codeSeen) && !test("VagueVerbs.VerificationRegex", clause)) {
         for (const q of matchAll("VagueVerbs.QualifierRegex", clause)) {
           const rest2 = after(clause, q);
-          if (!hasConcreteTarget(rest2) && !test("VagueVerbs.QualifierContextRegex", rest2)) terms.push(lowerInvariant(q[0]));
+          const codeObject = test("VagueVerbs.AsNeededRegex", q[0]) && clause.slice(0, q.index).includes("CODE");
+          if (!hasConcreteTarget(rest2) && !test("VagueVerbs.QualifierContextRegex", rest2) && !codeObject) terms.push(lowerInvariant(q[0]));
         }
       }
       codeSeen = codeSeen || clause.includes("CODE");
@@ -367,6 +374,7 @@ function r004(file) {
 function r005(file) {
   const { lines } = file;
   const keys = lines.map((l) => (l.isBlank ? null : normalize(l.text)));
+  const shapes = keys.map((k) => (k === null ? null : replace("DuplicateLines.DigitsRegex", replace("DuplicateLines.CodeSpanRegex", k, "`"), "0")));
   const instr = instructionLines(file);
   const isContinuation = (i) => i > 0 && lines[i - 1].isProse && !isListItem(lines[i].text)
     && test("DuplicateLines.LowercaseStartRegex", lines[i].text) && !test("DuplicateLines.SentenceEndRegex", lines[i - 1].text);
@@ -383,7 +391,7 @@ function r005(file) {
   const sameNeighbour = (first, repeat, offset) => {
     const a = first + offset;
     const b = repeat + offset;
-    return a >= 0 && b >= 0 && a < keys.length && b < keys.length && b !== first && keys[a] !== null && keys[a] === keys[b];
+    return a >= 0 && b >= 0 && a < shapes.length && b < shapes.length && b !== first && shapes[a] !== null && shapes[a] === shapes[b];
   };
   const firstSeen = new Map();
   const out = [];
@@ -541,7 +549,12 @@ function r012(file) {
 }
 
 function r013(file) {
+  if (isDocumentationDump(file)) return [];
   const max = limits.paragraphMaxWords;
+  const hasInstruction = (paragraph) => {
+    const all = sentences(trim(paragraph));
+    return all.filter(isInstruction).length * limits.paragraphInstructionShareDenominator >= all.length;
+  };
   const isNonParagraph = (l) => test("ProseParagraph.NonParagraphRegex", l.text);
   const out = [];
   let start = 0;
@@ -557,7 +570,7 @@ function r013(file) {
       text += trim(line.text) + " ";
       continue;
     }
-    if (words > max && sentences(text).some(isInstruction)) {
+    if (words > max && hasInstruction(text)) {
       out.push(finding("R013", start, `Paragraph of ${words} words; limit is ${max}.`, "Split it into list items, one instruction each."));
     }
     words = 0;
