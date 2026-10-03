@@ -5,7 +5,7 @@ using Aibysitter.Rules.Rules;
 
 namespace Aibysitter.Web.GitHub;
 
-public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer reviewer, ILogger<ReviewProcessor> logger)
+public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer reviewer, ILogger<ReviewProcessor> logger, Stats.IUsageCounter? usage = null)
 {
     public const int MaxContentFetches = 100;
 
@@ -56,6 +56,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             }
 
             await gateway.CompleteCheckRunAsync(pr, job.CheckRunId, report, cancellationToken);
+            usage?.Increment(Stats.UsageMetric.Review, report.Conclusion.ToString().ToLowerInvariant());
 
             logger.LogInformation(
                 "Reviewed {PullRequest} (delivery {DeliveryId}): {FindingCount} findings, {Conclusion}",
@@ -71,6 +72,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             try
             {
                 await gateway.CompleteCheckRunAsync(pr, job.CheckRunId, CheckRunReport.ForError(ex), cancellationToken);
+                usage?.Increment(Stats.UsageMetric.Review, "error");
             }
             catch (Exception closeEx)
             {

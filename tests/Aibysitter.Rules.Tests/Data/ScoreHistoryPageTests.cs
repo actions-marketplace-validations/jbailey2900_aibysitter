@@ -11,12 +11,19 @@ namespace Aibysitter.Rules.Tests.Data;
 public class ScoreHistoryPageTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
-    internal static HttpClient Client(WebApplicationFactory<Program> factory, FakeRaw raw, IScoreHistory history, int badgeLimit = 100000) =>
+    internal static HttpClient Client(WebApplicationFactory<Program> factory, FakeRaw raw, IScoreHistory history, int badgeLimit = 100000, Aibysitter.Web.Stats.IUsageCounter? usage = null) =>
         factory.WithWebHostBuilder(b => b
             .UseSetting("RateLimiting:Lint:PermitLimit", "100000")
             .UseSetting("RateLimiting:Badge:PermitLimit", badgeLimit.ToString())
             .ConfigureServices(s => s.AddHttpClient<RawGitHubFetcher>().ConfigurePrimaryHttpMessageHandler(() => raw))
-            .ConfigureTestServices(s => s.AddSingleton(history)))
+            .ConfigureTestServices(s =>
+            {
+                s.AddSingleton(history);
+                if (usage is not null)
+                {
+                    s.AddSingleton(usage);
+                }
+            }))
             .CreateClient();
 
     private async Task<string> Post(FakeRaw raw, IScoreHistory history, string repo = "o/r", string? file = null)

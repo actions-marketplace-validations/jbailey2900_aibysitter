@@ -54,7 +54,7 @@ public sealed record BadgeResult(int? Score, string? Grade, bool Transient = fal
 
 /// <summary>Badge lookups with a size-limited cache: found and not-found for one hour, transient failures for five minutes.</summary>
 /// <remarks>The typed <see cref="RawGitHubFetcher"/> is resolved per lookup so its HttpClient handler rotates.</remarks>
-public sealed class BadgeService(IServiceProvider services, LintService lint, IScoreHistory history) : IDisposable
+public sealed class BadgeService(IServiceProvider services, LintService lint, IScoreHistory history, Stats.IUsageCounter? usage = null) : IDisposable
 {
     public static readonly TimeSpan CacheFor = TimeSpan.FromHours(1);
     public static readonly TimeSpan TransientCacheFor = TimeSpan.FromMinutes(5);
@@ -65,14 +65,14 @@ public sealed class BadgeService(IServiceProvider services, LintService lint, IS
     public async Task<BadgeResult> GetAsync(RepoRef repo, string? file, CancellationToken cancellationToken)
     {
         var key = $"{ScoreHistoryKey.Repo(repo)}|{file}";
-        if (cache.TryGetValue(key, out BadgeResult? cached))
+        if (!cache.TryGetValue(key, out BadgeResult? result))
         {
-            return cached!;
+            result = await LintAsync(repo, file, cancellationToken);
+            cache.Set(key, result, new MemoryCacheEntryOptions { Size = 1, AbsoluteExpirationRelativeToNow = result.Transient ? TransientCacheFor : CacheFor });
         }
 
-        var result = await LintAsync(repo, file, cancellationToken);
-        cache.Set(key, result, new MemoryCacheEntryOptions { Size = 1, AbsoluteExpirationRelativeToNow = result.Transient ? TransientCacheFor : CacheFor });
-        return result;
+        usage?.Increment(Stats.UsageMetric.Badge, OutcomeKey(result!));
+        return result!;
     }
 
     private async Task<BadgeResult> LintAsync(RepoRef repo, string? file, CancellationToken cancellationToken)
@@ -98,6 +98,8 @@ public sealed class BadgeService(IServiceProvider services, LintService lint, IS
 
         return new BadgeResult(outcome.Score.Value, outcome.Score.Grade);
     }
+
+    public static string OutcomeKey(BadgeResult result) => result.Score is not null ? "scored" : result.Transient ? "unavailable" : "not-found";
 
     public void Dispose() => cache.Dispose();
 }

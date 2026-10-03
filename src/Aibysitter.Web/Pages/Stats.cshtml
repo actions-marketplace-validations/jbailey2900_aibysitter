@@ -1,0 +1,90 @@
+@page
+@using System.Globalization
+@using Aibysitter.Web.Stats
+@model Aibysitter.Web.Pages.StatsModel
+@{
+    ViewData["Title"] = "Stats";
+    ViewData["Description"] = "Daily usage counts for aibysitter: lints, findings by rule, GitHub App reviews and badge requests.";
+    string N(long n) => n.ToString("N0", CultureInfo.InvariantCulture);
+}
+
+<h1>Stats</h1>
+<p>Counts are daily totals with no repository names, IP addresses or file contents. Lints run in the browser are not counted.</p>
+
+@if (!Model.Enabled)
+{
+    <p class="note">Stats are not enabled on this server.</p>
+}
+else if (Model.Snapshot is null)
+{
+    <p class="note">Stats are unavailable right now.</p>
+}
+else
+{
+    @foreach (var metric in UsageMetric.All)
+    {
+        <section class="section">
+            <h2>@StatsModel.Headings[metric]</h2>
+            @if (!Model.Totals(metric).Any())
+            {
+                <p class="note">None counted yet.</p>
+            }
+            else
+            {
+                <table>
+                    <thead>
+                        <tr>
+                            <th>@(metric == UsageMetric.Finding ? "Rule" : metric == UsageMetric.Lint ? "Source" : "Outcome")</th>
+                            <th>Last 30 days</th>
+                            <th>All time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var total in Model.Totals(metric))
+                        {
+                            <tr>
+                                <td>@if (metric == UsageMetric.Finding)
+                                    {
+                                        <a asp-page="/Rules/Rule" asp-route-id="@total.Key">@total.Key</a>
+                                    }
+                                    else
+                                    {
+                                        @total.Key
+                                    }</td>
+                                <td>@N(total.Last30Days)</td>
+                                <td>@N(total.AllTime)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+
+    <section class="section">
+        <h2>Last 30 days</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Lints</th>
+                    <th>Findings</th>
+                    <th>App reviews</th>
+                    <th>Badges</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var day in Model.Snapshot.Days)
+                {
+                    <tr>
+                        <td><time datetime="@day.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)">@day.Date.ToString("d MMM", CultureInfo.InvariantCulture)</time></td>
+                        <td>@N(day.Of(UsageMetric.Lint))</td>
+                        <td>@N(day.Of(UsageMetric.Finding))</td>
+                        <td>@N(day.Of(UsageMetric.Review))</td>
+                        <td>@N(day.Of(UsageMetric.Badge))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
