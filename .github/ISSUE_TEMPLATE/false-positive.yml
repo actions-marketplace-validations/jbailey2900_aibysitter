@@ -1,0 +1,41 @@
+name: False positive
+description: A rule or check flagged a line that is not what it describes.
+labels: ["false positive"]
+body:
+  - type: input
+    id: rule
+    attributes:
+      label: Rule ID
+      placeholder: "R002 or P001"
+    validations:
+      required: true
+  - type: textarea
+    id: line
+    attributes:
+      label: The line
+      description: The flagged line, with a few lines around it if they matter.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it is wrong
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options:
+        - Site or API
+        - CLI
+        - GitHub Action
+        - GitHub App
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Ruleset version
+      placeholder: "v4"

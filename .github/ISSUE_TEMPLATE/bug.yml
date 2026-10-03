@@ -1,0 +1,40 @@
+name: Bug
+description: Something on the site, the CLI, the Action or the GitHub App does not work as documented.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options:
+        - Site or API
+        - CLI
+        - GitHub Action
+        - GitHub App
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: Input, command or page, in order.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: Output, error message or check run link.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Ruleset or CLI version
+      placeholder: "ruleset v4, CLI 0.4.1"
