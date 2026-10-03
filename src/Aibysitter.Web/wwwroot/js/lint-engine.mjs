@@ -371,6 +371,35 @@ function r004(file) {
     : [];
 }
 
+const indentOf = (text) => {
+  const t = text.replaceAll("\t", "    ");
+  return t.length - trimStart(t).length;
+};
+
+/** DuplicateLines.SectionPosition: innermost section opener above line i, as "kind/position", or null. */
+function sectionPosition(lines, i) {
+  let minIndent = indentOf(lines[i].text);
+  let position = 1;
+  let pendingBlank = false;
+  let gap = false;
+  for (let j = i - 1; j >= 0; j--) {
+    const line = lines[j];
+    if (line.isBlank) {
+      pendingBlank = true;
+      continue;
+    }
+    if (line.isHeading) return `h${match("DuplicateLines.HeadingLevelRegex", line.text)[1].length}/${position}`;
+    const indent = indentOf(line.text);
+    if (test("DuplicateLines.BoldLabelRegex", line.text)) return gap ? null : `b/${position}`;
+    if (isListItem(line.text) && indent < minIndent) return `l${indent}/${position}`;
+    minIndent = Math.min(minIndent, indent);
+    gap = gap || pendingBlank;
+    pendingBlank = false;
+    position++;
+  }
+  return null;
+}
+
 function r005(file) {
   const { lines } = file;
   const keys = lines.map((l) => (l.isBlank ? null : normalize(l.text)));
@@ -402,7 +431,9 @@ function r005(file) {
       continue;
     }
     const first = firstSeen.get(key);
-    if (counts.get(key) >= limits.duplicateTemplateCount || sameNeighbour(first, i, -1) || sameNeighbour(first, i, 1)) continue;
+    const section = sectionPosition(lines, first);
+    if (counts.get(key) >= limits.duplicateTemplateCount || sameNeighbour(first, i, -1) || sameNeighbour(first, i, 1)
+      || (section !== null && section === sectionPosition(lines, i))) continue;
     out.push(finding("R005", lines[i].number, `Duplicate of line ${lines[first].number}.`, "Delete the repeated line."));
   }
   return out;

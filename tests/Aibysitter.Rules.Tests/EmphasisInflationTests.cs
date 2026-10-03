@@ -12,11 +12,12 @@ public class EmphasisInflationTests
 
     [Theory]
     [InlineData(10, 3)]
-    [InlineData(100, 3)]
-    [InlineData(101, 4)]
-    [InlineData(200, 6)]
-    [InlineData(334, 11)]
-    public void Allowed_Is3Per100Lines_Minimum3(int lines, int allowed)
+    [InlineData(60, 3)]
+    [InlineData(100, 5)]
+    [InlineData(101, 6)]
+    [InlineData(200, 10)]
+    [InlineData(334, 17)]
+    public void Allowed_Is5Per100Lines_Minimum3(int lines, int allowed)
     {
         Assert.Equal(allowed, EmphasisInflation.Allowed(lines));
     }
@@ -59,6 +60,16 @@ public class EmphasisInflationTests
     public void EmphasisLine_NotDetected(string line)
     {
         Assert.False(EmphasisInflation.IsEmphasisLine(line));
+    }
+
+    [Fact]
+    public void FileCitingRfc2119_KeywordsNotCounted_OtherEmphasisCounted()
+    {
+        var musts = string.Join("\n", Enumerable.Range(1, 20).Select(n => $"- Handlers MUST validate input {n}."));
+        const string cite = "The key words MUST and REQUIRED are to be interpreted as described in RFC 2119.\n";
+
+        Assert.Empty(_rule.Evaluate(RulesFile.Parse(cite + musts)));
+        Assert.Single(_rule.Evaluate(RulesFile.Parse(cite + musts + "\n" + File(4, 0))));
     }
 
     [Fact]

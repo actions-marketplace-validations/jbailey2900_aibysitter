@@ -7,6 +7,19 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
     [Fact]
+    public async Task R001_ShowsKnownLimits_R002_DoesNot()
+    {
+        var client = factory.CreateClient();
+        var r001 = System.Net.WebUtility.HtmlDecode(await client.GetStringAsync("/Rules/R001"));
+        var r002 = await client.GetStringAsync("/Rules/R002");
+
+        Assert.Contains("<dt>Known limits</dt>", r001);
+        Assert.Contains("(\"never skip steps because a task seems small\") is flagged as rationale.", r001);
+        Assert.Contains("A descriptive sentence that shares a list item with an instruction is flagged as rationale.", r001);
+        Assert.DoesNotContain("<dt>Known limits</dt>", r002);
+    }
+
+    [Fact]
     public async Task Index_ListsEveryRule_WithLink()
     {
         var html = await factory.CreateClient().GetStringAsync("/Rules");

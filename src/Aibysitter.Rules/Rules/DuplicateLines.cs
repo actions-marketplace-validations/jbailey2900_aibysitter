@@ -9,7 +9,8 @@ namespace Aibysitter.Rules.Rules;
 /// (four spaces or a tab after a blank line, not a list item). Not reported:
 /// lines that occur <see cref="TemplateCount"/> or more times (template lines), and repeats whose previous or next line
 /// has the same shape as the line beside the first occurrence, ignoring digits and inline code (repeated blocks such as
-/// parallel procedures).
+/// parallel procedures), and repeats in parallel sections: the same position under section openers of the same kind
+/// and level (<see cref="SectionPosition"/>).
 /// </summary>
 public sealed partial class DuplicateLines : IRule
 {
@@ -43,7 +44,10 @@ public sealed partial class DuplicateLines : IRule
                 continue;
             }
 
-            if (counts[key] >= TemplateCount || SameNeighbour(shapes, first, i, -1) || SameNeighbour(shapes, first, i, 1))
+            if (counts[key] >= TemplateCount
+                || SameNeighbour(shapes, first, i, -1)
+                || SameNeighbour(shapes, first, i, 1)
+                || (SectionPosition(lines, first) is { } a && a == SectionPosition(lines, i)))
             {
                 continue;
             }
@@ -51,6 +55,54 @@ public sealed partial class DuplicateLines : IRule
             yield return new Finding(Id, lines[i].Number, $"Duplicate of line {lines[first].Number}.", "Delete the repeated line.");
         }
     }
+
+    /// <summary>
+    /// The innermost section opener above line <paramref name="i"/> and the line's position under it (non-blank lines from
+    /// the opener, counting the line itself). Openers: a heading (kind "h" + level); a bold-label line such as
+    /// <c>**Output Format**:</c> (kind "b"; a blank line between its content lines ends the section); a list item with deeper lines
+    /// under it (kind "l" + indent). Null when no opener is found.
+    /// </summary>
+    internal static (string Kind, int Position)? SectionPosition(IReadOnlyList<RulesLine> lines, int i)
+    {
+        var minIndent = Indent(lines[i].Text);
+        var position = 1;
+        var pendingBlank = false;
+        var gap = false;
+        for (var j = i - 1; j >= 0; j--)
+        {
+            var line = lines[j];
+            if (line.IsBlank)
+            {
+                pendingBlank = true;
+                continue;
+            }
+
+            if (line.IsHeading)
+            {
+                return ($"h{HeadingLevelRegex().Match(line.Text).Groups[1].Value.Length}", position);
+            }
+
+            var indent = Indent(line.Text);
+            if (BoldLabelRegex().IsMatch(line.Text))
+            {
+                return gap ? null : ("b", position);
+            }
+
+            if (InstructionText.IsListItem(line.Text) && indent < minIndent)
+            {
+                return ($"l{indent}", position);
+            }
+
+            minIndent = Math.Min(minIndent, indent);
+            gap |= pendingBlank;
+            pendingBlank = false;
+            position++;
+        }
+
+        return null;
+    }
+
+    private static int Indent(string text) => text.Replace("\t", "    ").Length - text.Replace("\t", "    ").TrimStart().Length;
 
     private static bool IsCandidate(IReadOnlyList<RulesLine> lines, int i, IReadOnlySet<int> instructionLines)
     {
@@ -88,6 +140,13 @@ public sealed partial class DuplicateLines : IRule
 
     [GeneratedRegex(@"`[^`]*`")]
     private static partial Regex CodeSpanRegex();
+
+    [GeneratedRegex(@"^\s{0,3}(#{1,6})\s")]
+    private static partial Regex HeadingLevelRegex();
+
+    /// <summary>A line that is only a bold label: <c>**Output Format**:</c> or <c>**Tests fail:**</c>.</summary>
+    [GeneratedRegex(@"^\s*\*\*[^*]+(?:\*\*\s*:|:\*\*)\s*$")]
+    private static partial Regex BoldLabelRegex();
 
     [GeneratedRegex(@"\d+")]
     private static partial Regex DigitsRegex();

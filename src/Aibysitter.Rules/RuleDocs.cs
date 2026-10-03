@@ -10,7 +10,12 @@ public static class RuleDocs
             "Instructions explain why instead of stating what.",
             "\"because\", \"so that\", \"in order to\", \"the reason\", \"this ensures\", \"this helps\", \"which means\" in an instruction: a list item that contains an instruction sentence, or a paragraph sentence that is an instruction and the sentence after it. Instruction sentence: a clause opens with a directive word (always, never, must, do not …) or an imperative verb, optionally after \"if / when / where / ideally … ,\"; or a label opens with a directive word (\"Be concise:\"); or it contains must, should, shall, need to, have to, is required, you can / could / may / might, or do not (not after we / they / it / that …); or it is a list item of at most 12 words with no label, no verb form such as is / are / has / uses, and no leading determiner, pronoun or gerund (\"- One concept per file.\"). Not instructions: list items labelled with inline code or an identifier (catalog entries); files with 20 or more MDX component lines (pasted documentation). Skipped: descriptive prose; HTML comments; quoted text; phrases after \"/\" or a quote mark; \"just / only / simply / merely / solely / purely because\"; \"because of\"; \"the reason\" as an object.",
             "- Use tabs because the formatter expects them.",
-            "- Use tabs."),
+            "- Use tabs.",
+            KnownLimits:
+            [
+                "\"because\" introducing a condition inside a prohibition (\"never skip steps because a task seems small\") is flagged as rationale. Suppress it with an in-file comment if the line is deliberate.",
+                "A descriptive sentence that shares a list item with an instruction is flagged as rationale. Suppress it with an in-file comment if the line is deliberate.",
+            ]),
         new(
             "R002",
             "VagueVerbs",
@@ -36,7 +41,7 @@ public static class RuleDocs
             "R005",
             "DuplicateLines",
             "The same instruction appears more than once.",
-            "Repeated instruction lines (instruction sentence as in R001) of four or more words, ignoring case, whitespace, and list markers. Excluded: headings, code blocks, indented code, horizontal rules, table rows, HTML comments, wrapped continuation lines. Not reported: a line that occurs three or more times (template), or a repeat whose previous or next line has the same shape as the line beside the first occurrence, ignoring digits and inline code (repeated block, such as parallel procedures).",
+            "Repeated instruction lines (instruction sentence as in R001) of four or more words, ignoring case, whitespace, and list markers. Excluded: headings, code blocks, indented code, horizontal rules, table rows, HTML comments, wrapped continuation lines. Not reported: a line that occurs three or more times (template), a repeat whose previous or next line has the same shape as the line beside the first occurrence, ignoring digits and inline code (repeated block), or a repeat at the same position under section openers of the same kind and level (parallel sections). Section openers: headings, bold-label lines (\"**Output Format**:\"), and list items with deeper lines under them.",
             "- Run tests before commit.\n* run tests before commit.",
             "- Run tests before commit."),
         new(
@@ -58,7 +63,7 @@ public static class RuleDocs
             "R008",
             "EmphasisInflation",
             "Emphasis is on so many lines that none of it stands out.",
-            "Lines with IMPORTANT, CRITICAL, MUST, NEVER, ALWAYS, DO NOT, MANDATORY or REQUIRED in capitals, or \"!!\". In a file with a capitalized SHOULD or a mention of RFC 2119 or BCP 14, MUST and REQUIRED are keywords and not counted. Limit: 3 per 100 lines, minimum 3. Code blocks excluded. Reported once, at the first line over the limit.",
+            "Lines with IMPORTANT, CRITICAL, MUST, NEVER, ALWAYS, DO NOT, MANDATORY or REQUIRED in capitals, or \"!!\". In a file with a capitalized SHOULD or a mention of RFC 2119 or BCP 14, MUST and REQUIRED are keywords and not counted. Limit: 5 per 100 lines, minimum 3. Code blocks excluded. Reported once, at the first line over the limit.",
             "- ALWAYS run tests.\n- NEVER skip lint.\n- You MUST format.\n- IMPORTANT: commit often.",
             "- Run tests.\n- Run lint before commit.\n- NEVER push to main."),
         new(
