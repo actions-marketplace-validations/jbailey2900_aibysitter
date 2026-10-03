@@ -20,7 +20,7 @@ public class TrustPagesTests(WebApplicationFactory<Program> factory)
     [InlineData("/GitHub", "<h2>Security model</h2>")]
     [InlineData("/GitHub", "href=\"/Privacy\"")]
     [InlineData("/GitHub", "To uninstall:")]
-    [InlineData("/GitHub", "Install coming soon.")]
+    [InlineData("/GitHub", ">Install the GitHub App</a>")]
     public async Task PageContent(string path, string expected)
     {
         Assert.Contains(expected, await factory.CreateClient().GetStringAsync(path));

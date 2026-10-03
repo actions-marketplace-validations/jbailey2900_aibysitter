@@ -21,7 +21,7 @@ public static class LlmsTxt
         Link(text, site, "Lint", "/Lint", "paste a rules file or name a public GitHub repository; findings by line, a fix for each, and a score");
         Link(text, site, "API", "/API", $"POST {LintApi.Path} with JSON; same rules and results as the lint page; no key");
         Link(text, site, "Hooks", "/Hooks", "Git pre-commit and Claude Code hooks that run the aibysitter CLI on rules files");
-        Link(text, site, "GitHub App", "/GitHub", "checks on agent-authored pull requests; in testing, not yet installable");
+        Link(text, site, "GitHub App", "/GitHub", "checks on agent-authored pull requests; install at " + Aibysitter.Web.GitHub.GitHubAppLinks.InstallUrl);
         Link(text, site, "Config generator", "/GitHub/Config", $"builds {RepoConfig.FilePath} for the GitHub App");
         text.Append('\n');
 
