@@ -65,4 +65,25 @@ public class DuplicateLinesTests
 
         Assert.Empty(_rule.Evaluate(RulesFile.Parse(text)));
     }
+
+    [Fact]
+    public void ParallelSections_NotFlagged_RealDuplicateAtOtherPosition_Flagged()
+    {
+        var finding = Assert.Single(_rule.Evaluate(Fixtures.Load("v3/R005-parallel-sections.md")));
+
+        Assert.Equal((33, "Duplicate of line 29."), (finding.Line, finding.Message));
+    }
+
+    [Theory]
+    [InlineData("## A\n- one\n- Run the formatter before you commit.\n## B\n- two\n- Run the formatter before you commit.\n", 3, "h2", 2)]
+    [InlineData("**Build fails:**\n- Check TypeScript errors now.\n- Verify the paths configuration file.\n", 3, "b", 2)]
+    [InlineData("**Build fails:**\n- Check TypeScript errors now.\n\n- Verify the paths configuration file.\n", 4, null, 0)]
+    [InlineData("1. **Node Version Check**\n   Run the version command first.\n   Install it when the version is old.\n", 3, "l0", 2)]
+    public void SectionPosition_Openers(string text, int lineNumber, string? kind, int position)
+    {
+        var lines = RulesFile.Parse(text).Lines;
+        var result = DuplicateLines.SectionPosition(lines, lineNumber - 1);
+
+        Assert.Equal(kind is null ? null : (kind, position), result);
+    }
 }

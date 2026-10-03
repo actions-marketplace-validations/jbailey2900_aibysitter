@@ -12,8 +12,8 @@ public class RulesetVersionTests(WebApplicationFactory<Program> factory)
     /// SHA-256 of the browser export (patterns, rules and severities, scoring, limits) for <see cref="PinnedVersion"/>.
     /// A change here means a rule or scoring change: bump RulesetVersion.Current, add a changelog entry, then re-pin both.
     /// </summary>
-    private const int PinnedVersion = 3;
-    private const string PinnedFingerprint = "fc85e8704585f2742ff9d93acc89404bbea95f17c59f80bf36c781f497db88cf";
+    private const int PinnedVersion = 4;
+    private const string PinnedFingerprint = "e36dca340fd56bab1f2979c0518cfc0ea04a52a0a4003dfa264fae20b5dc5b66";
 
     [Fact]
     public void Export_MatchesPinnedFingerprint_ForCurrentVersion()

@@ -6,5 +6,5 @@ namespace Aibysitter.Rules;
 /// </summary>
 public static class RulesetVersion
 {
-    public const int Current = 3;
+    public const int Current = 4;
 }

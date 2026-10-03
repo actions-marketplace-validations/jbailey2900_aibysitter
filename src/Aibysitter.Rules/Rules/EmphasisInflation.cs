@@ -9,7 +9,7 @@ namespace Aibysitter.Rules.Rules;
 /// </summary>
 public sealed partial class EmphasisInflation : IRule
 {
-    public const int PerHundredLines = 3;
+    public const int PerHundredLines = 5;
     public const int MinAllowed = 3;
 
     public string Id => "R008";

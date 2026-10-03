@@ -10,6 +10,11 @@ public static class RulesetChangelog
 
     public static IReadOnlyList<ChangelogEntry> Ruleset { get; } =
     [
+        new(4, new DateOnly(2026, 10, 3), "R005 parallel sections; R008 limit 5 per 100 lines", [
+            "R005: a repeat at the same position under section openers of the same kind and level is not reported. Section openers: headings, bold-label lines, list items with deeper lines under them.",
+            "R008: limit 5 emphasis lines per 100 lines (was 3), minimum 3. Files citing RFC 2119 or BCP 14 still do not count MUST or REQUIRED.",
+            "R001: known limits listed on its rule page.",
+        ]),
         new(3, new DateOnly(2026, 10, 3), "Instruction lines only; precision fixes from corpus pass 2", [
             "Instruction sentence: a clause opens with a directive word or an imperative verb, or a label opens with a directive word; or it contains must, should, shall, need to, have to, is required, you can / could / may / might, or do not after no subject pronoun; or it is a short list item with no label, no verb form and no leading determiner, pronoun or gerund (\"- One concept per file.\"). Catalog entries (list items labelled with inline code or an identifier) and files with 20 or more MDX component lines are not instructions.",
             "R001: only in a list item that contains an instruction sentence, or in an instruction sentence and the sentence after it. Skips quoted text, \"just / only / simply / merely / solely / purely because\", \"because of\", and \"the reason\" as an object.",

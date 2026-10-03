@@ -41,6 +41,14 @@
     <dd>@Model.Doc.Summary</dd>
     <dt>Flags</dt>
     <dd>@Model.Doc.Flags</dd>
+    @if (Model.Doc.KnownLimits is { Count: > 0 } limits)
+    {
+        <dt>Known limits</dt>
+        @foreach (var limit in limits)
+        {
+            <dd>@limit</dd>
+        }
+    }
     @if (Aibysitter.Rules.RulesFileFixer.FixableRules.Contains(Model.Doc.Id))
     {
         <dt>Fixable</dt>
