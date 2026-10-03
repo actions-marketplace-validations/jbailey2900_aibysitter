@@ -5,6 +5,7 @@ Lints rules files for AI coding agents: CLAUDE.md, AGENTS.md, GEMINI.md, Cursor 
 ```
 aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fail-on-error] [--fail-below <A|B|C|D>] [--stdin-path <path>]
 aibysitter init --packs starter,aspnet-web-api --format claude [--title <text>] [--output <path>] [--force]
+aibysitter fix <file|-> [--dry-run] [--disable R005]
 aibysitter hook claude-code [--disable R004]
 aibysitter packs
 ```

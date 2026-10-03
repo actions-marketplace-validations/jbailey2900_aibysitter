@@ -40,6 +40,7 @@ public static class CliApp
 
         Usage:
           aibysitter lint <file|-> [options]
+          aibysitter fix <file|-> [--dry-run] [--disable <ids>] [--format <name>] [--stdin-path <path>]
           aibysitter init --packs <ids> --format <name> [--title <text>] [--output <path>] [--force]
           aibysitter packs
           aibysitter hook claude-code [--disable <ids>]
@@ -55,6 +56,10 @@ public static class CliApp
           --fail-below <grade>  Exit 1 when the grade is below A, B, C or D.
           --stdin-path <path>   With -, names standard input: the format comes from this path and the report uses it.
 
+        fix: fixes R005 (deletes repeated lines), R011 (deletes empty headings) and R012 (closes the fence at end
+          of file), repeated until none apply. Writes the file in place. With -, writes the fixed text to standard output.
+          --dry-run             Print a unified diff instead; exit 1 when there are changes.
+
         init: writes a rules file composed from packs, then prints its score.
           --packs <ids>         Pack IDs, comma-separated, in order. 'aibysitter packs' lists them.
           --format <name>       claude, agents, gemini, copilot, cursor, cursorrules, windsurf.
@@ -66,7 +71,7 @@ public static class CliApp
           file is a rules file with Error or Warning findings, prints them to standard error and exits 2 so Claude
           fixes them. Otherwise exits 0. Extra flags also come from AIBYSITTER_HOOK_ARGS (--disable only).
 
-        Exit codes: 0 ok, 1 threshold failed, 2 usage error, 3 file not readable or not writable.
+        Exit codes: 0 ok, 1 threshold failed (lint) or changes found (fix --dry-run), 2 usage error, 3 file not readable or not writable.
         """;
 
     public static int Run(string[] args, TextReader stdin, TextWriter stdout, TextWriter stderr)
@@ -86,6 +91,8 @@ public static class CliApp
                 return InitCommand.Packs(packsArgs, stdout, m => UsageFail(stderr, m));
             case ["init", .. var initArgs]:
                 return InitCommand.Init(initArgs, stdout, stderr, m => UsageFail(stderr, m));
+            case ["fix", .. var fixArgs]:
+                return FixCommand.Run(fixArgs, stdin, stdout, stderr, m => UsageFail(stderr, m));
             case ["hook", "claude-code", .. var hookArgs]:
                 return HookCommand.ClaudeCode(hookArgs, stdin, stderr);
             case ["hook", ..]:

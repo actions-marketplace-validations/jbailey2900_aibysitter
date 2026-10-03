@@ -41,6 +41,16 @@
     <dd>@Model.Doc.Summary</dd>
     <dt>Flags</dt>
     <dd>@Model.Doc.Flags</dd>
+    @if (Aibysitter.Rules.RulesFileFixer.FixableRules.Contains(Model.Doc.Id))
+    {
+        <dt>Fixable</dt>
+        <dd><code>aibysitter fix</code> @(Model.Doc.Id switch
+        {
+            Aibysitter.Rules.RulesFileFixer.DuplicateLines => "deletes the repeated line and keeps the first.",
+            Aibysitter.Rules.RulesFileFixer.EmptySections => "deletes the empty heading and the blank lines after it.",
+            _ => "adds a matching closing fence at the end of the file. Check where the code block should end.",
+        }) <a asp-page="/Hooks">CLI</a></dd>
+    }
 </dl>
 
 <h2>Before</h2>
