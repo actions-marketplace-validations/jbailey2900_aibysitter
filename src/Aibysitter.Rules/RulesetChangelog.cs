@@ -29,6 +29,7 @@ public static class RulesetChangelog
 
     public static IReadOnlyList<ChangelogEntry> AppChecks { get; } =
     [
+        new(null, new DateOnly(2026, 10, 3), "P014 skips symlinked rules files", ["A rules file whose tree mode is 120000 is not linted; the summary notes \"P014 skipped <path>: symlink to <target>.\" GitHub returns the target's content under the link's path, so findings were reported at the link with the target's line numbers.", "P005 and R009: values equal to pass, passwd, pwd, abc123, 123456, 12345678 or qwerty are treated as placeholders."]),
         new(null, Launch, "R006 MissingIdentifiers (#24)", ["App-only. Paths, package scripts, make targets and MSBuild targets named in rules files are checked against the repository."]),
         new(null, Launch, "P014 RulesFileLint (#23)", ["Lints rules files changed in the pull request with the lint rules. Severity follows each rule."]),
         new(null, Launch, "P008–P012 (#20)", ["Deleted tests, swallowed exceptions, new dependencies, CI config edited, debug leftovers."]),

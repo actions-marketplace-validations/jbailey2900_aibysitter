@@ -25,6 +25,56 @@ public class ReviewProcessorR006Tests
     }
 
     [Fact]
+    public async Task SymlinkedRulesFile_SkippedWithNote_NotFetched()
+    {
+        var (fake, report) = await Run(f =>
+        {
+            f.Files.Add(new ChangedFile("CLAUDE.md", FileChangeStatus.Added, "@@ -0,0 +1 @@\n+AGENTS.md\n\\ No newline at end of file"));
+            f.Contents["CLAUDE.md"] = "# Rules\n- Handle errors properly.\n- `npm run nope`";
+            f.Paths = ["AGENTS.md", "CLAUDE.md"];
+            f.Symlinks.Add("CLAUDE.md");
+        });
+
+        Assert.DoesNotContain("content CLAUDE.md", fake.Calls);
+        Assert.DoesNotContain(report.Annotations, a => a.Path == "CLAUDE.md");
+        Assert.Contains("P014 skipped CLAUDE.md: symlink to AGENTS.md.", report.Summary);
+    }
+
+    [Fact]
+    public async Task SymlinkedRulesFile_NextToRealOne_RealOneStillLinted()
+    {
+        var (_, report) = await Run(f =>
+        {
+            f.Files.Add(new ChangedFile("docs/CLAUDE.md", FileChangeStatus.Added, "@@ -0,0 +1 @@\n+../AGENTS.md"));
+            f.Files.Add(new ChangedFile("AGENTS.md", FileChangeStatus.Added, "@@ -0,0 +1,2 @@\n+# Rules\n+- Handle errors properly."));
+            f.Contents["AGENTS.md"] = "# Rules\n- Handle errors properly.";
+            f.Contents["docs/CLAUDE.md"] = "# Rules\n- Handle errors properly.";
+            f.Paths = ["AGENTS.md", "docs/CLAUDE.md"];
+            f.Symlinks.Add("docs/CLAUDE.md");
+        });
+
+        Assert.Contains(report.Annotations, a => a.Path == "AGENTS.md" && a.Message.StartsWith("R002"));
+        Assert.DoesNotContain(report.Annotations, a => a.Path == "docs/CLAUDE.md");
+        Assert.Contains("P014 skipped docs/CLAUDE.md: symlink to ../AGENTS.md.", report.Summary);
+    }
+
+    [Fact]
+    public async Task RenameOnly_UnchangedSymlinkedRulesFile_NotRead()
+    {
+        var (fake, _) = await Run(f =>
+        {
+            f.Files.Add(new ChangedFile("src/New.cs", FileChangeStatus.Renamed, PreviousPath: "src/Old.cs"));
+            f.Contents["AGENTS.md"] = "- Entry point: `src/Old.cs`.";
+            f.Contents["CLAUDE.md"] = "- Entry point: `src/Old.cs`.";
+            f.Paths = ["AGENTS.md", "CLAUDE.md", "src/New.cs"];
+            f.Symlinks.Add("CLAUDE.md");
+        });
+
+        Assert.Contains("content AGENTS.md", fake.Calls);
+        Assert.DoesNotContain("content CLAUDE.md", fake.Calls);
+    }
+
+    [Fact]
     public async Task ChangedRulesFile_TreeAndNeededManifestsOnly()
     {
         var (fake, report) = await Run(f =>
@@ -71,13 +121,29 @@ public class ReviewProcessorR006Tests
     }
 
     [Fact]
-    public async Task R006Disabled_NoTreeFetched()
+    public async Task R006Disabled_TreeFetchedOnce_ForSymlinks_NoManifests()
+    {
+        var (fake, _) = await Run(f =>
+        {
+            f.Files.Add(new ChangedFile(".github/aibysitter.json", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x"));
+            f.Files.Add(new ChangedFile("CLAUDE.md", FileChangeStatus.Added, "@@ -0,0 +1,1 @@\n+- `npm run x`"));
+            f.Contents[".github/aibysitter.json"] = "{ \"disable\": [\"R006\"] }";
+            f.Contents["CLAUDE.md"] = "- `npm run x`";
+            f.Paths = ["CLAUDE.md", "package.json"];
+        });
+
+        Assert.Single(fake.Calls, c => c == "tree");
+        Assert.DoesNotContain("content package.json", fake.Calls);
+    }
+
+    [Fact]
+    public async Task P014Disabled_NoTreeFetched()
     {
         var (fake, _) = await Run(f =>
         {
             f.Files.Add(new ChangedFile(".github/aibysitter.json", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x"));
             f.Files.Add(new ChangedFile("CLAUDE.md", FileChangeStatus.Added, "@@ -0,0 +1,1 @@\n+- x"));
-            f.Contents[".github/aibysitter.json"] = "{ \"disable\": [\"R006\"] }";
+            f.Contents[".github/aibysitter.json"] = "{ \"disable\": [\"P014\"] }";
             f.Contents["CLAUDE.md"] = "- x";
         });
 

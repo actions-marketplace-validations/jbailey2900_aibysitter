@@ -12,6 +12,7 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
 {
     private static readonly ProductHeaderValue Product = new("Aibysitter");
     private static readonly TimeSpan TokenRefreshMargin = TimeSpan.FromMinutes(5);
+    private const string SymlinkMode = "120000";
 
     // PublicationOnly: a failed load (missing or empty PEM) is not cached, so fixing the file takes effect without a recycle.
     private readonly Lazy<RSA> privateKey = new(() => AppJwt.LoadPrivateKey(options.Value.PrivateKeyPath!), LazyThreadSafetyMode.PublicationOnly);
@@ -59,13 +60,19 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
         }
     }
 
-    public async Task<IReadOnlyList<string>?> GetFilePathsAsync(PullRequestRef pr, CancellationToken cancellationToken)
+    public async Task<RepoTree?> GetTreeAsync(PullRequestRef pr, CancellationToken cancellationToken)
     {
         var client = await ClientAsync(pr.InstallationId);
         var tree = await client.Git.Tree.GetRecursive(pr.Owner, pr.Repo, pr.HeadSha);
-        return tree.Truncated
-            ? null
-            : tree.Tree.Where(i => i.Type.Value == TreeType.Blob).Select(i => i.Path).ToList();
+        if (tree.Truncated)
+        {
+            return null;
+        }
+
+        var blobs = tree.Tree.Where(i => i.Type.Value == TreeType.Blob).ToList();
+        return new RepoTree(
+            blobs.Select(i => i.Path).ToList(),
+            blobs.Where(i => i.Mode == SymlinkMode).Select(i => i.Path).ToHashSet(StringComparer.Ordinal));
     }
 
     public async Task CompleteCheckRunAsync(PullRequestRef pr, long checkRunId, CheckRunReport report, CancellationToken cancellationToken)
