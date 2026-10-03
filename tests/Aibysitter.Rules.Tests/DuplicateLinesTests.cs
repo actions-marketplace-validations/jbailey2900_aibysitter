@@ -35,25 +35,25 @@ public class DuplicateLinesTests
     }
 
     [Fact]
-    public void Heading_RepeatedUnderDifferentParents_NotFlagged()
+    public void Headings_NotCounted()
     {
-        var text = "# Build\n## How to run it locally\n# Test\n## How to run it locally\n";
+        var text = "# Build\n## How to run it locally\n## Other\n## How to run it locally\n";
 
         Assert.Empty(_rule.Evaluate(RulesFile.Parse(text)));
     }
 
     [Fact]
-    public void Heading_RepeatedUnderSameParent_Flagged()
+    public void InstructionRepeats_OnlyIsolatedInstructionRepeatFlagged()
     {
-        var text = "# Build\n## How to run it locally\n## Other\n## How to run it locally\n";
+        var finding = Assert.Single(_rule.Evaluate(Fixtures.Load("v3/R005-instruction-repeats.md")));
 
-        Assert.Equal(4, Assert.Single(_rule.Evaluate(RulesFile.Parse(text))).Line);
+        Assert.Equal((39, "Duplicate of line 3."), (finding.Line, finding.Message));
     }
 
     [Fact]
-    public void Heading_DoesNotMatchBodyLineWithSameText()
+    public void WrappedContinuation_NotCounted()
     {
-        var text = "## How to run it locally\nHow to run it locally\n";
+        var text = "Keep the summary short and do not\nrestate the rules in this file here.\n\nList the files you changed and do not\nrestate the rules in this file here.\n";
 
         Assert.Empty(_rule.Evaluate(RulesFile.Parse(text)));
     }

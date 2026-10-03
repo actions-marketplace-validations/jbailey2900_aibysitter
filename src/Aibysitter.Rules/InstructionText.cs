@@ -47,7 +47,8 @@ internal static partial class InstructionText
     /// True when the sentence is an instruction: a clause opens with a directive word or an imperative verb (optionally
     /// after a leading "if / when / ideally … ," clause), or a leading <c>Label:</c> opens with a directive word ("Be concise:"); or the sentence contains
     /// a modal (including "you can / could / may / might"); or it is a list item of at most <see cref="MaxTerseRuleWords"/> words with no verb form from
-    /// <c>FiniteVerbRegex</c> and no leading determiner or pronoun (a terse rule such as "- One concept per file.").
+    /// <c>FiniteVerbRegex</c>, no leading <c>Label:</c> and no leading determiner or pronoun (a terse rule such as
+    /// "- One concept per file.").
     /// </summary>
     public static bool IsInstruction(string sentence)
     {
@@ -56,6 +57,7 @@ internal static partial class InstructionText
             || Clauses(sentence).Any(c => ImperativeStartRegex().IsMatch(c))
             || DirectiveLabelRegex().IsMatch(WithoutLabelRemoval(sentence))
             || (ListItemRegex().IsMatch(sentence)
+                && !LabelRegex().IsMatch(WithoutLabelRemoval(sentence))
                 && WordRegex().Count(content) is > 0 and <= MaxTerseRuleWords
                 && !FiniteVerbRegex().IsMatch(content)
                 && !DeterminerStartRegex().IsMatch(content));
@@ -97,9 +99,6 @@ internal static partial class InstructionText
 
     /// <summary>Text split at sentence ends.</summary>
     public static IEnumerable<string> Sentences(string text) => SentenceSplitRegex().Split(text);
-
-    /// <summary>True when the clause opens with a directive word or an imperative verb.</summary>
-    public static bool StartsImperative(string clause) => ImperativeStartRegex().IsMatch(clause);
 
     /// <summary>
     /// Instruction units: a list item with its continuation lines, or a run of paragraph lines. Units end at blank lines,

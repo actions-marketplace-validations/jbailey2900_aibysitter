@@ -63,6 +63,7 @@ public static class PatternExport
             {
                 fileMaxLines = Rules.FileLength.MaxLines,
                 duplicateMinWords = Rules.DuplicateLines.MinWords,
+                duplicateTemplateCount = Rules.DuplicateLines.TemplateCount,
                 paragraphMaxWords = Rules.ProseParagraph.MaxWords,
                 headingInstructionMinWords = Rules.EmptySections.MinInstructionWords,
                 terseRuleMaxWords = InstructionText.MaxTerseRuleWords,

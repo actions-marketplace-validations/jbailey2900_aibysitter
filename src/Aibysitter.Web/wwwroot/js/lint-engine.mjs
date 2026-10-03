@@ -214,7 +214,8 @@ function isInstruction(sentence) {
   if (clauses(sentence).some((cl) => test("InstructionText.ImperativeStartRegex", cl))) return true;
   if (test("InstructionText.DirectiveLabelRegex", keepLabel)) return true;
   const words = count("InstructionText.WordRegex", c);
-  return test("InstructionText.ListItemRegex", sentence) && words > 0 && words <= limits.terseRuleMaxWords
+  return test("InstructionText.ListItemRegex", sentence) && !test("InstructionText.LabelRegex", keepLabel)
+    && words > 0 && words <= limits.terseRuleMaxWords
     && !test("InstructionText.FiniteVerbRegex", c) && !test("InstructionText.DeterminerStartRegex", c);
 }
 const isListItem = (text) => test("InstructionText.ListItemRegex", text);
@@ -310,25 +311,27 @@ function sentenceIndex(spans, offset) {
   return i;
 }
 
-function vagueLeadVerb(clause) {
-  const verb = match("VagueVerbs.LeadVerbRegex", clause);
-  if (!verb) return [];
-  const rest = after(clause, verb);
-  const term = verb.groups.term;
-  const checkable = lowerInvariant(term) === "ensure" && test("VagueVerbs.CheckableObjectRegex", rest);
-  return trim(rest).length > 0 && !hasConcreteTarget(rest) && !checkable ? [lowerInvariant(term)] : [];
-}
-
-function vagueQualifiers(clause) {
-  if (!test("VagueVerbs.ImperativeRegex", clause)) return [];
-  return matchAll("VagueVerbs.QualifierRegex", clause)
-    .filter((q) => !hasConcreteTarget(after(clause, q)))
-    .map((q) => lowerInvariant(q[0]));
-}
-
 function r002(file) {
-  return proseLines(file).flatMap((line) => {
-    const terms = clauses(line.text).flatMap((c) => [...vagueLeadVerb(c), ...vagueQualifiers(c)]);
+  const lines = instructionLines(file);
+  return file.lines.filter((l) => lines.has(l.number)).flatMap((line) => {
+    const terms = [];
+    let codeSeen = false;
+    for (const clause of clauses(line.text)) {
+      const verb = match("VagueVerbs.LeadVerbRegex", clause);
+      const rest = verb ? after(clause, verb) : "";
+      const term = verb ? lowerInvariant(verb.groups.term) : "";
+      const checkableEnsure = !!verb && term === "ensure" && (codeSeen || test("VagueVerbs.CheckableObjectRegex", rest));
+      if (verb && trim(rest).length > 0 && !hasConcreteTarget(rest) && !test("VagueVerbs.ResourceObjectRegex", rest) && !checkableEnsure) {
+        terms.push(term);
+      }
+      if (test("VagueVerbs.ImperativeRegex", clause) && !(term === "ensure" && codeSeen)) {
+        for (const q of matchAll("VagueVerbs.QualifierRegex", clause)) {
+          const rest2 = after(clause, q);
+          if (!hasConcreteTarget(rest2) && !test("VagueVerbs.QualifierContextRegex", rest2)) terms.push(lowerInvariant(q[0]));
+        }
+      }
+      codeSeen = codeSeen || clause.includes("CODE");
+    }
     return terms.length === 0 ? [] : [finding("R002", line.number, `Vague wording: ${quoted(terms)}`,
       "Name the concrete action, file, or command.")];
   });
@@ -361,32 +364,38 @@ function r004(file) {
     : [];
 }
 
-function duplicateWordCount(text) {
-  return count("DuplicateLines.WordRegex", normalize(replace("DuplicateLines.HeadingMarkRegex", text, "")));
-}
-
-function headingKey(line, key, headingPath) {
-  const level = match("DuplicateLines.HeadingLevelRegex", line.text)?.[1].length ?? 0;
-  for (let i = headingPath.length - 1; i >= 0; i--) if (headingPath[i].level >= level) headingPath.splice(i, 1);
-  const parent = headingPath.length === 0 ? "" : headingPath[headingPath.length - 1].key;
-  headingPath.push({ level, key });
-  return `${parent}\u0000${key}`;
-}
-
 function r005(file) {
+  const { lines } = file;
+  const keys = lines.map((l) => (l.isBlank ? null : normalize(l.text)));
+  const instr = instructionLines(file);
+  const isContinuation = (i) => i > 0 && lines[i - 1].isProse && !isListItem(lines[i].text)
+    && test("DuplicateLines.LowercaseStartRegex", lines[i].text) && !test("DuplicateLines.SentenceEndRegex", lines[i - 1].text);
+  const isIndentedCode = (i) => i > 0 && lines[i - 1].isBlank && test("DuplicateLines.IndentedRegex", lines[i].text) && !isListItem(lines[i].text);
+  const candidates = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (instr.has(line.number) && !isHtmlComment(line.text) && !test("DuplicateLines.HorizontalRuleRegex", line.text)
+      && count("DuplicateLines.WordRegex", normalize(line.text)) >= limits.duplicateMinWords
+      && !isContinuation(i) && !isIndentedCode(i)) candidates.push(i);
+  }
+  const counts = new Map();
+  for (const i of candidates) counts.set(keys[i], (counts.get(keys[i]) ?? 0) + 1);
+  const sameNeighbour = (first, repeat, offset) => {
+    const a = first + offset;
+    const b = repeat + offset;
+    return a >= 0 && b >= 0 && a < keys.length && b < keys.length && b !== first && keys[a] !== null && keys[a] === keys[b];
+  };
   const firstSeen = new Map();
-  const headingPath = [];
   const out = [];
-  for (const line of file.lines.filter((l) => !l.isBlank && !l.isInCodeFence && !l.isFrontmatter && !l.isDirective)) {
-    let key = normalize(line.text);
-    if (line.isHeading) key = headingKey(line, key, headingPath);
-    if (test("DuplicateLines.HorizontalRuleRegex", line.text) || isTableRow(line.text)
-      || duplicateWordCount(line.text) < limits.duplicateMinWords) continue;
-    if (firstSeen.has(key)) {
-      out.push(finding("R005", line.number, `Duplicate of line ${firstSeen.get(key)}.`, "Delete the repeated line."));
-    } else {
-      firstSeen.set(key, line.number);
+  for (const i of candidates) {
+    const key = keys[i];
+    if (!firstSeen.has(key)) {
+      firstSeen.set(key, i);
+      continue;
     }
+    const first = firstSeen.get(key);
+    if (counts.get(key) >= limits.duplicateTemplateCount || sameNeighbour(first, i, -1) || sameNeighbour(first, i, 1)) continue;
+    out.push(finding("R005", lines[i].number, `Duplicate of line ${lines[first].number}.`, "Delete the repeated line."));
   }
   return out;
 }
