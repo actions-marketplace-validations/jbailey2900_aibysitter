@@ -16,7 +16,7 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
             Assert.Contains($"<a href=\"/Rules/{doc.Id}\">{doc.Id}</a>", html);
         }
 
-        Assert.Contains("Install coming soon.", html);
+        Assert.DoesNotContain("coming soon", html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("fail-on-errors", html);
         Assert.Contains("Multiply_Works", html);
     }
@@ -41,12 +41,24 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task GitHubPage_HasNoInstallLink_UntilAppIsPublic()
+    public async Task GitHubPage_LinksToInstall_InHeroAndInstallSection()
     {
         var html = await factory.CreateClient().GetStringAsync("/GitHub");
 
-        Assert.DoesNotContain("installations/new", html);
-        Assert.DoesNotContain("github.com/apps", html);
+        Assert.Equal(2, html.Split("href=\"https://github.com/apps/aibysitter/installations/new\"").Length - 1);
+        Assert.Contains(">Install the GitHub App</a>", html);
+    }
+
+    [Fact]
+    public async Task NoPage_SaysTheAppIsInTesting()
+    {
+        var client = factory.CreateClient();
+        foreach (var path in new[] { "/", "/GitHub", "/About", "/llms.txt" })
+        {
+            var html = await client.GetStringAsync(path);
+            Assert.DoesNotContain("in testing", html, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("coming soon", html, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     [Fact]

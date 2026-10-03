@@ -1,6 +1,6 @@
 # Installing the GitHub App
 
-The App is private until launch. Only accounts it is shared with can install it.
+Install: https://github.com/apps/aibysitter/installations/new
 
 ## Install
 

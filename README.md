@@ -1,3 +1,5 @@
+![aibysitter: Babysitting the AI.](docs/banner.png)
+
 # Aibysitter
 
 Babysitting the AI. Tooling for supervising AI coding agents: it reviews what an agent wrote after the fact. It does not run or constrain agents at runtime.
@@ -71,7 +73,7 @@ Optional repo config, `.github/aibysitter.json`, read from the pull request's he
 - `disable`: check IDs to skip, and rule IDs (R001–R016) to skip inside P014.
 - `comment`: `true` posts one PR comment with the summary and up to 25 linked findings, updated on each new commit. Default `false`.
 
-Install: [docs/installing-on-your-repos.md](docs/installing-on-your-repos.md). The App is private until launch. Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
+Install: [github.com/apps/aibysitter](https://github.com/apps/aibysitter/installations/new). Setup and configuration: [docs/installing-on-your-repos.md](docs/installing-on-your-repos.md). Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).
 
 ## API
 

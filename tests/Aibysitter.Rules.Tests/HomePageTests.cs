@@ -48,7 +48,7 @@ public class HomePageTests(WebApplicationFactory<Program> factory)
         var html = await factory.CreateClient().GetStringAsync("/");
 
         Assert.Contains(@"<a href=""/Lint"">Browser linter</a> <span>Available now</span>", html);
-        Assert.Contains(@"<a href=""/GitHub"">GitHub App</a> <span>In testing</span>", html);
+        Assert.Contains(@"<a href=""/GitHub"">GitHub App</a> <span>Available now</span>", html);
         Assert.Contains("CLI and Action <span>Planned</span>", html);
     }
 
@@ -56,8 +56,8 @@ public class HomePageTests(WebApplicationFactory<Program> factory)
     public async Task Home_SplitsChecks_R006UnderTheApp()
     {
         var html = await factory.CreateClient().GetStringAsync("/");
-        var rules = Section(html, "Rules files, available now", "Pull requests, GitHub App in testing");
-        var app = Section(html, "Pull requests, GitHub App in testing", "</ul>");
+        var rules = Section(html, "Rules files, available now", "Pull requests, GitHub App");
+        var app = Section(html, "Pull requests, GitHub App", "</ul>");
 
         Assert.DoesNotContain("/Rules/R006", rules);
         Assert.Contains("/Rules/R001", rules);

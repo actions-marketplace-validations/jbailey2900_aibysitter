@@ -170,7 +170,14 @@ main,
     font-weight: 700;
     text-decoration: none;
     font-size: var(--text-lg);
+    display: inline-flex;
+    align-items: center;
 }
+
+.wordmark .mark { width: 1.5em; height: 1.5em; margin-right: 0.5em; flex: none; }
+.mark-tile { fill: var(--ink); }
+.mark-glyph { fill: var(--paper); }
+.mark-dot { fill: var(--pass); }
 
 .nav-links {
     display: flex;

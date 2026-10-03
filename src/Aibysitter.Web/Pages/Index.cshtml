@@ -15,7 +15,7 @@
     </p>
     <ul class="status" aria-label="Status">
         <li><a asp-page="/Lint">Browser linter</a> <span>Available now</span></li>
-        <li><a asp-page="/GitHub">GitHub App</a> <span>In testing</span></li>
+        <li><a asp-page="/GitHub">GitHub App</a> <span>Available now</span></li>
         <li>CLI and Action <span>Planned</span></li>
     </ul>
 </section>
@@ -43,7 +43,7 @@
             </ul>
         </div>
         <div>
-            <h3>Pull requests, GitHub App in testing</h3>
+            <h3>Pull requests, GitHub App</h3>
             <ul class="marks">
                 @foreach (var check in Model.PullRequestChecks)
                 {
@@ -54,7 +54,7 @@
                     <li><a asp-page="/Rules/Rule" asp-route-id="@doc.Id">@doc.Id</a> @doc.Summary <span class="note">App-only</span></li>
                 }
             </ul>
-            <p class="note">Pull request checks run through the <a asp-page="/GitHub">Aibysitter GitHub App</a>, currently in testing.</p>
+            <p class="note">Pull request checks run through the <a asp-page="/GitHub">Aibysitter GitHub App</a>.</p>
         </div>
     </div>
 </section>
