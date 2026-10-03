@@ -1,3 +1,5 @@
+![aibysitter: Babysitting the AI.](docs/banner.png)
+
 # Aibysitter
 
 Babysitting the AI. Tooling for supervising AI coding agents: it reviews what an agent wrote after the fact. It does not run or constrain agents at runtime.

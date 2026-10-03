@@ -23,7 +23,17 @@
         <meta property="og:description" content="@description" />
     }
     <meta property="og:url" content="@canonical" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="@Site.Url("/img/og-image.png")" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="aibysitter: Babysitting the AI." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161514" media="(prefers-color-scheme: dark)" />
     <link rel="preload" href="~/fonts/jetbrains-mono-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
@@ -31,7 +41,7 @@
     <a class="skip" href="#main">Skip to content</a>
     <header class="site-header">
         <nav class="nav" aria-label="Main">
-            <a class="wordmark" asp-page="/Index" aria-label="aibysitter home">aibysitter<span class="cursor" aria-hidden="true"></span></a>
+            <a class="wordmark" asp-page="/Index" aria-label="aibysitter home"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><rect class="mark-tile" width="512" height="512" rx="108"/><path class="mark-glyph" d="M76 102H160V137H112V350H160V385H76ZM353 102H436V385H353V350H399V137H353Z"/><rect class="mark-glyph" x="214" y="150" width="84" height="212" rx="10"/><circle class="mark-dot" cx="405.5" cy="137.5" r="19.5"/></svg>aibysitter<span class="cursor" aria-hidden="true"></span></a>
             <ul class="nav-links">
                 <li><a asp-page="/Lint">lint</a></li>
                 <li><a asp-page="/Gallery/Index">gallery</a></li>

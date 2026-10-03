@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="aibysitter">
+  <style>
+    .tile { fill: #f5f0e6; }
+    .glyph { fill: #141413; }
+    .dot { fill: #3e8a4d; }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #141413; }
+      .glyph { fill: #f5f0e6; }
+      .dot { fill: #5ba66a; }
+    }
+  </style>
+  <rect class="tile" width="512" height="512" rx="108"/>
+  <path class="glyph" d="M76 102H160V137H112V350H160V385H76Z"/>
+  <path class="glyph" d="M353 102H436V385H353V350H399V137H353Z"/>
+  <rect class="glyph" x="214" y="150" width="84" height="212" rx="10"/>
+  <circle class="dot" cx="405.5" cy="137.5" r="19.5"/>
+</svg>

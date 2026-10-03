@@ -32,7 +32,7 @@ public partial class SeoHeadTests(WebApplicationFactory<Program> factory)
             if (Canonical(html) != url) failures.Add($"{entry.Path}: canonical {Canonical(html)}");
             if (Meta(html, "property", "og:url") != url) failures.Add($"{entry.Path}: og:url");
             if (string.IsNullOrWhiteSpace(Meta(html, "property", "og:title"))) failures.Add($"{entry.Path}: og:title");
-            if (Meta(html, "property", "og:type") != "website" || Meta(html, "property", "og:site_name") != "aibysitter" || Meta(html, "name", "twitter:card") != "summary")
+            if (Meta(html, "property", "og:type") != "website" || Meta(html, "property", "og:site_name") != "aibysitter" || Meta(html, "name", "twitter:card") != "summary_large_image" || Meta(html, "property", "og:image") is not { } image || !image.EndsWith("/img/og-image.png", StringComparison.Ordinal))
             {
                 failures.Add($"{entry.Path}: fixed og/twitter tags");
             }
