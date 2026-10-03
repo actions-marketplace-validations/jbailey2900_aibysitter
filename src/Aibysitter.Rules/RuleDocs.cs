@@ -8,14 +8,14 @@ public static class RuleDocs
             "R001",
             "RationaleProse",
             "Instructions explain why instead of stating what.",
-            "\"because\", \"so that\", \"in order to\", \"the reason\", \"this ensures\", \"this helps\", \"which means\" in an instruction: a list item that contains an instruction sentence, or a paragraph sentence that is an instruction and the sentence after it. Instruction sentence: opens with a modal or an imperative verb, or contains must, should, shall, do not, never, need to, have to, is required. Skipped: descriptive prose; HTML comments; phrases after \"/\" or a quote mark; \"just / only / simply / merely because\"; \"because of\"; \"the reason\" as a bare object.",
+            "\"because\", \"so that\", \"in order to\", \"the reason\", \"this ensures\", \"this helps\", \"which means\" in an instruction: a list item that contains an instruction sentence, or a paragraph sentence that is an instruction and the sentence after it. Instruction sentence: a clause opens with a directive word or an imperative verb (optionally after \"if / when / where / ideally … ,\"); or a label opens with one (\"Be concise:\"); or it contains must, should, shall, do not, never, need to, have to, is required, you can / could / may / might; or it is a list item of at most 12 words with no label, no verb form such as is / are / has / uses, and no leading determiner or pronoun (\"- One concept per file.\"). Skipped: descriptive prose; HTML comments; quoted text; phrases after \"/\" or a quote mark; \"just / only / simply / merely because\"; \"because of\"; \"the reason\" as a bare object.",
             "- Use tabs because the formatter expects them.",
             "- Use tabs."),
         new(
             "R002",
             "VagueVerbs",
             "Pattern-based: instructions use verbs with no checkable outcome.",
-            "\"handle\", \"manage\", \"deal with\", \"ensure\", \"improve\", \"optimize\", \"clean up\" opening an instruction, optionally after always / must / should / never / do not. \"properly\", \"appropriate(ly)\", \"as needed\" in an instruction. Skipped: table rows; inline code, links, paths, file names; a term followed by code, a path, a parenthesized list, \"e.g.\", three or more listed items, or a colon; \"ensure\" followed by a checkable statement; \"optimize for\"; \"where / when / if / as appropriate\".",
+            "\"handle\", \"manage\", \"deal with\", \"ensure\", \"improve\", \"optimize\", \"clean up\" opening an instruction, optionally after always / must / should / never / do not. \"properly\", \"appropriate(ly)\", \"as needed\" in an instruction. Instruction lines only (instruction sentence as in R001). Skipped: table rows; inline code, links, paths, file names; a term followed by code, a path, a parenthesized list, \"e.g.\", three or more listed items, or a colon; \"clean up / handle / manage\" followed by files, folders, directories, branches, containers, processes, worktrees, temp data, volumes, subscriptions, listeners or timers; \"ensure\" after inline code on the line, or followed by a checkable statement; a qualifier in an \"ensure\" clause after inline code, followed by a gerund (\"properly functioning\") or a purpose or condition (\"as needed for …\"), or after more / most / less / least; \"optimize for\"; \"where / when / if / as appropriate\".",
             "- Handle errors properly.",
             "- Return 400 with a ProblemDetails body when validation fails."),
         new(
@@ -35,8 +35,8 @@ public static class RuleDocs
         new(
             "R005",
             "DuplicateLines",
-            "The same line appears more than once.",
-            "Repeated lines of four or more words, ignoring case, whitespace, and list markers. A heading repeats only under the same parent heading. Excluded: code blocks, horizontal rules, table rows.",
+            "The same instruction appears more than once.",
+            "Repeated instruction lines (instruction sentence as in R001) of four or more words, ignoring case, whitespace, and list markers. Excluded: headings, code blocks, indented code, horizontal rules, table rows, HTML comments, wrapped continuation lines. Not reported: a line that occurs three or more times (template), or a repeat whose previous or next line also repeats the line beside the first occurrence (repeated block, such as parallel procedures).",
             "- Run tests before commit.\n* run tests before commit.",
             "- Run tests before commit."),
         new(
@@ -51,14 +51,14 @@ public static class RuleDocs
             "R007",
             "HedgedInstructions",
             "A hedge makes the instruction optional.",
-            "\"try to\", \"if possible\", \"ideally\", \"where / when / whenever possible\", \"consider\", \"prefer to\", \"where / when / if / as appropriate\". Skipped: table rows; inline code, links, paths, quoted text; \"try to\" after not / never / don't; \"consider\" unless it opens a clause or follows you can / could / may / should; \"consider whether / if / how\"; clauses opening with a third-person or plural subject.",
+            "\"try to\", \"if possible\", \"ideally\", \"where / when / whenever possible\", \"consider\", \"prefer to\", \"where / when / if / as appropriate\". Instruction lines only (instruction sentence as in R001). Skipped: table rows; inline code, links, paths, quoted text; \"try to\" after not / never / don't / can / could / may / might; \"consider\" unless it opens a clause or follows you can / could / may / should; \"consider whether / if / how\"; \"consider\" followed by =, : or / (a label); clauses opening with a third-person or plural subject.",
             "- Try to keep functions short.",
             "- Keep functions under 40 lines."),
         new(
             "R008",
             "EmphasisInflation",
             "Emphasis is on so many lines that none of it stands out.",
-            "Lines with IMPORTANT, CRITICAL, MUST, NEVER, ALWAYS, DO NOT, MANDATORY or REQUIRED in capitals, or \"!!\". Limit: 3 per 100 lines, minimum 3. Code blocks excluded. Reported once, at the first line over the limit.",
+            "Lines with IMPORTANT, CRITICAL, MUST, NEVER, ALWAYS, DO NOT, MANDATORY or REQUIRED in capitals, or \"!!\". In a file with a capitalized SHOULD or a mention of RFC 2119 or BCP 14, MUST and REQUIRED are keywords and not counted. Limit: 3 per 100 lines, minimum 3. Code blocks excluded. Reported once, at the first line over the limit.",
             "- ALWAYS run tests.\n- NEVER skip lint.\n- You MUST format.\n- IMPORTANT: commit often.",
             "- Run tests.\n- Run lint before commit.\n- NEVER push to main."),
         new(
