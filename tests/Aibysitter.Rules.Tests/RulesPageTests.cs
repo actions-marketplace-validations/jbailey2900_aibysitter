@@ -56,12 +56,21 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     [Fact]
     public async Task CheckPage_RendersPullRequestDoc()
     {
-        var html = await factory.CreateClient().GetStringAsync("/Rules/P003");
+        var html = await factory.CreateClient().GetStringAsync("/Rules/P001");
 
-        Assert.Contains("<h1>P003 AssertNothingTests</h1>", html);
+        Assert.Contains("<h1>P001 PlaceholderIdentifiers</h1>", html);
         Assert.Contains("Pull requests, through the", html);
         Assert.Contains("fails the check when the repo sets fail-on-errors", html);
         Assert.DoesNotContain("per finding", html);
+    }
+
+    [Fact]
+    public async Task CheckPage_P003_IsWarning()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Rules/P003");
+
+        Assert.Contains("<dd>Warning</dd>", html);
+        Assert.DoesNotContain("fails the check when the repo sets fail-on-errors", html);
     }
 
     [Theory]

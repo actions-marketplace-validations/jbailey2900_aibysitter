@@ -36,7 +36,7 @@ public class DeletedTestsTests
     {
         var findings = _check.Evaluate(Context(
             new ChangedFile("tests/OrderTests.cs", FileChangeStatus.Removed),
-            new ChangedFile("src/Order.cs", FileChangeStatus.Removed),
+            new ChangedFile("src/Billing.cs", FileChangeStatus.Removed),
             new ChangedFile("tests/OtherTests.cs", FileChangeStatus.Modified),
             new ChangedFile("tests/NewTests.cs", FileChangeStatus.Renamed, PreviousPath: "tests/OldTests.cs"))).ToList();
 

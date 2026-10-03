@@ -5,6 +5,7 @@ namespace Aibysitter.Rules.PullRequests;
 /// <summary>
 /// Packages added by the pull request: .csproj / .props PackageReference and PackageVersion, package.json dependency
 /// sections, requirements*.txt, go.mod require. A name both removed and added in the same file (version change) is not new.
+/// One finding per package per ecosystem; with central package management it is on the PackageVersion line.
 /// </summary>
 public sealed partial class NewDependencies : IPullRequestCheck
 {
@@ -26,10 +27,23 @@ public sealed partial class NewDependencies : IPullRequestCheck
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        foreach (var file in context.Files.Where(f => f.Status != FileChangeStatus.Removed))
+        return Added(context)
+            .GroupBy(a => (a.Ecosystem, Package: a.Package.ToUpperInvariant()))
+            .Select(g => g.OrderByDescending(a => a.Line.Text.Contains("<PackageVersion", StringComparison.OrdinalIgnoreCase)).First())
+            .Select(a => new PullRequestFinding(
+                Id,
+                a.Path,
+                a.Line.NewLine!.Value,
+                $"New dependency: {a.Package}",
+                "Confirm the package was requested, or remove it and use what the project already has."));
+    }
+
+    private static IEnumerable<(string Ecosystem, string Path, DiffLine Line, string Package)> Added(PullRequestContext context)
+    {
+        foreach (var file in context.Files.Where(f => f.Status != FileChangeStatus.Removed && !CodeText.IsGenerated(f)))
         {
             var name = Path.GetFileName(file.Path);
-            var extract = Extractor(name);
+            var (ecosystem, extract) = Extractor(name);
             if (extract is null)
             {
                 continue;
@@ -40,27 +54,22 @@ public sealed partial class NewDependencies : IPullRequestCheck
 
             foreach (var (line, package) in entries.Where(e => e.Line.Kind == DiffLineKind.Added && !removed.Contains(e.Package)))
             {
-                yield return new PullRequestFinding(
-                    Id,
-                    file.Path,
-                    line.NewLine!.Value,
-                    $"New dependency: {package}",
-                    "Confirm the package was requested, or remove it and use what the project already has.");
+                yield return (ecosystem, file.Path, line, package);
             }
         }
     }
 
-    private static Func<IReadOnlyList<DiffLine>, IEnumerable<(DiffLine Line, string Package)>>? Extractor(string fileName) => fileName switch
+    private static (string Ecosystem, Func<IReadOnlyList<DiffLine>, IEnumerable<(DiffLine Line, string Package)>>? Extract) Extractor(string fileName) => fileName switch
     {
         _ when fileName.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)
             || fileName.EndsWith(".fsproj", StringComparison.OrdinalIgnoreCase)
             || fileName.EndsWith(".vbproj", StringComparison.OrdinalIgnoreCase)
             || fileName.EndsWith(".props", StringComparison.OrdinalIgnoreCase)
-            || fileName.EndsWith(".targets", StringComparison.OrdinalIgnoreCase) => lines => ByRegex(lines, PackageReferenceRegex()),
-        "package.json" => PackageJson,
-        _ when RequirementsFileRegex().IsMatch(fileName) => lines => ByRegex(lines, RequirementRegex()),
-        "go.mod" => lines => ByRegex(lines, GoRequireRegex()),
-        _ => null,
+            || fileName.EndsWith(".targets", StringComparison.OrdinalIgnoreCase) => ("nuget", lines => ByRegex(lines, PackageReferenceRegex())),
+        "package.json" => ("npm", PackageJson),
+        _ when RequirementsFileRegex().IsMatch(fileName) => ("pip", lines => ByRegex(lines, RequirementRegex())),
+        "go.mod" => ("go", lines => ByRegex(lines, GoRequireRegex())),
+        _ => (string.Empty, null),
     };
 
     private static IEnumerable<(DiffLine, string)> ByRegex(IReadOnlyList<DiffLine> lines, Regex regex) =>

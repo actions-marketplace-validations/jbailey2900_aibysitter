@@ -4,7 +4,7 @@
 -        return _repo.Find(id);
 +        var key = "YOUR_API_KEY";
 +        var user = ::CURRENT_USER_ID::;
-+        // added comment with an ::OLD:: placeholder is flagged too
++        // added comment with an ::OLD:: placeholder is not flagged
 +        return _repo.Find(id, key, user);
      }
  

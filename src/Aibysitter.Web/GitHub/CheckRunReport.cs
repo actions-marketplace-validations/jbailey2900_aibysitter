@@ -37,6 +37,7 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
 
         var errors = review.Findings.Count(f => f.SeverityOr(checkById[f.CheckId].Severity) == Severity.Error);
         var warnings = review.Findings.Count(f => f.SeverityOr(checkById[f.CheckId].Severity) == Severity.Warning);
+        var notices = review.Findings.Count(f => f.SeverityOr(checkById[f.CheckId].Severity) == Severity.Info);
         var title = review.Findings.Count switch
         {
             0 => "No findings",
@@ -46,7 +47,8 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
 
         if (review.Findings.Count > 0)
         {
-            title += $" ({errors} error{(errors == 1 ? "" : "s")}, {warnings} warning{(warnings == 1 ? "" : "s")})";
+            title += $" ({errors} error{(errors == 1 ? "" : "s")}, {warnings} warning{(warnings == 1 ? "" : "s")}"
+                + (notices > 0 ? $", {notices} notice{(notices == 1 ? "" : "s")})" : ")");
         }
 
         if (configErrors.Count > 0)

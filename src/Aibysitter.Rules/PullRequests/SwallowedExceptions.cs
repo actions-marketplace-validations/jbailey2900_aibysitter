@@ -6,6 +6,7 @@ namespace Aibysitter.Rules.PullRequests;
 /// Empty catch blocks (C#, Java, JS/TS, and similar) and except-pass (Python) in added code.
 /// Looks across up to four consecutive added lines. Comments inside the block do not count as handling.
 /// Empty catches of OperationCanceledException / TaskCanceledException (cancellation) are not flagged.
+/// A catch inside a string literal on its line is not code. Generated files are skipped.
 /// </summary>
 public sealed partial class SwallowedExceptions : IPullRequestCheck
 {
@@ -19,14 +20,17 @@ public sealed partial class SwallowedExceptions : IPullRequestCheck
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        foreach (var file in context.Files.Where(f => f.Status != FileChangeStatus.Removed && FileKinds.IsCode(f.Path)))
+        foreach (var file in context.Files.Where(f => f.Status != FileChangeStatus.Removed && FileKinds.IsCode(f.Path) && !CodeText.IsGenerated(f)))
         {
             var added = file.AddedLines.ToList();
             var python = file.Path.EndsWith(".py", StringComparison.OrdinalIgnoreCase);
 
             for (var i = 0; i < added.Count; i++)
             {
-                if (!(python ? ExceptStartRegex() : CatchStartRegex()).IsMatch(added[i].Text))
+                var start = python
+                    ? ExceptStartRegex().Match(added[i].Text)
+                    : CatchStartRegex().Matches(added[i].Text).FirstOrDefault(m => !CodeText.IsInsideStringLiteral(added[i].Text, m.Index));
+                if (start is not { Success: true })
                 {
                     continue;
                 }
@@ -38,7 +42,7 @@ public sealed partial class SwallowedExceptions : IPullRequestCheck
                 }
 
                 var text = string.Join("\n", block);
-                var match = (python ? ExceptPassRegex() : EmptyCatchRegex()).Match(text);
+                var match = (python ? ExceptPassRegex() : EmptyCatchRegex()).Match(text, start.Index);
                 if (match.Success && match.Index < added[i].Text.Length + 1 && !CancellationRegex().IsMatch(match.Value))
                 {
                     yield return new PullRequestFinding(
