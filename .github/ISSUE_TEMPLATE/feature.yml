@@ -1,0 +1,17 @@
+name: Feature
+description: A new rule, check, format or capability.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: The behaviour you want.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: A line or change it should flag, or the input and output you expect.
+      render: text

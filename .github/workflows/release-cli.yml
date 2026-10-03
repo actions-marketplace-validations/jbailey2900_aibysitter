@@ -1,0 +1,46 @@
+name: Release CLI
+
+on:
+  push:
+    tags: ["cli-v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-cli
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Check tag
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not on main."; exit 1; }
+          version=$(dotnet msbuild src/Aibysitter.Cli/Aibysitter.Cli.csproj -getProperty:Version)
+          [ "cli-v$version" = "$GITHUB_REF_NAME" ] || { echo "::error::Tag $GITHUB_REF_NAME does not match Version $version."; exit 1; }
+
+      - name: Test CLI
+        run: dotnet test tests/Aibysitter.Rules.Tests --configuration Release --filter "FullyQualifiedName~Aibysitter.Rules.Tests.Cli"
+
+      - name: Pack
+        run: dotnet pack src/Aibysitter.Cli/Aibysitter.Cli.csproj --configuration Release --output artifacts --nologo
+
+      - name: Push to nuget.org
+        if: ${{ !github.event.repository.private }}
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json
+
+      - name: Skipped push
+        if: ${{ github.event.repository.private }}
+        run: echo "::notice::Repository is private; package built, not pushed."
