@@ -83,4 +83,12 @@ public class SecretsInRulesFileTests
     {
         Assert.Single(_rule.Evaluate(RulesFile.Parse("Password=Pass2024!x")));
     }
+
+    [Fact]
+    public void CiWorkflow_HasNoSecretMatches()
+    {
+        var path = Path.Combine(Parity.NodeRunner.RepoRoot, ".github", "workflows", "ci.yml");
+
+        Assert.All(File.ReadAllLines(path), line => Assert.Empty(SecretPatterns.Find(line)));
+    }
 }

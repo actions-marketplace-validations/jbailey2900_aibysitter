@@ -56,7 +56,7 @@ public class MarkdownAndNotesTests(WebApplicationFactory<Program> factory)
     [Fact]
     public void Notes_NewestFirst()
     {
-        Assert.Equal(["field-note-2", "field-note-1"], new NoteCatalog().All.Select(n => n.Slug));
+        Assert.Equal(["field-note-3", "field-note-2", "field-note-1"], new NoteCatalog().All.Select(n => n.Slug));
     }
 
     [Fact]
@@ -102,5 +102,20 @@ public class MarkdownAndNotesTests(WebApplicationFactory<Program> factory)
         Assert.Contains("<code>packs/aspnet-web-api\\01-commands.md</code>", html);
         Assert.Contains("href=\"/Notes/field-note-2\">Field note 2</a>", await factory.CreateClient().GetStringAsync("/Notes"));
         Assert.Contains("/Notes/field-note-2", await factory.CreateClient().GetStringAsync("/sitemap.xml"));
+    }
+
+    [Fact]
+    public async Task FieldNote3_PositionAboveData_WithTables()
+    {
+        var html = System.Net.WebUtility.HtmlDecode(await factory.CreateClient().GetStringAsync("/Notes/field-note-3"));
+
+        Assert.Contains("<h1>Field note 3</h1>", html);
+        Assert.Contains("3 October 2026", html);
+        var position = html.IndexOf("I published the linter's false-positive rates because every linter has them", StringComparison.Ordinal);
+        var data = html.IndexOf("<h2", StringComparison.Ordinal);
+        Assert.True(position > 0 && position < data, "Position must come before the data section.");
+        Assert.Contains("<td>R001 RationaleProse</td>", html);
+        Assert.DoesNotContain("corpus-pass-2-manifest", html);
+        Assert.Contains("/Notes/field-note-3", await factory.CreateClient().GetStringAsync("/sitemap.xml"));
     }
 }
