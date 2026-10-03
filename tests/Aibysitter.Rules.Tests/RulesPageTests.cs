@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aibysitter.Rules.Tests;
 
@@ -151,7 +152,7 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task Methodology_ListsSeveritiesThresholdsAndGaps()
+    public async Task Methodology_ListsSeveritiesThresholdsAndPositions()
     {
         var html = await factory.CreateClient().GetStringAsync("/Rules/Methodology");
 
@@ -161,7 +162,11 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
         Assert.Contains("116 of 755 (15.4%)", html);
         Assert.DoesNotContain("336", html);
         Assert.Contains("The lowest possible score is 20.", html);
-        Assert.Equal(4, html.Split("class=\"gap\"").Length - 1);
+        var decoded = System.Net.WebUtility.HtmlDecode(html);
+        Assert.Contains("The reason belongs in a commit message or a design note, where a human reads it; the rules file gets the rule.", decoded);
+        Assert.Contains("<h4>R004, 200 lines</h4>", decoded);
+        Assert.Contains("<h4>R008, emphasis</h4>", decoded);
+        Assert.Contains("<h4>R013, paragraphs</h4>", decoded);
     }
 
     [Theory]
@@ -207,5 +212,19 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     public async Task PullRequestCheckPage_HasNoMeasurementRow()
     {
         Assert.DoesNotContain("Measured false-positive rate", await factory.CreateClient().GetStringAsync("/Rules/P001"));
+    }
+
+    [Fact]
+    public async Task NoPageRendersAPlaceholder()
+    {
+        var client = factory.CreateClient();
+        var paths = factory.Services.GetRequiredService<Web.Seo.SiteMap>().Entries.Select(e => e.Path).ToList();
+
+        Assert.NotEmpty(paths);
+        foreach (var path in paths)
+        {
+            var html = await client.GetStringAsync(path);
+            Assert.False(html.Contains("Position to be written", StringComparison.OrdinalIgnoreCase) || html.Contains("class=\"gap\"", StringComparison.Ordinal), $"Placeholder on {path}");
+        }
     }
 }

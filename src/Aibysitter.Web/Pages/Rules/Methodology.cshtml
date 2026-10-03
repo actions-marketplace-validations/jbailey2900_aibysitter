@@ -52,7 +52,7 @@
 <partial name="_Scoring" />
 
 <h2>Why R001 penalises rationale prose</h2>
-<p class="gap">Position to be written.</p>
+<p>An agent follows an instruction. It doesn't need to agree with it. When a rule carries its reason, the agent has something to weigh the rule against, and sometimes it decides the reason no longer applies and "fixes" the constraint. I've watched that happen. The reason belongs in a commit message or a design note, where a human reads it; the rules file gets the rule.</p>
 
 <h2>Thresholds</h2>
 <p>Corpus hit rates are from the @Aibysitter.Web.Linting.RuleMeasurements.CorpusFiles-file corpus with ruleset v4.</p>
@@ -84,9 +84,12 @@
 </table>
 
 <h3>Why these thresholds</h3>
-<p class="gap">Position to be written: R004.</p>
-<p class="gap">Position to be written: R008.</p>
-<p class="gap">Position to be written: R013.</p>
+<h4>R004, 200 lines</h4>
+<p>Rules files are read in full on every turn, so every line competes with the task for the agent's attention. Past about 200 lines, mine stopped being followed consistently, and the lines nobody follows are the ones that get stale first. The number is a judgment, not a measurement: it's where I noticed the drop. Split by concern if you need more.</p>
+<h4>R008, emphasis</h4>
+<p>If every third line is IMPORTANT, none of them is. Emphasis works by contrast. The limit is set so that a file can shout about the few things that matter and still have those lines stand out. A file written in RFC 2119 keywords is exempt because those words are a vocabulary there, not volume.</p>
+<h4>R013, paragraphs</h4>
+<p>An instruction in a paragraph is an instruction the agent has to find. Lists are scanned; prose is read, and reading is where things get skipped. Eighty words is roughly where a paragraph stops being one instruction with context and starts being several instructions hiding in each other.</p>
 
 <h2 id="false-positive-rates">Measured false-positive rates</h2>
 <ul>
