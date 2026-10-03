@@ -9,6 +9,7 @@
 
 <h1>API</h1>
 <p>Lint a rules file over HTTP. Same rules, limits and results as the <a asp-page="/Lint">lint page</a>. No key, no account; the text is not stored or logged (<a asp-page="/Privacy">Privacy</a>).</p>
+<p>To lint before each commit or after each Claude Code edit, see <a asp-page="/Hooks">Hooks</a>.</p>
 
 <h2>Request</h2>
 <p><code>POST @LintApi.Path</code> with <code>Content-Type: application/json</code>.</p>

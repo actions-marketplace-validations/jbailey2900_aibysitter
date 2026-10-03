@@ -3,8 +3,9 @@
 Lints rules files for AI coding agents: CLAUDE.md, AGENTS.md, GEMINI.md, Cursor rules (`.cursor/rules/*.mdc`, `.cursorrules`), `.github/copilot-instructions.md`, `.windsurfrules`. Same rules, ruleset version and scoring as [aibysitting.net](https://aibysitting.net). Runs offline.
 
 ```
-aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fail-on-error] [--fail-below <A|B|C|D>]
+aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fail-on-error] [--fail-below <A|B|C|D>] [--stdin-path <path>]
 aibysitter init --packs starter,aspnet-web-api --format claude [--title <text>] [--output <path>] [--force]
+aibysitter hook claude-code [--disable R004]
 aibysitter packs
 ```
 

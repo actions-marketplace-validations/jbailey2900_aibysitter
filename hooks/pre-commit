@@ -1,0 +1,37 @@
+#!/bin/sh
+# aibysitter pre-commit hook: lints the staged content of rules files (not the working copy).
+# Flags: AIBYSITTER_HOOK_ARGS, default --fail-on-error. CLI command: AIBYSITTER, default aibysitter.
+# Skip once: git commit --no-verify. Docs: https://aibysitting.net/Hooks
+
+AIBYSITTER=${AIBYSITTER:-aibysitter}
+ARGS=${AIBYSITTER_HOOK_ARGS:---fail-on-error}
+
+# Same paths as RulesFormats.FromFileName.
+is_rules_file() {
+    case "$1" in
+        CLAUDE.md | */CLAUDE.md | AGENTS.md | */AGENTS.md | GEMINI.md | */GEMINI.md) return 0 ;;
+        .cursorrules | .windsurfrules | .github/copilot-instructions.md) return 0 ;;
+        .cursor/rules/*.mdc | */.cursor/rules/*.mdc) return 0 ;;
+    esac
+    return 1
+}
+
+if ! command -v "$AIBYSITTER" >/dev/null 2>&1; then
+    echo "aibysitter pre-commit: '$AIBYSITTER' not found; rules files not linted. Install: https://aibysitting.net/Hooks" >&2
+    exit 0
+fi
+
+git diff --cached --name-only --diff-filter=ACMR | {
+    status=0
+    while IFS= read -r path; do
+        is_rules_file "$path" || continue
+        # shellcheck disable=SC2086
+        if ! git show ":$path" | "$AIBYSITTER" lint - --stdin-path "$path" $ARGS; then
+            status=1
+        fi
+    done
+    if [ "$status" -ne 0 ]; then
+        echo "aibysitter pre-commit: commit blocked. Fix the findings above, or skip once with git commit --no-verify." >&2
+    fi
+    exit "$status"
+}

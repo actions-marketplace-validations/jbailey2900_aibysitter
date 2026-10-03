@@ -65,7 +65,7 @@ public sealed class CliTests : IDisposable
         var result = Run(["--version"]);
 
         Assert.Equal(CliApp.Ok, result.Exit);
-        Assert.Equal($"aibysitter 0.2.0 (ruleset v{RulesetVersion.Current})\n", result.Out);
+        Assert.Equal($"aibysitter 0.3.0 (ruleset v{RulesetVersion.Current})\n", result.Out);
     }
 
     [Theory]

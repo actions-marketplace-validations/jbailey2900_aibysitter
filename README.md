@@ -87,13 +87,16 @@ dotnet tool install --global Aibysitter.Cli --add-source artifacts
 ```
 
 ```
-aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fail-on-error] [--fail-below <A|B|C|D>]
+aibysitter lint <file|-> [--format <name>] [--disable R002,R005] [--json] [--fail-on-error] [--fail-below <A|B|C|D>] [--stdin-path <path>]
 aibysitter init --packs starter,aspnet-web-api --format claude [--title <text>] [--output <path>] [--force]
+aibysitter hook claude-code [--disable R004]
 aibysitter packs
 ```
 
 - Format: `--format`, else from the file path (as in the list above), else detected from content. `-` reads standard input.
 - `--json`: the `/api/lint` response fields, plus `file`.
+- `--stdin-path <path>`: with `-`, names standard input for format detection and the report.
+- `hook claude-code`: Claude Code `PostToolUse` hook; exits 2 with Error and Warning findings on stderr when the edited file is a rules file. Hooks: [`hooks/`](hooks/) and [aibysitting.net/Hooks](https://aibysitting.net/Hooks).
 - `init` writes a rules file composed from rules packs (below), then prints its score. `--format`: claude, agents, gemini, copilot, cursor, cursorrules, windsurf. Default output: where that format goes (`CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/<pack>.mdc`, ...). An existing file needs `--force`.
 - Exit codes: 0 ok, 1 a `--fail-*` threshold failed, 2 usage error, 3 file not readable or not writable. Without a `--fail-*` flag the exit code is 0 whatever the findings.
 - No length limit.
