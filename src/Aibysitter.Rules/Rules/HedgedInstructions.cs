@@ -3,9 +3,10 @@ using System.Text.RegularExpressions;
 namespace Aibysitter.Rules.Rules;
 
 /// <summary>
-/// Hedges that make an instruction optional. Evaluated per clause. Skips table rows, inline code,
-/// links, paths, quoted text, negated "try to", "consider" outside suggestion position, and clauses
-/// that open with a third-person or plural subject.
+/// Hedges that make an instruction optional, on lines an instruction sentence overlaps
+/// (<see cref="InstructionText.InstructionLines"/>). Evaluated per clause. Skips table rows, inline code, links, paths,
+/// quoted text, negated "try to", "can / could / may / might try to", "consider" outside suggestion position or used
+/// as a label (followed by "=", ":" or "/"), and clauses that open with a third-person or plural subject.
 /// </summary>
 public sealed partial class HedgedInstructions : IRule
 {
@@ -17,7 +18,8 @@ public sealed partial class HedgedInstructions : IRule
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        foreach (var line in file.Lines.Where(l => l.IsProse && !InstructionText.IsTableRow(l.Text)))
+        var instructionLines = InstructionText.InstructionLines(file);
+        foreach (var line in file.Lines.Where(l => instructionLines.Contains(l.Number)))
         {
             var hedges = new List<string>();
             foreach (var clause in InstructionText.Clauses(QuotedRegex().Replace(line.Text, " QUOTE ")))
@@ -28,7 +30,8 @@ public sealed partial class HedgedInstructions : IRule
                 }
 
                 var consider = ConsiderRegex().Match(clause);
-                if (consider.Success && !InstructionText.HasConcreteTarget(clause[(consider.Index + consider.Length)..]) && !ConsiderObjectRegex().IsMatch(clause[(consider.Index + consider.Length)..]))
+                var rest = consider.Success ? clause[(consider.Index + consider.Length)..] : string.Empty;
+                if (consider.Success && !InstructionText.HasConcreteTarget(rest) && !ConsiderObjectRegex().IsMatch(rest) && !LabelUseRegex().IsMatch(rest))
                 {
                     hedges.Add("consider");
                 }
@@ -47,7 +50,7 @@ public sealed partial class HedgedInstructions : IRule
 
     private static string Normalize(string value) => WhitespaceRegex().Replace(value.ToLowerInvariant(), " ");
 
-    [GeneratedRegex(@"(?<!\b(?:not|never|don't|n't)\s+)\btry\s+to\b|\bif\s+possible\b|\bideally\b|\b(?:where|when|whenever)\s+possible\b|\bprefer\s+to\b|\b(?:where|when|if|as)\s+appropriate\b", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?<!\b(?:not|never|don't|n't|can|could|may|might)\s+)\btry\s+to\b|\bif\s+possible\b|\bideally\b|\b(?:where|when|whenever)\s+possible\b|\bprefer\s+to\b|\b(?:where|when|if|as)\s+appropriate\b", RegexOptions.IgnoreCase)]
     private static partial Regex HedgeRegex();
 
     /// <summary>"consider" as a suggestion: opening the clause, or after "you can / could / may / might / should".</summary>
@@ -61,6 +64,10 @@ public sealed partial class HedgedInstructions : IRule
     /// <summary>Clause opens with a third-person or plural subject ("Drivers use", "Handles"), not an instruction.</summary>
     [GeneratedRegex(@"^(?!(?:always|unless|is|was|has|does|this|its|as)\b)[A-Za-z-]+s\b", RegexOptions.IgnoreCase)]
     private static partial Regex DescriptiveStartRegex();
+
+    /// <summary>"consider" as a label: followed by "=", ":" or "/".</summary>
+    [GeneratedRegex(@"^\s*[=:/]")]
+    private static partial Regex LabelUseRegex();
 
     [GeneratedRegex(@"""[^""]*""|“[^”]*”")]
     private static partial Regex QuotedRegex();

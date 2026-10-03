@@ -44,11 +44,56 @@ internal static partial class InstructionText
         || afterTerm.TrimEnd().EndsWith(':');
 
     /// <summary>
-    /// True when the sentence is an instruction: after <see cref="Content"/>, a clause opens with a directive word or an
-    /// imperative verb (optionally after a leading "if / when / before … ," clause), or the sentence contains a modal.
+    /// True when the sentence is an instruction: a clause opens with a directive word or an imperative verb (optionally
+    /// after a leading "if / when / ideally … ," clause), or a leading <c>Label:</c> opens with a directive word ("Be concise:"); or the sentence contains
+    /// a modal (including "you can / could / may / might"); or it is a list item of at most <see cref="MaxTerseRuleWords"/> words with no verb form from
+    /// <c>FiniteVerbRegex</c> and no leading determiner or pronoun (a terse rule such as "- One concept per file.").
     /// </summary>
-    public static bool IsInstruction(string sentence) =>
-        ModalRegex().IsMatch(Content(sentence)) || Clauses(sentence).Any(c => ImperativeStartRegex().IsMatch(c));
+    public static bool IsInstruction(string sentence)
+    {
+        var content = Content(sentence);
+        return ModalRegex().IsMatch(content)
+            || Clauses(sentence).Any(c => ImperativeStartRegex().IsMatch(c))
+            || DirectiveLabelRegex().IsMatch(WithoutLabelRemoval(sentence))
+            || (ListItemRegex().IsMatch(sentence)
+                && WordRegex().Count(content) is > 0 and <= MaxTerseRuleWords
+                && !FiniteVerbRegex().IsMatch(content)
+                && !DeterminerStartRegex().IsMatch(content));
+    }
+
+    /// <summary>Most words in a list item read as a terse rule without a verb.</summary>
+    public const int MaxTerseRuleWords = 12;
+
+    /// <summary>Line content as in <see cref="Content"/>, keeping a leading <c>Label:</c>.</summary>
+    private static string WithoutLabelRemoval(string text)
+    {
+        var s = ListMarkerRegex().Replace(WithoutCode(text).Trim(), string.Empty);
+        return s.Replace("**", string.Empty).Replace("__", string.Empty).Trim();
+    }
+
+    /// <summary>
+    /// Numbers of lines that an instruction sentence overlaps. Sentences are read across each unit (<see cref="Units"/>).
+    /// </summary>
+    public static IReadOnlySet<int> InstructionLines(RulesFile file)
+    {
+        var result = new HashSet<int>();
+        foreach (var unit in Units(file))
+        {
+            var (text, starts) = Join(unit);
+            var instructions = SentenceSpans(text).Where(s => IsInstruction(text.Substring(s.Start, s.Length))).ToList();
+            foreach (var line in unit)
+            {
+                var start = starts[line] + (line.Text.Length - line.Text.TrimStart().Length);
+                var end = start + line.Text.Trim().Length;
+                if (instructions.Any(s => s.Start < end && s.Start + s.Length > start))
+                {
+                    result.Add(line.Number);
+                }
+            }
+        }
+
+        return result;
+    }
 
     /// <summary>Text split at sentence ends.</summary>
     public static IEnumerable<string> Sentences(string text) => SentenceSplitRegex().Split(text);
@@ -164,13 +209,26 @@ internal static partial class InstructionText
     [GeneratedRegex(@"^\s*<!--.*-->\s*$")]
     private static partial Regex HtmlCommentRegex();
 
+    [GeneratedRegex(@"[\p{L}\p{N}][\p{L}\p{N}'_.-]*")]
+    private static partial Regex WordRegex();
+
+    [GeneratedRegex(@"^(?:be|keep|use|avoid|prefer|never|always|don't|do\s+not|make\s+sure|stay|stick)\b[^:.;!?]{0,40}:", RegexOptions.IgnoreCase)]
+    private static partial Regex DirectiveLabelRegex();
+
+    /// <summary>Copulas, auxiliaries and common third-person verbs: a sentence with one describes rather than instructs.</summary>
+    [GeneratedRegex(@"\b(?:is|are|was|were|isn't|aren't|has|have|had|does|did|will|would|can|could|may|might|lives|runs|uses|contains|includes|returns|provides|handles|requires|needs|makes|takes|gives|shows|holds|stores|reads|writes|calls|wraps|exports|adds|prevents|flags|fails|passes|means|helps|ensures|allows|lets|supports|depends|works|starts|loads|sends|creates|generates|builds|owns|sits|goes|comes|becomes|exists|lists|describes|defines|covers|maps|points|refers)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex FiniteVerbRegex();
+
+    [GeneratedRegex(@"^(?:the|a|an|this|that|these|those|it|its|our|their|his|her|we|they|he|she|i|there|here|each|every|all|some|most|many|both|either|neither|which|who|what|CODE)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex DeterminerStartRegex();
+
     /// <summary>Modal or obligation anywhere in the sentence.</summary>
-    [GeneratedRegex(@"\b(?:must|mustn't|should|shouldn't|shall|do\s+not|don't|never|needs?\s+to|ha(?:ve|s)\s+to|(?:is|are)\s+required)\b", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"\b(?:must|mustn't|should|shouldn't|shall|do\s+not|don't|never|needs?\s+to|ha(?:ve|s)\s+to|(?:is|are)\s+required|you\s+(?:can|could|may|might))\b", RegexOptions.IgnoreCase)]
     private static partial Regex ModalRegex();
 
     /// <summary>
     /// Clause opens, optionally after one leading "if / when / before … ," clause, with a directive word or a common imperative verb.
     /// </summary>
-    [GeneratedRegex(@"^(?:(?:if|when|whenever|before|after|unless|once|while|for)\b[^,]{0,80},\s*)?(?:(?:always|must|should|never|please|only|do\s+not|don't|make\s+sure)\b|(?:use|add|run|create|check|keep|avoid|follow|write|call|set|make|prefer|return|update|verify|validate|select|export|edit|assign|move|organize|configure|cache|continue|read|merge|adapt|wrap|log|put|place|define|store|import|include|apply|choose|pick|install|build|deploy|commit|review|refactor|implement|handle|manage|ensure|treat|throw|catch|raise|split|sort|mark|limit|scale|tune|register|inject|convert|escape|sanitize|encode|close|dispose|release|retry|notify|load|save|fetch|send|clean|remove|delete|replace|rename|extend|override|reuse|share|enable|disable|initialize|init|stop|do|be|try|ask|test|document|let|wait|yield|report|respond|reply|explain|mention|start|look|find|search|prefix|name|format|lint|push|open|ignore|skip|leave|give|provide|generate|output|print|show|list|state|note|remember|consider|think|plan|confirm|comment|declare|separate|group|order|focus|stick|target|match|mirror|copy|pass|prompt|tell|summarize|describe|reference|link|cite|flag|emit|exit|abort|fail|drop|batch|lock|pin|bump|tag|label|track|measure|profile|benchmark|monitor|watch|parse|serialize|render|display|answer|clarify|request|query|refer|see|assume|go|get)\b)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"^(?:(?:if|when|whenever|where|wherever|before|after|unless|once|while|for|ideally|preferably)\b[^,]{0,80},\s*)?(?:(?:always|must|should|never|please|only|do\s+not|don't|make\s+sure)\b|(?:use|add|run|create|check|keep|avoid|follow|write|call|set|make|prefer|return|update|verify|validate|select|export|edit|assign|move|organize|configure|cache|continue|read|merge|adapt|wrap|log|put|place|define|store|import|include|apply|choose|pick|install|build|deploy|commit|review|refactor|implement|handle|manage|ensure|treat|throw|catch|raise|split|sort|mark|limit|scale|tune|register|inject|convert|escape|sanitize|encode|close|dispose|release|retry|notify|load|save|fetch|send|clean|remove|delete|replace|rename|extend|override|reuse|share|enable|disable|initialize|init|stop|do|be|try|ask|test|document|let|wait|yield|report|respond|reply|explain|mention|start|look|find|search|prefix|name|format|lint|push|open|ignore|skip|leave|give|provide|generate|output|print|show|list|state|note|remember|consider|think|plan|confirm|comment|declare|separate|group|order|focus|stick|target|match|mirror|copy|pass|prompt|tell|summarize|describe|reference|link|cite|flag|emit|exit|abort|fail|drop|batch|lock|pin|bump|tag|label|track|measure|profile|benchmark|monitor|watch|parse|serialize|render|display|answer|clarify|request|query|refer|see|assume|go|get|design|automate|annotate|attach|avoid|break|bundle|capture|change|clear|collect|combine|compare|compile|compose|compute|connect|construct|contain|convey|correct|count|cover|debug|decide|declare|delegate|deprecate|derive|detect|determine|develop|disallow|distinguish|divide|download|draft|duplicate|edit|embed|emphasize|enforce|enter|establish|estimate|evaluate|examine|exclude|execute|expand|expect|explore|expose|express|extract|favor|favour|fill|filter|finish|fix|follow|force|forbid|forward|gather|grant|guard|guide|hide|highlight|hold|identify|implement|improve|increase|indent|inform|inherit|insert|inspect|instantiate|integrate|introduce|invoke|isolate|iterate|join|justify|keep|kill|lazy-load|lead|learn|lift|lower|maintain|map|maximize|migrate|minimize|mock|modify|mount|name|navigate|nest|normalize|obey|observe|obtain|offer|omit|optimize|organise|paginate|patch|pause|perform|persist|pick|poll|populate|post|preserve|prevent|process|produce|protect|prune|publish|pull|purge|qualify|quote|reach|rebase|rebuild|receive|record|recover|redact|reduce|reject|reload|repeat|rephrase|reproduce|require|reset|resize|resolve|restart|restore|restrict|resume|rethink|reveal|revert|rewrite|rotate|route|scan|schedule|scope|secure|seed|sign|simplify|specify|squash|stage|standardize|stash|stream|strip|structure|stub|submit|substitute|suggest|supply|suppress|switch|sync|throttle|toggle|trace|transform|translate|trigger|trim|trust|turn|unify|unwrap|upgrade|upload|validate|vary|version|walk|warn|work|wrap|yield|zip)\b)", RegexOptions.IgnoreCase)]
     private static partial Regex ImperativeStartRegex();
 }

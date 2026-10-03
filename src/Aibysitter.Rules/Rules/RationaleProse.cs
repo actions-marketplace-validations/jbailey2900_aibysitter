@@ -5,7 +5,7 @@ namespace Aibysitter.Rules.Rules;
 /// <summary>
 /// Rationale phrases in an instruction: a list item (with its continuation lines) that contains an instruction sentence,
 /// or a paragraph sentence that is an instruction and the sentence after it (<see cref="InstructionText.IsInstruction"/>).
-/// Skips HTML comment lines, phrases after "/" or a quote mark (templates), "just / only / simply / merely because",
+/// Skips HTML comment lines, quoted text, phrases after "/" or a quote mark (templates), "just / only / simply / merely because",
 /// "because of", and "the reason" as a bare object (followed by punctuation, "and", "or" or end of line). One finding per line.
 /// </summary>
 public sealed partial class RationaleProse : IRule
@@ -29,7 +29,7 @@ public sealed partial class RationaleProse : IRule
 
             foreach (var line in unit.Where(l => !InstructionText.IsHtmlComment(l.Text)))
             {
-                var terms = PhraseRegex().Matches(line.Text)
+                var terms = PhraseRegex().Matches(QuotedRegex().Replace(line.Text, m => new string(' ', m.Length)))
                     .Where(m => inScope[SentenceIndex(spans, starts[line] + m.Index)])
                     .Select(m => m.Value.ToLowerInvariant())
                     .Distinct()
@@ -53,6 +53,10 @@ public sealed partial class RationaleProse : IRule
 
         return index;
     }
+
+    /// <summary>Quoted spans: "…", “…”, and '…' opened after a space, "(" or line start.</summary>
+    [GeneratedRegex(@"""[^""]*""|“[^”]*”|(?<=^|[\s(])'[^'\n]+'(?=[\s).,;:!?]|$)")]
+    private static partial Regex QuotedRegex();
 
     [GeneratedRegex(@"(?<![/""'“‘]\s*)(?<!\b(?:just|only|simply|merely)\s+)\b(?:because(?!\s+of\b)|so that|in order to|the reason(?!\s*(?:[.,;:)]|and\b|or\b|$))|this ensures|this helps|which means)\b", RegexOptions.IgnoreCase)]
     private static partial Regex PhraseRegex();

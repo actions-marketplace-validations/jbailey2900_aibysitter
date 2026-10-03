@@ -207,8 +207,16 @@ function hasConcreteTarget(after) {
     || trimEnd(after).endsWith(":");
 }
 
-const isInstruction = (sentence) =>
-  test("InstructionText.ModalRegex", content(sentence)) || clauses(sentence).some((c) => test("InstructionText.ImperativeStartRegex", c));
+function isInstruction(sentence) {
+  const c = content(sentence);
+  const keepLabel = trim(replace("InstructionText.ListMarkerRegex", trim(withoutCode(sentence)), "").replaceAll("**", "").replaceAll("__", ""));
+  if (test("InstructionText.ModalRegex", c)) return true;
+  if (clauses(sentence).some((cl) => test("InstructionText.ImperativeStartRegex", cl))) return true;
+  if (test("InstructionText.DirectiveLabelRegex", keepLabel)) return true;
+  const words = count("InstructionText.WordRegex", c);
+  return test("InstructionText.ListItemRegex", sentence) && words > 0 && words <= limits.terseRuleMaxWords
+    && !test("InstructionText.FiniteVerbRegex", c) && !test("InstructionText.DeterminerStartRegex", c);
+}
 const isListItem = (text) => test("InstructionText.ListItemRegex", text);
 const isHtmlComment = (text) => test("InstructionText.HtmlCommentRegex", text);
 const sentences = (text) => text.split(rx("InstructionText.SentenceSplitRegex"));
@@ -254,6 +262,21 @@ function sentenceSpans(text) {
   return spans;
 }
 
+/** InstructionText.InstructionLines: numbers of lines an instruction sentence overlaps. */
+function instructionLines(file) {
+  const result = new Set();
+  for (const unit of units(file)) {
+    const { text, starts } = joinUnit(unit);
+    const instructions = sentenceSpans(text).filter((sp) => isInstruction(text.substr(sp.start, sp.length)));
+    for (const line of unit) {
+      const start = starts.get(line) + (line.text.length - trimStart(line.text).length);
+      const end = start + trim(line.text).length;
+      if (instructions.some((sp) => sp.start < end && sp.start + sp.length > start)) result.add(line.number);
+    }
+  }
+  return result;
+}
+
 const after = (s, m) => s.slice(m.index + m[0].length);
 const proseLines = (file) => file.lines.filter((l) => l.isProse && !isTableRow(l.text));
 
@@ -269,7 +292,8 @@ function r001(file) {
       ? spans.map(() => instruction.includes(true))
       : instruction.map((v, i) => v || (i > 0 && instruction[i - 1]));
     for (const line of unit.filter((l) => !isHtmlComment(l.text))) {
-      const terms = matchAll("RationaleProse.PhraseRegex", line.text)
+      const masked = line.text.replace(rx("RationaleProse.QuotedRegex", "g"), (m) => " ".repeat(m.length));
+      const terms = matchAll("RationaleProse.PhraseRegex", masked)
         .filter((m) => inScope[sentenceIndex(spans, starts.get(line) + m.index)])
         .map((m) => lowerInvariant(m[0]));
       if (terms.length > 0) {
@@ -376,13 +400,14 @@ function hedgesIn(clause) {
   const consider = match("HedgedInstructions.ConsiderRegex", clause);
   if (consider) {
     const rest = after(clause, consider);
-    if (!hasConcreteTarget(rest) && !test("HedgedInstructions.ConsiderObjectRegex", rest)) found.push("consider");
+    if (!hasConcreteTarget(rest) && !test("HedgedInstructions.ConsiderObjectRegex", rest) && !test("HedgedInstructions.LabelUseRegex", rest)) found.push("consider");
   }
   return found;
 }
 
 function r007(file) {
-  return proseLines(file).flatMap((line) => {
+  const lines = instructionLines(file);
+  return file.lines.filter((l) => lines.has(l.number)).flatMap((line) => {
     const hedges = clauses(replace("HedgedInstructions.QuotedRegex", line.text, " QUOTE ")).flatMap(hedgesIn);
     return hedges.length === 0 ? [] : [finding("R007", line.number, `Hedge: ${quoted(hedges)}`,
       "State the instruction without the hedge, or state the condition that makes it apply.")];
@@ -391,7 +416,10 @@ function r007(file) {
 
 function r008(file) {
   const total = file.lines.length;
-  const emphasis = file.lines.filter((l) => (l.isProse || l.isHeading) && test("EmphasisInflation.EmphasisRegex", withoutCode(l.text)));
+  const counted = file.lines.filter((l) => l.isProse || l.isHeading);
+  const rfc = counted.some((l) => test("EmphasisInflation.RfcKeywordsRegex", withoutCode(l.text)));
+  const key = rfc ? "EmphasisInflation.EmphasisWithoutKeywordsRegex" : "EmphasisInflation.EmphasisRegex";
+  const emphasis = counted.filter((l) => test(key, withoutCode(l.text)));
   const allowed = Math.max(limits.emphasisMinAllowed, Math.ceil(limits.emphasisPerHundred * total / 100));
   return emphasis.length > allowed
     ? [finding("R008", emphasis[allowed].number, `${emphasis.length} emphasis lines in ${total} lines; limit is ${allowed}.`,
