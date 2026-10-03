@@ -422,7 +422,7 @@ function findSecrets(text) {
       const hasV = m.groups?.v !== undefined;
       const value = hasV ? m.groups.v : m[0];
       const column = (hasV ? m.indices.groups.v[0] : m.index) + 1;
-      if (test("SecretPatterns.PlaceholderRegex", value) || found.some((f) => f.column === column)) continue;
+      if (test("SecretPatterns.PlaceholderRegex", value) || test("SecretPatterns.CommonValueRegex", value) || found.some((f) => f.column === column)) continue;
       found.push({ kind, column, redacted: redact(value) });
     }
   }
@@ -448,26 +448,47 @@ function r010(file) {
 
 const headingLevel = (text) => match("EmptySections.LevelRegex", text)?.[1].length ?? 0;
 
-function sectionIsEmpty(lines, i, level) {
+function sectionIsEmpty(lines, empty, i) {
+  const level = headingLevel(lines[i].text);
   for (let j = i + 1; j < lines.length; j++) {
-    if (lines[j].isHeading) return headingLevel(lines[j].text) <= level;
-    if (!lines[j].isBlank && !lines[j].isDirective && !test("EmptySections.HtmlCommentRegex", lines[j].text)) return false;
+    if (lines[j].isHeading) {
+      const next = headingLevel(lines[j].text);
+      return next < level ? next > 1 || empty[j] : next === level;
+    }
+    if (!lines[j].isBlank && !isCommentLine(lines[j])) return false;
   }
   return true;
 }
 
+const isCommentLine = (line) => line.isDirective || isHtmlComment(line.text);
+const headingName = (text) => trim(replace("EmptySections.HeadingTextRegex", text, ""));
+
 function r011(file) {
   const { lines } = file;
+  const empty = new Array(lines.length).fill(false);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].isHeading) empty[i] = sectionIsEmpty(lines, empty, i);
+  }
+  const plainText = file.format === "CursorRules" || file.format === "WindsurfRules";
+  const sameLevel = (index, level) => index >= 0 && index < lines.length && lines[index].isHeading && headingLevel(lines[index].text) === level;
   const out = [];
   let seenHeading = false;
+  let introduced = false;
   for (let i = 0; i < lines.length; i++) {
-    if (!lines[i].isHeading) continue;
-    const level = headingLevel(lines[i].text);
-    const skip = level === 1 && !seenHeading;
+    const line = lines[i];
+    if (!line.isHeading) {
+      if (line.isProse && !isCommentLine(line)) introduced = trimEnd(line.text).endsWith(":");
+      continue;
+    }
+    const level = headingLevel(line.text);
+    const name = headingName(line.text);
+    const exempt = (level === 1 && !seenHeading)
+      || introduced
+      || name.includes("`") || (count("EmptySections.WordRegex", name) >= limits.headingInstructionMinWords && isInstruction(name))
+      || (plainText && (sameLevel(i - 1, level) || sameLevel(i + 1, level)));
     seenHeading = true;
-    if (skip || !sectionIsEmpty(lines, i, level)) continue;
-    const name = trim(replace("EmptySections.HeadingTextRegex", lines[i].text, ""));
-    out.push(finding("R011", lines[i].number, `Section "${name}" has no content.`,
+    if (!empty[i] || exempt) continue;
+    out.push(finding("R011", line.number, `Section "${name}" has no content.`,
       "Add the rules for this section, or delete the heading."));
   }
   return out;

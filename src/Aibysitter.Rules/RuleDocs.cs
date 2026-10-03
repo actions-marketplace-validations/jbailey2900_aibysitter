@@ -65,7 +65,7 @@ public static class RuleDocs
             "R009",
             "SecretsInRulesFile",
             "The file contains a credential.",
-            "Private key headers; AWS, GitHub, Slack, Anthropic, OpenAI, Stripe live and Google API keys; JSON Web Tokens; Password= and Pwd= values; credentials in URLs other than localhost. Code blocks included. Values with placeholder markers (xxxx, ..., <, >, {, }, $, *, your, example, changeme) are ignored. Findings show a redacted prefix only.",
+            "Private key headers; AWS, GitHub, Slack, Anthropic, OpenAI, Stripe live and Google API keys; JSON Web Tokens; Password= and Pwd= values; credentials in URLs other than localhost. Code blocks included. Values with placeholder markers (xxxx, ..., <, >, {, }, $, *, your, example, changeme) and the example passwords pass, passwd, pwd, abc123, 123456, 12345678, qwerty are ignored. Findings show a redacted prefix only.",
             "- Connect with Server=db;User Id=app;Password=Hunter2Prod;",
             "- Read the connection string from the ConnectionStrings__Default environment variable."),
         new(
@@ -79,7 +79,7 @@ public static class RuleDocs
             "R011",
             "EmptySections",
             "A heading has no content.",
-            "A heading followed by a heading of the same or higher level, or end of file, with only blank lines or comments between. The file's first heading is exempt when it is level 1.",
+            "A heading followed by a heading of the same or higher level, or end of file, with only blank lines or comments between. Content: a deeper heading; a level-1 heading after it whose section has content (wrapper for an embedded document). Exempt: the file's first heading when it is level 1; a heading that is an instruction of four or more words or contains inline code; headings after a line ending in \":\" (examples); in .cursorrules and .windsurfrules, adjacent heading lines of the same level (comment block).",
             "# Rules\n## Testing\n## Style\n- Use tabs.",
             "# Rules\n## Testing\n- Run `dotnet test`.\n## Style\n- Use tabs."),
         new(

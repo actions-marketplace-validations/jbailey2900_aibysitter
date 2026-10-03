@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace Aibysitter.Rules;
 
-/// <summary>Credential patterns shared by R009 and P005. Matches containing a placeholder marker are ignored.</summary>
+/// <summary>Credential patterns shared by R009 and P005. Matches containing a placeholder marker, or equal to a common example password, are ignored.</summary>
 public static partial class SecretPatterns
 {
     public sealed record SecretMatch(string Kind, int Column, string Redacted);
@@ -47,10 +47,14 @@ public static partial class SecretPatterns
 
     private static string Redact(string value) => value.Length <= 8 ? "****" : $"{value[..4]}…";
 
-    private static bool IsPlaceholder(string value) => PlaceholderRegex().IsMatch(value);
+    private static bool IsPlaceholder(string value) => PlaceholderRegex().IsMatch(value) || CommonValueRegex().IsMatch(value);
 
     [GeneratedRegex(@"x{4,}|\.\.\.|[<>{}$*]|your|example|sample|placeholder|changeme|redacted|dummy|fake|test|secret_here|password\b", RegexOptions.IgnoreCase)]
     private static partial Regex PlaceholderRegex();
+
+    /// <summary>Whole values used as example passwords.</summary>
+    [GeneratedRegex(@"^(?:pass|passwd|pwd|abc123|123456|12345678|qwerty)$", RegexOptions.IgnoreCase)]
+    private static partial Regex CommonValueRegex();
 
     [GeneratedRegex(@"-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP |ENCRYPTED )?PRIVATE KEY-----")]
     private static partial Regex PrivateKeyRegex();

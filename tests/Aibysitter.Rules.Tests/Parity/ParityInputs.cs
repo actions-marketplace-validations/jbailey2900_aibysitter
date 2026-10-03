@@ -16,6 +16,8 @@ internal static class ParityInputs
         yield return new ParityInput("disable/several", sample, RulesFormat.Auto, ["R002", "R003", "R005"]);
         yield return new ParityInput("disable/all-findings", sample, RulesFormat.Auto, ["R001", "R002", "R003", "R005"]);
         yield return new ParityInput("disable/suppressed-rule", "# T\n<!-- aibysitter-disable R001 -->\n## S\n- Use tabs because x.\n- Handle errors properly.", RulesFormat.Auto, ["R001"]);
+        yield return new ParityInput("format/cursorrules-comment-block", "# Project\n# Language: TypeScript\n\nlanguage: x\n\n# Stack\n\n## Empty\n## Style\n- y\n", RulesFormat.CursorRules);
+        yield return new ParityInput("format/windsurfrules-comment-block", "# Rules for Windsurf\n\n# Updates: refresh\n# through your host.\n\nproject: x\n", RulesFormat.WindsurfRules);
         yield return new ParityInput("disable/mdc", "---\nalwaysApply: maybe\n---\n# Rules\n- Use tabs.", RulesFormat.CursorMdc, ["R016"]);
     }
 

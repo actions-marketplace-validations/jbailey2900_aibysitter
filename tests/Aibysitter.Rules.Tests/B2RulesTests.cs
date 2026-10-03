@@ -59,6 +59,25 @@ public class EmptySectionsTests
     public void CodeBlockCountsAsContent() => Assert.Empty(Lint("# Rules\n- x\n## Build\n```\ndotnet build\n```\n## Next\n- y\n"));
 
     [Fact]
+    public void ContentFixture_OnlyRealEmptySectionFlagged()
+    {
+        var finding = Assert.Single(new EmptySections().Evaluate(Fixtures.Load("v3/R011-content.md")));
+
+        Assert.Equal(17, finding.Line);
+    }
+
+    [Fact]
+    public void PlainTextFormats_AdjacentSameLevelHeadings_AreCommentBlock()
+    {
+        const string text = "# Project\n# Language: TypeScript\n# Runtime: Node.js >=22\n\nlanguage: TypeScript\n\n# Stack\n\nmore: x\n";
+
+        Assert.Empty(new EmptySections().Evaluate(RulesFile.Parse(text, RulesFormat.CursorRules)));
+        Assert.Empty(new EmptySections().Evaluate(RulesFile.Parse(text, RulesFormat.WindsurfRules)));
+        Assert.NotEmpty(new EmptySections().Evaluate(RulesFile.Parse("# Rules\n\n## Testing\n\n## Style\n- Use tabs.\n", RulesFormat.CursorRules)));
+        Assert.Equal(2, Assert.Single(new EmptySections().Evaluate(RulesFile.Parse(text, RulesFormat.ClaudeMd))).Line);
+    }
+
+    [Fact]
     public void CommentsOnly_CountAsEmpty() => Assert.Single(Lint("# Rules\n- x\n## Build\n<!-- later -->\n## Next\n- y\n"));
 }
 
