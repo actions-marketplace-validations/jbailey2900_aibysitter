@@ -4,7 +4,7 @@
 @using Aibysitter.Rules.Rules
 @{
     ViewData["Title"] = "Methodology";
-    ViewData["Description"] = "How aibysitter rules are chosen and scored, with hit rates from a 336-file corpus of rules files.";
+    ViewData["Description"] = "How aibysitter rules are chosen and scored, with hit rates and measured false-positive rates from a 755-file corpus of rules files.";
 }
 
 <p><a asp-page="/Rules/Index">All rules</a></p>
@@ -14,7 +14,7 @@
 <h2>How rules were chosen</h2>
 <ul>
     <li>Each lint rule reads the rules file text only. No agent is run and no repository is read; R006 is the exception and runs only in the GitHub App, where the repository is available.</li>
-    <li>Each rule was run against a corpus of 336 public CLAUDE.md and AGENTS.md files before it shipped. A rule ships when fewer than 5% of corpus files get a finding that is a false positive and nothing else.</li>
+    <li>Each rule is run against a corpus of @Aibysitter.Web.Linting.RuleMeasurements.CorpusFiles public rules files in 7 formats. Its false-positive rate is measured by two judges; see <a href="#false-positive-rates">Measured false-positive rates</a>.</li>
     <li>Thresholds (line counts, word counts, ratios) are fixed constants in the rule code and apply to every file the same way.</li>
 </ul>
 
@@ -55,7 +55,7 @@
 <p class="gap">Position to be written.</p>
 
 <h2>Thresholds</h2>
-<p>Corpus hit rates are from the 336-file corpus with the current rules.</p>
+<p>Corpus hit rates are from the @Aibysitter.Web.Linting.RuleMeasurements.CorpusFiles-file corpus with ruleset v4.</p>
 <table class="stack">
     <thead>
         <tr>
@@ -68,17 +68,17 @@
         <tr>
             <td><a asp-page="/Rules/Rule" asp-route-id="R004">R004</a> FileLength</td>
             <td>More than @FileLength.MaxLines lines</td>
-            <td>129 of 336 (38.4%)</td>
+            <td>116 of 755 (15.4%)</td>
         </tr>
         <tr>
             <td><a asp-page="/Rules/Rule" asp-route-id="R008">R008</a> EmphasisInflation</td>
             <td>More than @EmphasisInflation.PerHundredLines emphasis lines per 100 lines, at least @EmphasisInflation.MinAllowed allowed</td>
-            <td>10 of 336 (3.0%)</td>
+            <td>16 of 755 (2.1%)</td>
         </tr>
         <tr>
             <td><a asp-page="/Rules/Rule" asp-route-id="R013">R013</a> ProseParagraph</td>
             <td>A paragraph of more than @ProseParagraph.MaxWords words</td>
-            <td>59 of 336 (17.6%)</td>
+            <td>52 of 755 (6.9%)</td>
         </tr>
     </tbody>
 </table>
@@ -87,3 +87,47 @@
 <p class="gap">Position to be written: R004.</p>
 <p class="gap">Position to be written: R008.</p>
 <p class="gap">Position to be written: R013.</p>
+
+<h2 id="false-positive-rates">Measured false-positive rates</h2>
+<ul>
+    <li>Corpus: @Aibysitter.Web.Linting.RuleMeasurements.CorpusFiles rules files from public GitHub repositories, fetched 2026-10-03: 150 CLAUDE.md, 150 AGENTS.md, 147 GEMINI.md, 126 Copilot instructions, 119 Cursor .mdc, 45 .cursorrules, 18 .windsurfrules. One file per repository per format.</li>
+    <li>Sample: up to 30 findings per rule, at most 2 per file, spread across formats. Rules with fewer findings: all of them.</li>
+    <li>Two judges: judge A, and judge B, a separate model without access to judge A's verdicts. A finding is a true positive when it is what the rule's summary describes, on text the rule applies to.</li>
+    <li>R001, R002, R005, R007 and R013 apply to instructions only. Descriptive prose, pasted documentation and project descriptions are never true positives.</li>
+    <li>Ruleset v4 rates are the ruleset v3 sample re-scored for the findings v4 still reports. Rules unchanged since ruleset v2 show their v2 measurement.</li>
+    <li>Judge agreement at ruleset v4: 140 of 149 findings (94.0%), Cohen's kappa 0.84.</li>
+</ul>
+<table class="stack">
+    <thead>
+        <tr>
+            <th>Rule</th>
+            <th>Judge A</th>
+            <th>Judge B</th>
+            <th>Sample</th>
+            <th>Ruleset</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var id in Aibysitter.Web.Linting.RuleMeasurements.RuleIds)
+        {
+            var doc = RuleDocs.Find(id)!;
+            if (Aibysitter.Web.Linting.RuleMeasurements.Find(id) is { } m)
+            {
+                <tr>
+                    <td><a asp-page="/Rules/Rule" asp-route-id="@id">@id</a> @doc.Name</td>
+                    <td>@m.FalsePositivesA of @m.Sample</td>
+                    <td>@m.FalsePositivesB of @m.Sample</td>
+                    <td>@m.Sample</td>
+                    <td>v@(m.Ruleset)</td>
+                </tr>
+            }
+            else
+            {
+                <tr>
+                    <td><a asp-page="/Rules/Rule" asp-route-id="@id">@id</a> @doc.Name</td>
+                    <td colspan="4">@Aibysitter.Web.Linting.RuleMeasurements.NotMeasuredReason(id)</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
