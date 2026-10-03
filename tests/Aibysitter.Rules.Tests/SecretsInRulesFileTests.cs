@@ -85,10 +85,11 @@ public class SecretsInRulesFileTests
     }
 
     [Fact]
-    public void CiWorkflow_HasNoSecretMatches()
+    public void Workflows_HaveNoSecretMatches()
     {
-        var path = Path.Combine(Parity.NodeRunner.RepoRoot, ".github", "workflows", "ci.yml");
+        var files = Directory.GetFiles(Path.Combine(Parity.NodeRunner.RepoRoot, ".github", "workflows"), "*.yml");
 
-        Assert.All(File.ReadAllLines(path), line => Assert.Empty(SecretPatterns.Find(line)));
+        Assert.NotEmpty(files);
+        Assert.All(files.SelectMany(File.ReadAllLines), line => Assert.Empty(SecretPatterns.Find(line)));
     }
 }

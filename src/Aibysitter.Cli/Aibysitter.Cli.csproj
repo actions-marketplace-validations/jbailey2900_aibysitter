@@ -15,6 +15,9 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://aibysitting.net</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/jbailey2900/aibysitter</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>claude-md;agents-md;cursor;copilot;lint;ai-agents</PackageTags>
   </PropertyGroup>
 
@@ -22,6 +25,7 @@
     <ProjectReference Include="..\Aibysitter.Rules\Aibysitter.Rules.csproj" />
     <ProjectReference Include="..\Aibysitter.Packs\Aibysitter.Packs.csproj" />
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
     <InternalsVisibleTo Include="Aibysitter.Rules.Tests" />
   </ItemGroup>
 
