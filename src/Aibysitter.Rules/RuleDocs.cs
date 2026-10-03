@@ -7,8 +7,8 @@ public static class RuleDocs
         new(
             "R001",
             "RationaleProse",
-            "Instruction lines explain why instead of stating what.",
-            "\"because\", \"so that\", \"in order to\", \"the reason\", \"this ensures\", \"this helps\", \"which means\".",
+            "Instructions explain why instead of stating what.",
+            "\"because\", \"so that\", \"in order to\", \"the reason\", \"this ensures\", \"this helps\", \"which means\" in an instruction: a list item that contains an instruction sentence, or a paragraph sentence that is an instruction and the sentence after it. Instruction sentence: opens with a modal or an imperative verb, or contains must, should, shall, do not, never, need to, have to, is required. Skipped: descriptive prose; HTML comments; phrases after \"/\" or a quote mark; \"just / only / simply / merely because\"; \"because of\"; \"the reason\" as a bare object.",
             "- Use tabs because the formatter expects them.",
             "- Use tabs."),
         new(
@@ -93,7 +93,7 @@ public static class RuleDocs
             "R013",
             "ProseParagraph",
             "Instructions are written as a long paragraph.",
-            "A paragraph over 80 words. Paragraph: consecutive prose lines that are not list items, list-item continuation lines, table rows, or block quotes. Reported at the first line.",
+            "A paragraph over 80 words that contains an instruction sentence (as in R001). Paragraph: consecutive prose lines that are not list items, list-item continuation lines, table rows, or block quotes. Descriptive paragraphs are not flagged. Reported at the first line.",
             string.Join(" ", Enumerable.Repeat("Run the tests before you commit and keep the build green.", 9)),
             "- Run `dotnet test` before commit.\n- Keep the build green."),
         new(

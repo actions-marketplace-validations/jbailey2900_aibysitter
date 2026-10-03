@@ -4,7 +4,8 @@ namespace Aibysitter.Rules.Rules;
 
 /// <summary>
 /// Paragraphs (consecutive prose lines that are not list items, list-item continuation lines, table rows, or
-/// block quotes) longer than <see cref="MaxWords"/> words. Reported at the paragraph's first line.
+/// block quotes) longer than <see cref="MaxWords"/> words that contain at least one instruction sentence
+/// (<see cref="InstructionText.IsInstruction"/>). Reported at the paragraph's first line.
 /// </summary>
 public sealed partial class ProseParagraph : IRule
 {
@@ -20,6 +21,7 @@ public sealed partial class ProseParagraph : IRule
 
         var start = 0;
         var words = 0;
+        var text = new System.Text.StringBuilder();
         var inList = false;
         foreach (var line in file.Lines.Append(null))
         {
@@ -40,10 +42,11 @@ public sealed partial class ProseParagraph : IRule
                 }
 
                 words += WordRegex().Count(InstructionText.WithoutCode(line.Text));
+                text.Append(line.Text.Trim()).Append(' ');
                 continue;
             }
 
-            if (words > MaxWords)
+            if (words > MaxWords && HasInstruction(text.ToString()))
             {
                 yield return new Finding(
                     Id,
@@ -53,8 +56,12 @@ public sealed partial class ProseParagraph : IRule
             }
 
             words = 0;
+            text.Clear();
         }
     }
+
+    private static bool HasInstruction(string paragraph) =>
+        InstructionText.Sentences(paragraph).Any(InstructionText.IsInstruction);
 
     private static bool IsParagraphLine(RulesLine line) =>
         line.IsProse && !InstructionText.IsTableRow(line.Text) && !NonParagraphRegex().IsMatch(line.Text);

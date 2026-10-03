@@ -66,7 +66,8 @@ public class ProseParagraphTests
 {
     private readonly ProseParagraph _rule = new();
 
-    private static string Words(int n) => string.Join(" ", Enumerable.Range(1, n).Select(i => $"word{i}"));
+    /// <summary>n words, opening with "Always" so the paragraph contains an instruction.</summary>
+    private static string Words(int n) => string.Join(" ", Enumerable.Range(1, n).Select(i => i == 1 ? "Always" : $"word{i}"));
 
     [Fact]
     public void Over80Words_Flagged_AtFirstLine()
@@ -97,6 +98,14 @@ public class ProseParagraphTests
     [Fact]
     public void ParagraphAfterList_Counted() =>
         Assert.Single(_rule.Evaluate(RulesFile.Parse($"- item\n  {Words(50)}\n\n{Words(90)}\n")));
+
+    [Fact]
+    public void DescriptiveParagraph_NotFlagged_InstructionParagraph_Flagged()
+    {
+        var finding = Assert.Single(_rule.Evaluate(Fixtures.Load("v3/R013-instruction-paragraph.md")));
+
+        Assert.Equal(7, finding.Line);
+    }
 
     [Fact]
     public void InlineCodeDoesNotInflateCount() =>

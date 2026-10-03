@@ -207,17 +207,83 @@ function hasConcreteTarget(after) {
     || trimEnd(after).endsWith(":");
 }
 
+const isInstruction = (sentence) =>
+  test("InstructionText.ModalRegex", content(sentence)) || clauses(sentence).some((c) => test("InstructionText.ImperativeStartRegex", c));
+const isListItem = (text) => test("InstructionText.ListItemRegex", text);
+const isHtmlComment = (text) => test("InstructionText.HtmlCommentRegex", text);
+const sentences = (text) => text.split(rx("InstructionText.SentenceSplitRegex"));
+
+/** InstructionText.Units: list items with continuation lines, or runs of paragraph lines. */
+function units(file) {
+  const out = [];
+  let current = null;
+  for (const line of file.lines) {
+    if (!line.isProse || isTableRow(line.text)) {
+      current = null;
+      continue;
+    }
+    if (!current || isListItem(line.text)) {
+      current = [];
+      out.push(current);
+    }
+    current.push(line);
+  }
+  return out;
+}
+
+/** InstructionText.Join: trimmed lines joined with one space; start offset of each line's untrimmed text. */
+function joinUnit(unit) {
+  let text = "";
+  const starts = new Map();
+  for (const line of unit) {
+    if (text.length > 0) text += " ";
+    starts.set(line, text.length - (line.text.length - trimStart(line.text).length));
+    text += trim(line.text);
+  }
+  return { text, starts };
+}
+
+function sentenceSpans(text) {
+  const spans = [];
+  let start = 0;
+  for (const b of matchAll("InstructionText.SentenceSplitRegex", text)) {
+    spans.push({ start, length: b.index - start });
+    start = b.index + b[0].length;
+  }
+  spans.push({ start, length: text.length - start });
+  return spans;
+}
+
 const after = (s, m) => s.slice(m.index + m[0].length);
 const proseLines = (file) => file.lines.filter((l) => l.isProse && !isTableRow(l.text));
 
 // ---- Rules ----
 
 function r001(file) {
-  return file.lines.filter((l) => l.isProse).flatMap((line) => {
-    const terms = matchAll("RationaleProse.PhraseRegex", line.text).map((m) => lowerInvariant(m[0]));
-    return terms.length === 0 ? [] : [finding("R001", line.number, `Rationale prose: ${quoted(terms)}`,
-      "Remove the explanation. State the instruction only.")];
-  });
+  const out = [];
+  for (const unit of units(file)) {
+    const { text, starts } = joinUnit(unit);
+    const spans = sentenceSpans(text);
+    const instruction = spans.map((sp) => isInstruction(text.substr(sp.start, sp.length)));
+    const inScope = isListItem(unit[0].text)
+      ? spans.map(() => instruction.includes(true))
+      : instruction.map((v, i) => v || (i > 0 && instruction[i - 1]));
+    for (const line of unit.filter((l) => !isHtmlComment(l.text))) {
+      const terms = matchAll("RationaleProse.PhraseRegex", line.text)
+        .filter((m) => inScope[sentenceIndex(spans, starts.get(line) + m.index)])
+        .map((m) => lowerInvariant(m[0]));
+      if (terms.length > 0) {
+        out.push(finding("R001", line.number, `Rationale prose: ${quoted(terms)}`, "Remove the explanation. State the instruction only."));
+      }
+    }
+  }
+  return out;
+}
+
+function sentenceIndex(spans, offset) {
+  let i = 0;
+  while (i + 1 < spans.length && spans[i + 1].start <= offset) i++;
+  return i;
 }
 
 function vagueLeadVerb(clause) {
@@ -422,6 +488,7 @@ function r013(file) {
   const out = [];
   let start = 0;
   let words = 0;
+  let text = "";
   let inList = false;
   for (const line of [...file.lines, null]) {
     if (line && isNonParagraph(line) && line.isProse) inList = true;
@@ -429,12 +496,14 @@ function r013(file) {
     if (line && !inList && line.isProse && !isTableRow(line.text) && !isNonParagraph(line)) {
       if (words === 0) start = line.number;
       words += count("ProseParagraph.WordRegex", withoutCode(line.text));
+      text += trim(line.text) + " ";
       continue;
     }
-    if (words > max) {
+    if (words > max && sentences(text).some(isInstruction)) {
       out.push(finding("R013", start, `Paragraph of ${words} words; limit is ${max}.`, "Split it into list items, one instruction each."));
     }
     words = 0;
+    text = "";
   }
   return out;
 }
