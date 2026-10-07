@@ -8,7 +8,7 @@ using Octokit;
 
 namespace Aibysitter.Web.GitHub;
 
-public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimeProvider time) : IGitHubGateway, IDisposable
+public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimeProvider time, ILogger<OctokitGitHubGateway> logger) : IGitHubGateway, IDisposable
 {
     private static readonly ProductHeaderValue Product = new("Aibysitter");
     private static readonly TimeSpan TokenRefreshMargin = TimeSpan.FromMinutes(5);
@@ -32,11 +32,16 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
     public async Task MarkInProgressAsync(PullRequestRef pr, long checkRunId, CancellationToken cancellationToken)
     {
         var client = await ClientAsync(pr.InstallationId);
-        await client.Check.Run.Update(pr.Owner, pr.Repo, checkRunId, new CheckRunUpdate
-        {
-            Status = CheckStatus.InProgress,
-            StartedAt = time.GetUtcNow(),
-        });
+        await CheckRunRetry.RunAsync(
+            () => client.Check.Run.Update(pr.Owner, pr.Repo, checkRunId, new CheckRunUpdate
+            {
+                Status = CheckStatus.InProgress,
+                StartedAt = time.GetUtcNow(),
+            }),
+            checkRunId,
+            time,
+            logger,
+            cancellationToken);
     }
 
     public async Task<IReadOnlyList<ChangedFile>> GetChangedFilesAsync(PullRequestRef pr, CancellationToken cancellationToken)
@@ -101,7 +106,7 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
                 update.CompletedAt = time.GetUtcNow();
             }
 
-            await client.Check.Run.Update(pr.Owner, pr.Repo, checkRunId, update);
+            await CheckRunRetry.RunAsync(() => client.Check.Run.Update(pr.Owner, pr.Repo, checkRunId, update), checkRunId, time, logger, cancellationToken);
         }
     }
 

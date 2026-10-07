@@ -26,6 +26,8 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
 
     public Exception? ThrowOnComplete { get; set; }
 
+    public Exception? ThrowOnInProgress { get; set; }
+
     public TaskCompletionSource<CheckRunReport> Completed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public string Slug { get; set; } = "aibysitter";
@@ -49,7 +51,7 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
     public Task MarkInProgressAsync(PullRequestRef pr, long checkRunId, CancellationToken cancellationToken)
     {
         Calls.Enqueue($"in_progress {checkRunId}");
-        return Task.CompletedTask;
+        return ThrowOnInProgress is null ? Task.CompletedTask : Task.FromException(ThrowOnInProgress);
     }
 
     public Task<IReadOnlyList<ChangedFile>> GetChangedFilesAsync(PullRequestRef pr, CancellationToken cancellationToken)

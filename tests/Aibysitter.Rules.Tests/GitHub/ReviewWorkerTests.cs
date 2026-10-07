@@ -9,6 +9,7 @@ public sealed class ReviewWorkerTests : IDisposable
     private readonly string root = Path.Combine(Path.GetTempPath(), "aib-worker-" + Guid.NewGuid().ToString("N"));
     private readonly FakeGitHubGateway fake = new();
     private readonly ReviewQueue queue = new();
+    private readonly ImmediateTime time = new();
     private readonly FileReviewJobStore store;
     private readonly ReviewJob job = new(new PullRequestRef(42, "o", "r", 7, "abcdef0123"), 777, Guid.NewGuid().ToString("D"));
 
@@ -40,6 +41,53 @@ public sealed class ReviewWorkerTests : IDisposable
 
         Assert.Equal("Review failed", (await fake.Completed.Task).Title);
         Assert.Equal(StoredJobState.None, store.Find(job.DeliveryId, out _));
+    }
+
+    [Fact]
+    public async Task CheckRunNotClosed_KeepsJob_RequeuesAfterDelay()
+    {
+        fake.ThrowOnComplete = new HttpRequestException("404");
+        store.Save(job);
+        var worker = Worker();
+
+        await worker.RunAsync(job, CancellationToken.None);
+        await worker.PendingRetry!;
+
+        Assert.Equal(StoredJobState.Pending, store.Find(job.DeliveryId, out _));
+        Assert.Equal(new[] { job }, await Drain());
+        Assert.Equal([ReviewWorker.RetryDelay], time.Delays);
+    }
+
+    [Fact]
+    public async Task CheckRunNeverClosed_AbandonedAfterMaxAttempts_JobRemoved()
+    {
+        fake.ThrowOnComplete = new HttpRequestException("404");
+        store.Save(job);
+        var worker = Worker();
+
+        for (var attempt = 1; attempt <= IReviewJobStore.MaxAttempts; attempt++)
+        {
+            await worker.RunAsync(job, CancellationToken.None);
+            Assert.Equal(StoredJobState.Pending, store.Find(job.DeliveryId, out _));
+        }
+
+        await worker.RunAsync(job, CancellationToken.None);
+
+        Assert.Equal(StoredJobState.None, store.Find(job.DeliveryId, out _));
+        Assert.Equal(IReviewJobStore.MaxAttempts, fake.Calls.Count(c => c == "files"));
+        Assert.Equal(IReviewJobStore.MaxAttempts * 2 + 1, fake.Calls.Count(c => c == "complete 777"));
+    }
+
+    [Fact]
+    public async Task CheckRunNotClosed_InMemoryStore_NotRequeued()
+    {
+        fake.ThrowOnComplete = new HttpRequestException("404");
+        var worker = new ReviewWorker(queue, new ReviewProcessor(fake, new PullRequestReviewer(), NullLogger<ReviewProcessor>.Instance), new InMemoryReviewJobStore(), fake, time, NullLogger<ReviewWorker>.Instance);
+
+        await worker.RunAsync(job, CancellationToken.None);
+
+        Assert.Null(worker.PendingRetry);
+        Assert.Empty(time.Delays);
     }
 
     [Fact]
@@ -120,7 +168,7 @@ public sealed class ReviewWorkerTests : IDisposable
     }
 
     private ReviewWorker Worker() =>
-        new(queue, new ReviewProcessor(fake, new PullRequestReviewer(), NullLogger<ReviewProcessor>.Instance), store, fake, NullLogger<ReviewWorker>.Instance);
+        new(queue, new ReviewProcessor(fake, new PullRequestReviewer(), NullLogger<ReviewProcessor>.Instance), store, fake, time, NullLogger<ReviewWorker>.Instance);
 
     private async Task RunRecovery(IReviewJobStore source)
     {

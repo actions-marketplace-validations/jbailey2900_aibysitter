@@ -15,7 +15,8 @@ public class OctokitGitHubGatewayTests
         {
             using var gateway = new OctokitGitHubGateway(
                 Options.Create(new GitHubOptions { AppId = "1", WebhookSecret = "s", PrivateKeyPath = path }),
-                TimeProvider.System);
+                TimeProvider.System,
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<OctokitGitHubGateway>.Instance);
 
             Assert.ThrowsAny<ArgumentException>(() => gateway.PrivateKey);
 

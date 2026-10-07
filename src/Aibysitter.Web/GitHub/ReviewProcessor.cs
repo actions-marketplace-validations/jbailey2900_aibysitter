@@ -15,12 +15,13 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
     /// <summary>package.json, Makefile, .gitignore, and MSBuild files read for R006.</summary>
     public const int MaxManifestFetches = 20;
 
-    public async Task ProcessAsync(ReviewJob job, CancellationToken cancellationToken)
+    /// <returns>True when the check run was completed (with findings or as "Review failed"); false when it could not be closed.</returns>
+    public async Task<bool> ProcessAsync(ReviewJob job, CancellationToken cancellationToken)
     {
         var pr = job.PullRequest;
         try
         {
-            await gateway.MarkInProgressAsync(pr, job.CheckRunId, cancellationToken);
+            await MarkInProgressAsync(job, cancellationToken);
 
             var files = await gateway.GetChangedFilesAsync(pr, cancellationToken);
             var (config, configErrors) = RepoConfig.Parse(await gateway.GetFileContentAsync(pr, RepoConfig.FilePath, cancellationToken));
@@ -67,6 +68,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             logger.LogInformation(
                 "Reviewed {PullRequest} (delivery {DeliveryId}): {FindingCount} findings, {Conclusion}",
                 pr, job.DeliveryId, review.Findings.Count, review.Conclusion);
+            return true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -79,11 +81,26 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             {
                 await gateway.CompleteCheckRunAsync(pr, job.CheckRunId, CheckRunReport.ForError(ex), cancellationToken);
                 usage?.Increment(Stats.UsageMetric.Review, "error");
+                return true;
             }
-            catch (Exception closeEx)
+            catch (Exception closeEx) when (closeEx is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
                 logger.LogError(closeEx, "Could not close check run {CheckRunId} for {PullRequest}", job.CheckRunId, pr);
+                return false;
             }
+        }
+    }
+
+    /// <summary>The in_progress status is cosmetic; a failure is logged and the review continues.</summary>
+    private async Task MarkInProgressAsync(ReviewJob job, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await gateway.MarkInProgressAsync(job.PullRequest, job.CheckRunId, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(ex, "Could not mark check run {CheckRunId} in progress for {PullRequest}; reviewing anyway", job.CheckRunId, job.PullRequest);
         }
     }
 
