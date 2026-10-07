@@ -14,6 +14,13 @@ public sealed partial class TodoStubs : AddedLinePatternCheck
 
     protected override bool AppliesTo(string path) => FileKinds.IsCode(path);
 
+    /// <summary>A match inside a string literal on its line is not a stub.</summary>
+    protected override IEnumerable<string> Keep(ChangedFile file, DiffLine line, IReadOnlyList<string> matches)
+    {
+        var hashComments = CodeText.UsesHashComments(file.Path);
+        return matches.Where(m => !CodeText.IsInsideStringLiteral(line.Text, line.Text.IndexOf(m, StringComparison.Ordinal), hashComments));
+    }
+
     [GeneratedRegex(@"throw\s+new\s+NotImplementedException\s*\(|raise\s+NotImplementedError\b|\b(?:todo|unimplemented)!\s*\(|(?://|/\*|#|--)\s*(?:TODO|FIXME)\b")]
     private static partial Regex StubRegex();
 }

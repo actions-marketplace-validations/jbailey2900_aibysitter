@@ -53,45 +53,6 @@ public class NewChecksDogfood2Tests
     public void P016_TestsCommentsStringsDocs_NotFlagged(string path, string line) =>
         Assert.Empty(Run(new SecurityExemptions(), Added(path, line)));
 
-    // P017 LoosenedAssertions
-
-    [Theory]
-    [InlineData("-        Assert.Equal(\"no-store\", response.Headers.CacheControl?.ToString());", "+        Assert.True(response.Headers.CacheControl?.NoStore);", "Assert.Equal", "Assert.True")]
-    [InlineData("-        Assert.Equal(1, Regex.Count(html, \"href=\\\"/d/x/\"));", "+        Assert.DoesNotContain(\"href=\\\"/d/x/\", html, StringComparison.Ordinal);", "Assert.Equal", "Assert.DoesNotContain")]
-    [InlineData("-    expect(total).toBe(42);", "+    expect(total).toBeTruthy();", "toBe", "toBeTruthy")]
-    public void P017_ExactReplacedByWeaker_Flagged(string removed, string added, string exact, string weaker)
-    {
-        var finding = Assert.Single(Run(new LoosenedAssertions(), Modified("tests/Site/CacheTests.cs", "     var response = await Get();", removed, added, "     }")));
-
-        Assert.Equal($"Assertion loosened: {exact} replaced by {weaker}", finding.Message);
-        Assert.Equal(11, finding.Line);
-    }
-
-    [Fact]
-    public void P017_ExactKept_NotFlagged() =>
-        Assert.Empty(Run(new LoosenedAssertions(), Modified("tests/Site/CacheTests.cs",
-            "-        Assert.Equal(\"no-store\", cache);",
-            "+        Assert.Equal(\"no-store, private\", cache);",
-            "+        Assert.True(response.IsSuccessStatusCode);")));
-
-    [Fact]
-    public void P017_WeakerAddedWithoutExactRemoved_NotFlagged() =>
-        Assert.Empty(Run(new LoosenedAssertions(), Modified("tests/Site/CacheTests.cs",
-            "     Assert.Equal(200, status);",
-            "+    Assert.Contains(\"ok\", body, StringComparison.Ordinal);")));
-
-    [Fact]
-    public void P017_DifferentHunks_NotPaired() =>
-        Assert.Empty(Run(new LoosenedAssertions(), new ChangedFile("tests/Site/CacheTests.cs", FileChangeStatus.Modified,
-            "@@ -10,1 +10,0 @@\n-        Assert.Equal(\"a\", x);\n@@ -40,0 +39,1 @@\n+        Assert.Contains(\"b\", y);")));
-
-    [Fact]
-    public void P017_NonTestOrAddedFile_NotChecked()
-    {
-        Assert.Empty(Run(new LoosenedAssertions(), Modified("src/Guard.cs", "-Assert.Equal(1, x);", "+Assert.True(x > 0);")));
-        Assert.Empty(Run(new LoosenedAssertions(), Added("tests/NewTests.cs", "Assert.True(x > 0);")));
-    }
-
     // P018 BrowserPolicyLoosened
 
     [Theory]

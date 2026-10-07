@@ -117,13 +117,6 @@ public static class PullRequestCheckDocs
             "app.MapPost(\"/subscribe\", Subscribe).DisableAntiforgery();",
             "app.MapPost(\"/subscribe\", Subscribe);"),
         new(
-            "P017",
-            "LoosenedAssertions",
-            "A change replaces an exact test assertion with a weaker one.",
-            "Modified test files where one diff hunk removes an exact assertion (Assert.Equal, StrictEqual, Same, Single, Empty, AreEqual, AreSame; toBe, toEqual, toStrictEqual) and adds a weaker one (Assert.Contains, DoesNotContain, NotNull, True, Matches, InRange, NotEmpty, NotEqual, IsTrue, IsNotNull; toContain, toBeTruthy, toMatch, toBeDefined) without adding back as many exact assertions. One finding per hunk.",
-            "- Assert.Equal(\"no-store\", response.Headers.CacheControl?.ToString());\n+ Assert.True(response.Headers.CacheControl?.NoStore);",
-            "  Assert.Equal(\"no-store\", response.Headers.CacheControl?.ToString());"),
-        new(
             "P018",
             "BrowserPolicyLoosened",
             "A change loosens the Content-Security-Policy or CORS policy.",
@@ -138,6 +131,9 @@ public static class PullRequestCheckDocs
             "\"SupportEmail\": \"TBD\"",
             "\"SupportEmail\": \"support@example.com\""),
     ];
+
+    /// <summary>Withdrawn check IDs; not reused.</summary>
+    public static IReadOnlyList<string> Reserved { get; } = ["P017"];
 
     private static readonly Dictionary<string, RuleDoc> ById = All.ToDictionary(d => d.Id, StringComparer.OrdinalIgnoreCase);
 

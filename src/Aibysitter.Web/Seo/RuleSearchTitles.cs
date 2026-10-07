@@ -37,7 +37,6 @@ public static class RuleSearchTitles
         ["P014"] = "How do I lint CLAUDE.md changes in a pull request?",
         ["P015"] = "How do I catch unpinned GitHub Actions in an AI agent's pull request?",
         ["P016"] = "How do I catch an AI agent disabling antiforgery or authorization?",
-        ["P017"] = "How do I catch an AI agent weakening a test assertion?",
         ["P018"] = "How do I catch an AI agent loosening the CSP or CORS policy?",
         ["P019"] = "How do I catch TBD and TODO values in config files?",
     };
