@@ -51,12 +51,18 @@ public sealed class OctokitGitHubGateway(IOptions<GitHubOptions> options, TimePr
         return files.Select(f => new ChangedFile(f.FileName, MapStatus(f.Status), f.Patch, f.PreviousFileName)).ToList();
     }
 
-    public async Task<string?> GetFileContentAsync(PullRequestRef pr, string path, CancellationToken cancellationToken)
+    public Task<string?> GetFileContentAsync(PullRequestRef pr, string path, CancellationToken cancellationToken) =>
+        ContentAtAsync(pr, path, pr.HeadSha);
+
+    public Task<string?> GetBaseFileContentAsync(PullRequestRef pr, string path, CancellationToken cancellationToken) =>
+        ContentAtAsync(pr, path, pr.BaseSha ?? throw new InvalidOperationException($"{pr} has no base commit."));
+
+    private async Task<string?> ContentAtAsync(PullRequestRef pr, string path, string sha)
     {
         var client = await ClientAsync(pr.InstallationId);
         try
         {
-            var bytes = await client.Repository.Content.GetRawContentByRef(pr.Owner, pr.Repo, path, pr.HeadSha);
+            var bytes = await client.Repository.Content.GetRawContentByRef(pr.Owner, pr.Repo, path, sha);
             return Encoding.UTF8.GetString(bytes);
         }
         catch (NotFoundException)

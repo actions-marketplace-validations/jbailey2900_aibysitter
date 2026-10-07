@@ -45,6 +45,8 @@ public static class RulesetChangelog
 
     public static IReadOnlyList<ChangelogEntry> AppChecks { get; } =
     [
+        new(null, new DateOnly(2026, 10, 7), "Config read from the base branch", ["A pull request is reviewed with the base branch's .github/aibysitter.json. When it changes the file, the summary says so and config errors are those of the new version."]),
+        new(null, new DateOnly(2026, 10, 7), "Repo config: ignore", ["Path globs, or {paths, checks} objects, skipped by content checks. Not applied to P004, P008, P011, P013, P014. Up to 50 entries; listed in the summary."]),
         new(null, new DateOnly(2026, 10, 7), "P017 LoosenedAssertions withdrawn", ["No true positives on pull request diffs in two dogfood passes. The ID stays reserved. The check would need per-commit review: loosened assertions were inside test files added by the same pull request."]),
         new(null, new DateOnly(2026, 10, 7), "P002 skips string literals", ["A TODO, FIXME or stub pattern inside a string literal on its line is not flagged."]),
         new(null, new DateOnly(2026, 10, 7), "P015 UnpinnedActions (dogfood 2)", ["GitHub Actions referenced by tag or branch instead of a commit SHA. Warning."]),

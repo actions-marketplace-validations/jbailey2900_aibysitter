@@ -32,7 +32,7 @@ public sealed class PullRequestReviewer
 
         var findings = Checks
             .Where(c => context.Config.IsEnabled(c.Id))
-            .SelectMany(c => c.Evaluate(context))
+            .SelectMany(c => c.Evaluate(ForCheck(c.Id, context)))
             .OrderBy(f => f.Path, StringComparer.Ordinal)
             .ThenBy(f => f.Line)
             .ThenBy(f => f.CheckId, StringComparer.Ordinal)
@@ -40,6 +40,12 @@ public sealed class PullRequestReviewer
 
         return new PullRequestReview(findings, Conclude(findings, context.Config));
     }
+
+    /// <summary>The context with files that <c>ignore</c> excludes from this check removed.</summary>
+    private static PullRequestContext ForCheck(string checkId, PullRequestContext context) =>
+        context.Config.Ignore.Count == 0 || RepoConfig.PathOnlyChecks.Contains(checkId)
+            ? context
+            : context with { Files = context.Files.Where(f => !context.Config.IsIgnored(checkId, f.Path)).ToList() };
 
     private ReviewConclusion Conclude(IReadOnlyList<PullRequestFinding> findings, RepoConfig config)
     {

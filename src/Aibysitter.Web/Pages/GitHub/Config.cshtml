@@ -34,6 +34,10 @@
     <textarea asp-for="Scope" rows="5" spellcheck="false" placeholder="src/**&#10;tests/**" aria-describedby="scope-help"></textarea>
     <p class="note" id="scope-help">One glob per line, from the repository root. <code>**</code> matches any number of folders, <code>*</code> and <code>?</code> match within one folder. Case-sensitive. Empty: P004 is off.</p>
     <span asp-validation-for="Scope" class="error"></span>
+    <label for="Ignore">Ignore</label>
+    <textarea asp-for="Ignore" rows="3" spellcheck="false" placeholder="docs/**&#10;tests/fixtures/**" aria-describedby="ignore-help"></textarea>
+    <p class="note" id="ignore-help">One glob per line. Matching files are skipped by content checks; P004, P008, P011, P013 and P014 still see them. To ignore a path for some checks only, edit the file: <code>{ "paths": ["tests/**"], "checks": ["P005"] }</code>.</p>
+    <span asp-validation-for="Ignore" class="error"></span>
     <fieldset>
         <legend>Conclusion</legend>
         <label class="choice"><input type="radio" name="Conclusion" value="@ConclusionMode.Advisory" checked="@(Model.Conclusion == ConclusionMode.Advisory ? "checked" : null)" /> <code>advisory</code>: findings report as neutral.</label>

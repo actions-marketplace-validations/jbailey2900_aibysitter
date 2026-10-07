@@ -143,7 +143,7 @@ public class GitHubWebhookTests(WebApplicationFactory<Program> factory)
         var job = await TryDequeue(services);
         Assert.NotNull(job);
         Assert.Equal(777, job.CheckRunId);
-        Assert.Equal(new PullRequestRef(42, "jbailey2900", "sandbox", 7, "0123456789abcdef0123456789abcdef01234567"), job.PullRequest);
+        Assert.Equal(new PullRequestRef(42, "jbailey2900", "sandbox", 7, "0123456789abcdef0123456789abcdef01234567", WebhookTestData.BaseSha), job.PullRequest);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class GitHubWebhookTests(WebApplicationFactory<Program> factory)
     {
         var fake = new FakeGitHubGateway();
         fake.Files.Add(Added("src/OrderService.cs", "var key = YOUR_API_KEY;"));
-        fake.Contents[".github/aibysitter.json"] = "{\"conclusion\": \"fail-on-errors\"}";
+        fake.BaseContents[".github/aibysitter.json"] = "{\"conclusion\": \"fail-on-errors\"}";
         var (client, _) = Create(fake, runWorker: true);
 
         var response = await client.SendAsync(Request("pull_request", PullRequestPayload()));
@@ -173,7 +173,7 @@ public class GitHubWebhookTests(WebApplicationFactory<Program> factory)
         Assert.Equal(Aibysitter.Rules.PullRequests.ReviewConclusion.Failure, report.Conclusion);
         Assert.Equal("P001 Placeholder identifiers", Assert.Single(report.Annotations).Title);
         Assert.Equal(
-            new[] { "create jbailey2900/sandbox#7@0123456", "in_progress 777", "files", "content .github/aibysitter.json", "complete 777" },
+            new[] { "create jbailey2900/sandbox#7@0123456", "in_progress 777", "files", "base content .github/aibysitter.json", "complete 777" },
             fake.Calls);
     }
 }

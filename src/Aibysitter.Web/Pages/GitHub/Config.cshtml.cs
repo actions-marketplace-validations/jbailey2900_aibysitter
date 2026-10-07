@@ -27,6 +27,11 @@ public class ConfigModel : PageModel
     [StringLength(MaxScopeLength, ErrorMessage = "Scope is limited to 10,000 characters.")]
     public string? Scope { get; set; }
 
+    /// <summary>One glob per line, written as <c>ignore</c> entries that apply to every content check.</summary>
+    [BindProperty]
+    [StringLength(MaxScopeLength, ErrorMessage = "Ignore is limited to 10,000 characters.")]
+    public string? Ignore { get; set; }
+
     [BindProperty]
     public ConclusionMode Conclusion { get; set; } = ConclusionMode.Advisory;
 
@@ -83,7 +88,7 @@ public class ConfigModel : PageModel
     private void Generate()
     {
         var disable = Checks.Concat(Rules).Select(d => d.Id).Where(id => !IsEnabled(id)).ToList();
-        Json = RepoConfigWriter.Write(RepoConfigWriter.ScopeLines(Scope), Conclusion, disable, Comment);
+        Json = RepoConfigWriter.Write(RepoConfigWriter.ScopeLines(Scope), Conclusion, disable, Comment, RepoConfigWriter.ScopeLines(Ignore));
         var (config, errors) = RepoConfig.Parse(Json);
         Errors = errors;
         ConfigFileOutOfScope = config.HasScope && !config.InScope(RepoConfig.FilePath);

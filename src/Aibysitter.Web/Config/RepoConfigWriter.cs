@@ -6,8 +6,8 @@ using Aibysitter.Rules.PullRequests;
 namespace Aibysitter.Web.Config;
 
 /// <summary>
-/// Writes <c>.github/aibysitter.json</c>: keys in the order scope, conclusion, disable, comment; 2-space indent; LF line ends.
-/// <c>conclusion</c> is always written; <c>scope</c> and <c>disable</c> only when non-empty; <c>comment</c> only when true.
+/// Writes <c>.github/aibysitter.json</c>: keys in the order scope, conclusion, disable, ignore, comment; 2-space indent; LF line ends.
+/// <c>conclusion</c> is always written; <c>scope</c>, <c>disable</c> and <c>ignore</c> only when non-empty; <c>comment</c> only when true.
 /// </summary>
 public static class RepoConfigWriter
 {
@@ -25,7 +25,7 @@ public static class RepoConfigWriter
     public static IReadOnlyList<string> ScopeLines(string? text) =>
         (text ?? string.Empty).Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).Distinct(StringComparer.Ordinal).ToList();
 
-    public static string Write(IReadOnlyList<string> scope, ConclusionMode conclusion, IReadOnlyList<string> disable, bool comment = false)
+    public static string Write(IReadOnlyList<string> scope, ConclusionMode conclusion, IReadOnlyList<string> disable, bool comment = false, IReadOnlyList<string>? ignore = null)
     {
         using var buffer = new MemoryStream();
         using (var writer = new Utf8JsonWriter(buffer, Options))
@@ -40,6 +40,11 @@ public static class RepoConfigWriter
             if (disable.Count > 0)
             {
                 WriteArray(writer, "disable", disable);
+            }
+
+            if (ignore is { Count: > 0 })
+            {
+                WriteArray(writer, "ignore", ignore);
             }
 
             if (comment)

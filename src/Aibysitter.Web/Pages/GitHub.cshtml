@@ -34,7 +34,7 @@
 
 <section class="section">
     <h2>Configuration</h2>
-    <p>Optional. Add <code>.github/aibysitter.json</code> to the repository. The App reads it from the pull request's head commit.</p>
+    <p>Optional. Add <code>.github/aibysitter.json</code> to the repository. The App reads it from the pull request's base branch, so a pull request cannot change how it is itself reviewed.</p>
     <pre><code>{
   "scope": ["src/**", "tests/**"],
   "conclusion": "fail-on-errors",
@@ -66,13 +66,18 @@
                 <td>None</td>
             </tr>
             <tr>
+                <td><code>ignore</code></td>
+                <td>Path globs skipped by content checks, or <code>{ "paths": [...], "checks": [...] }</code> to skip them for some checks only. P004, P008, P011, P013 and P014 still see every file. Up to 50 entries.</td>
+                <td>None</td>
+            </tr>
+            <tr>
                 <td><code>comment</code></td>
                 <td><code>true</code> posts one comment on the pull request with the summary table and up to 25 findings linked to their lines. Each new commit updates the same comment. No comment is created while there are no findings.</td>
                 <td><code>false</code></td>
             </tr>
         </tbody>
     </table>
-    <p>The config file is itself a changed file: a pull request that edits it outside the declared scope gets a P004 finding. Invalid entries fall back to their defaults, are listed in the check summary and are annotated on their line of the config file. Under <code>fail-on-errors</code>, any config error fails the check.</p>
+    <p>The config file is itself a changed file: a pull request that edits it outside the declared scope gets a P004 finding, and is reviewed with the base branch's version; the summary says so. Invalid entries fall back to their defaults, are listed in the check summary and are annotated on their line of the config file. Under <code>fail-on-errors</code>, any config error fails the check.</p>
     <p><a asp-page="/GitHub/Config">Generate a config file</a></p>
 </section>
 

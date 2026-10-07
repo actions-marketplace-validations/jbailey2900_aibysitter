@@ -16,6 +16,9 @@ public sealed record ConfigError(int Line, string Message)
     public override string ToString() => Message;
 }
 
+/// <summary>An <c>ignore</c> entry: paths excluded from the listed content checks, or from every content check when Checks is null.</summary>
+public sealed record IgnoreEntry(IReadOnlyList<Glob> Paths, IReadOnlySet<string>? Checks);
+
 /// <summary>Parsed <c>.github/aibysitter.json</c>.</summary>
 public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMode Conclusion)
 {
@@ -29,7 +32,23 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
     /// <summary>Post one PR comment with the summary, updated in place (<c>"comment": true</c>).</summary>
     public bool Comment { get; init; }
 
+    public const int MaxIgnoreEntries = 50;
+
+    /// <summary>Checks that read paths or rules files only; <c>ignore</c> does not apply to them.</summary>
+    public static IReadOnlySet<string> PathOnlyChecks { get; } = new HashSet<string>(StringComparer.Ordinal) { "P004", "P008", "P011", "P013", "P014" };
+
+    /// <summary>Entries under <c>ignore</c>, in file order.</summary>
+    public IReadOnlyList<IgnoreEntry> Ignore { get; init; } = [];
+
     public bool HasScope => Scope.Count > 0;
+
+    /// <summary>True when an <c>ignore</c> entry excludes <paramref name="path"/> from the content check <paramref name="checkId"/>.</summary>
+    public bool IsIgnored(string checkId, string path) =>
+        !PathOnlyChecks.Contains(checkId)
+        && Ignore.Any(e => (e.Checks is null || e.Checks.Contains(checkId)) && e.Paths.Any(g => g.IsMatch(path)));
+
+    /// <summary>True when any <c>ignore</c> entry matches <paramref name="path"/>.</summary>
+    public bool IsIgnoredByAny(string path) => Ignore.Any(e => e.Paths.Any(g => g.IsMatch(path)));
 
     public bool IsEnabled(string checkId) => !Disabled.Contains(checkId);
 
@@ -68,6 +87,7 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
             var conclusion = ConclusionMode.Advisory;
             var disabled = new HashSet<string>(StringComparer.Ordinal);
             var comment = false;
+            var ignore = new List<IgnoreEntry>();
 
             foreach (var property in doc.RootElement.EnumerateObject())
             {
@@ -131,6 +151,31 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
                     case "disable":
                         Error("disable", "\"disable\" must be an array of check or rule IDs");
                         break;
+                    case "ignore" when property.Value.ValueKind == JsonValueKind.Array:
+                        var ignoreIndex = 0;
+                        foreach (var item in property.Value.EnumerateArray())
+                        {
+                            var key = $"ignore[{ignoreIndex++}]";
+                            if (ignoreIndex > MaxIgnoreEntries)
+                            {
+                                Error(key, $"\"ignore\" has more than {MaxIgnoreEntries} entries; the rest are skipped");
+                                break;
+                            }
+
+                            if (ParseIgnoreEntry(item, out var message) is { } entry)
+                            {
+                                ignore.Add(entry);
+                            }
+                            else
+                            {
+                                Error(key, $"ignore entry {item.GetRawText()}: {message}");
+                            }
+                        }
+
+                        break;
+                    case "ignore":
+                        Error("ignore", "\"ignore\" must be an array of path globs or {\"paths\", \"checks\"} objects");
+                        break;
                     case "comment" when property.Value.ValueKind is JsonValueKind.True or JsonValueKind.False:
                         comment = property.Value.GetBoolean();
                         break;
@@ -143,8 +188,86 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
                 }
             }
 
-            return (new RepoConfig(scope, conclusion) { Disabled = disabled, Comment = comment }, errors);
+            return (new RepoConfig(scope, conclusion) { Disabled = disabled, Comment = comment, Ignore = ignore }, errors);
         }
+    }
+
+    /// <summary>A glob string, or an object with "paths" (globs, required) and "checks" (content check IDs, optional).</summary>
+    private static IgnoreEntry? ParseIgnoreEntry(JsonElement item, out string? message)
+    {
+        message = null;
+        if (item.ValueKind == JsonValueKind.String)
+        {
+            if (Glob.TryCreate(item.GetString(), out var glob, out var globError))
+            {
+                return new IgnoreEntry([glob!], null);
+            }
+
+            message = globError ?? "must be a non-empty path glob";
+            return null;
+        }
+
+        if (item.ValueKind != JsonValueKind.Object)
+        {
+            message = "must be a path glob or an object with \"paths\"";
+            return null;
+        }
+
+        var paths = new List<Glob>();
+        HashSet<string>? checks = null;
+        var hasPaths = false;
+        foreach (var field in item.EnumerateObject())
+        {
+            switch (field.Name)
+            {
+                case "paths" when field.Value.ValueKind == JsonValueKind.Array && field.Value.GetArrayLength() > 0:
+                    hasPaths = true;
+                    foreach (var path in field.Value.EnumerateArray())
+                    {
+                        if (path.ValueKind != JsonValueKind.String || !Glob.TryCreate(path.GetString(), out var glob, out var globError))
+                        {
+                            message = $"\"paths\" entry {path.GetRawText()} is not a valid path glob";
+                            return null;
+                        }
+
+                        paths.Add(glob!);
+                    }
+
+                    break;
+                case "checks" when field.Value.ValueKind == JsonValueKind.Array && field.Value.GetArrayLength() > 0:
+                    checks = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (var check in field.Value.EnumerateArray())
+                    {
+                        var id = check.ValueKind == JsonValueKind.String ? check.GetString()?.Trim().ToUpperInvariant() : null;
+                        if (id is null || !id.StartsWith('P') || PullRequestCheckDocs.Find(id) is null)
+                        {
+                            message = $"\"checks\" entry {check.GetRawText()} is not a known check ID";
+                            return null;
+                        }
+
+                        if (PathOnlyChecks.Contains(id))
+                        {
+                            message = $"{id} checks paths, not content, and cannot be ignored";
+                            return null;
+                        }
+
+                        checks.Add(id);
+                    }
+
+                    break;
+                default:
+                    message = $"\"{field.Name}\" must be {(field.Name is "paths" or "checks" ? "a non-empty array" : "\"paths\" or \"checks\"")}";
+                    return null;
+            }
+        }
+
+        if (!hasPaths)
+        {
+            message = "\"paths\" is required";
+            return null;
+        }
+
+        return new IgnoreEntry(paths, checks);
     }
 
     /// <summary>1-based line of each top-level key (<c>scope</c>) and of each item in a top-level array (<c>scope[0]</c>).</summary>
