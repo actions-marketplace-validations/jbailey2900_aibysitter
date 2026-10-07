@@ -12,11 +12,37 @@ public sealed partial class PlaceholderIdentifiers : AddedLinePatternCheck
     protected override string MessagePrefix => "Placeholder left in change";
     protected override string FixHint => "Replace with the real identifier or value.";
 
-    protected override bool AppliesTo(string path) => FileKinds.IsCodeOrConfig(path);
+    /// <summary>Code and config files outside test files.</summary>
+    protected override bool AppliesTo(string path) => FileKinds.IsCodeOrConfig(path) && !FileKinds.IsTestFile(path);
 
-    /// <summary>Comment-only lines and test-data attributes ([InlineData], [TestCase], [DataRow]) are not findings.</summary>
-    protected override IEnumerable<string> Keep(ChangedFile file, string line, IReadOnlyList<string> matches) =>
-        CodeText.IsCommentOnly(line) || TestDataRegex().IsMatch(line) ? [] : matches;
+    /// <summary>
+    /// Not findings: comment lines (including inside block comments and docstrings), test-data attributes
+    /// ([InlineData], [TestCase], [DataRow]), and placeholders that a comment line in the same file names (a documented template).
+    /// </summary>
+    protected override IEnumerable<string> Keep(ChangedFile file, DiffLine line, IReadOnlyList<string> matches)
+    {
+        var (commentLines, documented) = Comments(file);
+        return commentLines.Contains(line.NewLine!.Value) || TestDataRegex().IsMatch(line.Text)
+            ? []
+            : matches.Where(m => !documented.Contains(m));
+    }
+
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<ChangedFile, Tuple<IReadOnlySet<int>, HashSet<string>>> comments = new();
+
+    /// <summary>Comment line numbers, and the placeholders those lines name.</summary>
+    private (IReadOnlySet<int> Lines, HashSet<string> Documented) Comments(ChangedFile file)
+    {
+        var entry = comments.GetValue(file, f =>
+        {
+            var lines = CodeText.CommentLines(f);
+            var texts = f.HeadContent is { } head
+                ? head.Replace("\r\n", "\n").Split('\n').Where((_, i) => lines.Contains(i + 1))
+                : f.Lines.Where(l => l.NewLine is { } n && lines.Contains(n)).Select(l => l.Text);
+            var documented = texts.SelectMany(t => PlaceholderRegex().Matches(t).Select(m => m.Value)).ToHashSet(StringComparer.Ordinal);
+            return Tuple.Create(lines, documented);
+        });
+        return (entry.Item1, entry.Item2);
+    }
 
     [GeneratedRegex(@"^\s*\[\s*(?:[\w.]+(?:\([^)]*\))?\s*,\s*)*(?:InlineData|TestCase|DataRow)(?:Attribute)?\s*\(")]
     private static partial Regex TestDataRegex();

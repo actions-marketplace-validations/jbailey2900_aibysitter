@@ -65,11 +65,11 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task CheckPage_P003_IsWarning()
+    public async Task CheckPage_P003_IsInfo()
     {
         var html = await factory.CreateClient().GetStringAsync("/Rules/P003");
 
-        Assert.Contains("<dd>Warning</dd>", html);
+        Assert.Contains("<dd>Info</dd>", html);
         Assert.DoesNotContain("fails the check when the repo sets fail-on-errors", html);
     }
 

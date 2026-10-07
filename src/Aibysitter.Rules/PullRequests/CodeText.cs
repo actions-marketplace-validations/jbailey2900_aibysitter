@@ -97,9 +97,93 @@ public static partial class CodeText
         return quote is not null;
     }
 
+    /// <summary>
+    /// Line numbers (head side) that hold only a comment, or sit inside a /* */ block comment or a Python
+    /// triple-quoted docstring. Read from the head content when fetched, otherwise from the diff's added and
+    /// context lines (state resets at each gap between hunks).
+    /// </summary>
+    public static IReadOnlySet<int> CommentLines(ChangedFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        var lines = file.HeadContent is { } head
+            ? head.Replace("\r\n", "\n").Split('\n').Select((text, i) => (Number: i + 1, Text: text))
+            : file.Lines.Where(l => l.NewLine is not null).Select(l => (Number: l.NewLine!.Value, l.Text));
+        var python = Path.GetExtension(file.Path).Equals(".py", StringComparison.OrdinalIgnoreCase);
+
+        var result = new HashSet<int>();
+        var inBlock = false;
+        string? docstring = null;
+        var previous = 0;
+        foreach (var (number, text) in lines)
+        {
+            if (number != previous + 1)
+            {
+                inBlock = false;
+                docstring = null;
+            }
+
+            previous = number;
+            if (inBlock)
+            {
+                result.Add(number);
+                inBlock = !text.Contains("*/", StringComparison.Ordinal);
+                continue;
+            }
+
+            if (docstring is not null)
+            {
+                result.Add(number);
+                if (text.Contains(docstring, StringComparison.Ordinal))
+                {
+                    docstring = null;
+                }
+
+                continue;
+            }
+
+            if (IsCommentOnly(text))
+            {
+                result.Add(number);
+            }
+
+            var open = text.LastIndexOf("/*", StringComparison.Ordinal);
+            if (open >= 0 && text.IndexOf("*/", open, StringComparison.Ordinal) < 0 && !IsInsideStringLiteral(text, open))
+            {
+                inBlock = true;
+                result.Add(number);
+                continue;
+            }
+
+            var trimmed = text.TrimStart();
+            if (python && (trimmed.StartsWith("\"\"\"", StringComparison.Ordinal) || trimmed.StartsWith("'''", StringComparison.Ordinal)))
+            {
+                var delimiter = trimmed[..3];
+                result.Add(number);
+                if (CountOf(trimmed, delimiter) == 1)
+                {
+                    docstring = delimiter;
+                }
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Python, shell, PowerShell, Ruby: # starts a comment.</summary>
     public static bool UsesHashComments(string path) =>
         Path.GetExtension(path).ToLowerInvariant() is ".py" or ".sh" or ".ps1" or ".psm1" or ".rb";
+
+    private static int CountOf(string text, string token)
+    {
+        var count = 0;
+        for (var i = text.IndexOf(token, StringComparison.Ordinal); i >= 0; i = text.IndexOf(token, i + token.Length, StringComparison.Ordinal))
+        {
+            count++;
+        }
+
+        return count;
+    }
 
     private static int QuoteRun(string line, int start)
     {

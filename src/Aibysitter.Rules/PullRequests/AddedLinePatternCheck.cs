@@ -20,7 +20,7 @@ public abstract class AddedLinePatternCheck : IPullRequestCheck
     protected abstract bool AppliesTo(string path);
 
     /// <summary>The matches on one added line that become a finding. Default: all.</summary>
-    protected virtual IEnumerable<string> Keep(ChangedFile file, string line, IReadOnlyList<string> matches) => matches;
+    protected virtual IEnumerable<string> Keep(ChangedFile file, DiffLine line, IReadOnlyList<string> matches) => matches;
 
     public IEnumerable<PullRequestFinding> Evaluate(PullRequestContext context)
     {
@@ -31,7 +31,7 @@ public abstract class AddedLinePatternCheck : IPullRequestCheck
             foreach (var line in file.AddedLines)
             {
                 var matches = Pattern.Matches(line.Text).Select(m => (m.Groups["m"].Success ? m.Groups["m"].Value : m.Value).Trim()).Distinct().ToList();
-                matches = Keep(file, line.Text, matches).ToList();
+                matches = Keep(file, line, matches).ToList();
                 if (matches.Count > 0)
                 {
                     yield return new PullRequestFinding(

@@ -55,7 +55,7 @@ public class Dogfood1TuningTests
     // P003
 
     [Fact]
-    public void P003_IsWarning() => Assert.Equal(Severity.Warning, new AssertNothingTests().Severity);
+    public void P003_IsInfo_SinceDogfood2() => Assert.Equal(Severity.Info, new AssertNothingTests().Severity);
 
     // P005
 
@@ -148,7 +148,7 @@ public class Dogfood1TuningTests
         Assert.Empty(Run(new DebugLeftovers(), Added(path, "    print(f\"::error title={name}::{text}\")")));
 
     [Theory]
-    [InlineData("app/orders.py", "    print(order)")]
+    [InlineData("app/orders.py", "    breakpoint()")]
     [InlineData("scripts/run.py", "    import pdb")]
     [InlineData("scripts/run.js", "console.log(x);")]
     public void P012_OtherDebugStatements_StillFlagged(string path, string line) =>

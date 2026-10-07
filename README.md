@@ -44,7 +44,7 @@ Reviews pull requests and posts a check named `Aibysitter review`, with an annot
 |---|---|---|
 | P001 | PlaceholderIdentifiers | Error |
 | P002 | TodoStubs | Warning |
-| P003 | AssertNothingTests (C# only) | Warning |
+| P003 | AssertNothingTests (C# only) | Info |
 | P004 | OutOfScopeFiles | Error |
 | P005 | SecretsInDiff | Error |
 | P006 | SkippedTests | Error |
