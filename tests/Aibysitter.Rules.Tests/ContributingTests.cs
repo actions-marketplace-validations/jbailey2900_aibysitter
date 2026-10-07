@@ -44,6 +44,16 @@ public class ContributingTests
         Assert.Contains("https://github.com/jbailey2900/aibysitter/security/advisories/new", yaml, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void RepoConfig_DisablesP005_AndContributingSaysWhy()
+    {
+        var (config, errors) = Aibysitter.Rules.PullRequests.RepoConfig.Parse(File.ReadAllText(Path.Combine(NodeRunner.RepoRoot, ".github", "aibysitter.json")));
+
+        Assert.Empty(errors);
+        Assert.False(config.IsEnabled("P005"));
+        Assert.Contains("`.github/aibysitter.json` disables P005", File.ReadAllText(Path.Combine(NodeRunner.RepoRoot, "CONTRIBUTING.md")), StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("dotnet test Aibysitter.slnx")]
     [InlineData("AIBYSITTER_TEST_SQL")]
