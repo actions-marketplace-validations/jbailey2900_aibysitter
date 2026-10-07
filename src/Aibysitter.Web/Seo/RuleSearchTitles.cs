@@ -35,6 +35,11 @@ public static class RuleSearchTitles
         ["P012"] = "How do I catch debug statements left in AI-written code?",
         ["P013"] = "How do I catch build output and .env files in an AI agent's pull request?",
         ["P014"] = "How do I lint CLAUDE.md changes in a pull request?",
+        ["P015"] = "How do I catch unpinned GitHub Actions in an AI agent's pull request?",
+        ["P016"] = "How do I catch an AI agent disabling antiforgery or authorization?",
+        ["P017"] = "How do I catch an AI agent weakening a test assertion?",
+        ["P018"] = "How do I catch an AI agent loosening the CSP or CORS policy?",
+        ["P019"] = "How do I catch TBD and TODO values in config files?",
     };
 
     /// <summary>"{question} ({id})", or "{id} {name}" when no question is defined.</summary>

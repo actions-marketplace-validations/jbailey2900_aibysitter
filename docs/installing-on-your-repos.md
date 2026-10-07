@@ -37,7 +37,7 @@ Optional. Path: `.github/aibysitter.json`. The App reads it from the pull reques
 |---|---|---|
 | `scope` | Path globs from the repository root. `**` spans folders and must be a whole segment (`**/*.cs`, not `**.cs`); `*` and `?` stay within one. Case-sensitive. Not supported: `{a,b}`, `[...]`, `!`, `\`. Turns on P004. | Not set; P004 off |
 | `conclusion` | `advisory`: findings report as `neutral`. `fail-on-errors`: any Error finding fails the check. | `advisory` |
-| `disable` | Check IDs (`P001`–`P014`) skip that check. Rule IDs (`R001`–`R016`) skip that rule inside P014. | None |
+| `disable` | Check IDs (`P001`–`P019`) skip that check. Rule IDs (`R001`–`R016`) skip that rule inside P014. | None |
 | `comment` | `true`: one comment on the pull request with the summary table and up to 25 findings linked to their lines, updated on each new commit. No comment is created while there are no findings; turning it off leaves an existing comment as it is. | `false` |
 
 - Comments and trailing commas are allowed.
