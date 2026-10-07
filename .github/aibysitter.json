@@ -1,3 +1,9 @@
 {
-  "disable": ["P005"]
+  "ignore": [
+    "src/Aibysitter.Rules/PullRequests/BrowserPolicyLoosened.cs",
+    "src/Aibysitter.Rules/PullRequests/PullRequestCheckDocs.cs",
+    "src/Aibysitter.Rules/RuleDocs.cs",
+    "src/Aibysitter.Rules/RulesetChangelog.cs",
+    { "paths": ["tests/**"], "checks": ["P005"] }
+  ]
 }

@@ -11,7 +11,7 @@ public partial class ConfigPageTests(WebApplicationFactory<Program> factory)
 {
     private static readonly string[] AllIds = [.. PullRequestCheckDocs.All.Select(d => d.Id), .. RuleDocs.All.Select(d => d.Id)];
 
-    private async Task<HttpResponseMessage> Post(IEnumerable<string> enabled, string? scope = null, string conclusion = "Advisory", string? path = null, string? handler = null, bool comment = false)
+    private async Task<HttpResponseMessage> Post(IEnumerable<string> enabled, string? scope = null, string conclusion = "Advisory", string? path = null, string? handler = null, bool comment = false, string? ignore = null)
     {
         var client = factory.CreateClient();
         var form = await client.GetStringAsync("/GitHub/Config");
@@ -35,6 +35,11 @@ public partial class ConfigPageTests(WebApplicationFactory<Program> factory)
         if (comment)
         {
             fields.Add(new("Comment", "true"));
+        }
+
+        if (ignore is not null)
+        {
+            fields.Add(new("Ignore", ignore));
         }
 
         using var content = new FormUrlEncodedContent(fields);
@@ -102,6 +107,17 @@ public partial class ConfigPageTests(WebApplicationFactory<Program> factory)
 
         Assert.Contains("<pre id=\"config-json\"><code>" + Encoded("{\n  \"conclusion\": \"advisory\",\n  \"comment\": true\n}\n") + "</code></pre>", html);
         Assert.Contains("name=\"Comment\" value=\"true\" checked=\"checked\"", html);
+    }
+
+    [Fact]
+    public async Task Post_Ignore_WritesEntries_ParsesClean()
+    {
+        var response = await Post(AllIds, ignore: "docs/**\n\ntests/fixtures/**\ndocs/**");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Contains("&quot;ignore&quot;: [", html, StringComparison.Ordinal);
+        Assert.Contains("&quot;tests/fixtures/**&quot;", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("<h2>Errors</h2>", html, StringComparison.Ordinal);
     }
 
     [Fact]

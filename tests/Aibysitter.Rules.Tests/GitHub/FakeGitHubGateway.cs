@@ -12,6 +12,9 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
 
     public Dictionary<string, string> Contents { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>Files at the base commit.</summary>
+    public Dictionary<string, string> BaseContents { get; } = new(StringComparer.Ordinal);
+
     /// <summary>File list at head; null simulates a truncated listing.</summary>
     public List<string>? Paths { get; set; } = [];
 
@@ -64,6 +67,12 @@ internal sealed class FakeGitHubGateway : IGitHubGateway
     {
         Calls.Enqueue($"content {path}");
         return Task.FromResult(Contents.GetValueOrDefault(path));
+    }
+
+    public Task<string?> GetBaseFileContentAsync(PullRequestRef pr, string path, CancellationToken cancellationToken)
+    {
+        Calls.Enqueue($"base content {path}");
+        return Task.FromResult(BaseContents.GetValueOrDefault(path));
     }
 
     public Task<RepoTree?> GetTreeAsync(PullRequestRef pr, CancellationToken cancellationToken)

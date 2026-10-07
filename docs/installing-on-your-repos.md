@@ -23,7 +23,7 @@ Checks: [aibysitting.net/Rules](https://aibysitting.net/Rules). What the App rea
 
 ## Config file
 
-Optional. Path: `.github/aibysitter.json`. The App reads it from the pull request's head commit.
+Optional. Path: `.github/aibysitter.json`. The App reads it from the base branch commit of the pull request, so a pull request cannot change how it is itself reviewed.
 
 ```json
 {
@@ -38,12 +38,13 @@ Optional. Path: `.github/aibysitter.json`. The App reads it from the pull reques
 | `scope` | Path globs from the repository root. `**` spans folders and must be a whole segment (`**/*.cs`, not `**.cs`); `*` and `?` stay within one. Case-sensitive. Not supported: `{a,b}`, `[...]`, `!`, `\`. Turns on P004. | Not set; P004 off |
 | `conclusion` | `advisory`: findings report as `neutral`. `fail-on-errors`: any Error finding fails the check. | `advisory` |
 | `disable` | Check IDs (`P001`–`P019`) skip that check. Rule IDs (`R001`–`R016`) skip that rule inside P014. | None |
+| `ignore` | Entries are a path glob (skipped by every content check) or `{ "paths": [globs], "checks": [IDs] }` (skipped by those checks only). Globs as in `scope`. P004, P008, P011, P013 and P014 read paths or rules files and do not apply `ignore`. Up to 50 entries. The summary lists the entries and how many changed files they match. | None |
 | `comment` | `true`: one comment on the pull request with the summary table and up to 25 findings linked to their lines, updated on each new commit. No comment is created while there are no findings; turning it off leaves an existing comment as it is. | `false` |
 
 - Comments and trailing commas are allowed.
 - An invalid entry falls back to its default, is listed under **Config errors** in the summary and is annotated on its line of the config file.
 - Under `fail-on-errors`, any config error fails the check. Under `advisory`, config errors do not change the conclusion.
-- Editing the config file in a pull request makes it a changed file: outside `scope`, it gets a P004 finding.
+- Editing the config file in a pull request makes it a changed file: outside `scope`, it gets a P004 finding. The pull request is reviewed with the base branch's config; the summary says the config changed, and config errors are those of the new version. The change applies to pull requests opened after it merges.
 
 Starter config:
 

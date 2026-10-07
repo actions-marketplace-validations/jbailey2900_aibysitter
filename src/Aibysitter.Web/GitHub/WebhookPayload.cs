@@ -24,7 +24,8 @@ public static class WebhookPayload
                 root.GetProperty("repository").GetProperty("owner").GetProperty("login").GetString()!,
                 root.GetProperty("repository").GetProperty("name").GetString()!,
                 root.GetProperty("pull_request").GetProperty("number").GetInt32(),
-                root.GetProperty("pull_request").GetProperty("head").GetProperty("sha").GetString()!);
+                root.GetProperty("pull_request").GetProperty("head").GetProperty("sha").GetString()!,
+                root.GetProperty("pull_request").TryGetProperty("base", out var baseRef) && baseRef.TryGetProperty("sha", out var baseSha) ? baseSha.GetString() : null);
             return true;
         }
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or InvalidOperationException or FormatException)

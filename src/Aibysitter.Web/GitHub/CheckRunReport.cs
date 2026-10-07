@@ -22,7 +22,8 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         IReadOnlyList<ChangedFile> files,
         RepoConfig config,
         IReadOnlyList<ConfigError> configErrors,
-        IReadOnlyList<string>? notes = null)
+        IReadOnlyList<string>? notes = null,
+        string? configNote = null)
     {
         ArgumentNullException.ThrowIfNull(review);
 
@@ -59,7 +60,19 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         var conclusion = config.Conclusion == ConclusionMode.FailOnErrors && configErrors.Count > 0 ? ReviewConclusion.Failure : review.Conclusion;
 
         var summary = new StringBuilder();
+        if (configNote is not null)
+        {
+            summary.AppendLine(configNote);
+            summary.AppendLine();
+        }
+
         summary.AppendLine($"Conclusion mode: `{(config.Conclusion == ConclusionMode.FailOnErrors ? "fail-on-errors" : "advisory")}`. Scope: {(config.HasScope ? string.Join(", ", config.Scope.Select(g => $"`{g.Pattern}`")) : "not declared")}.");
+        if (config.Ignore.Count > 0)
+        {
+            var ignored = files.Count(f => config.IsIgnoredByAny(f.Path));
+            summary.AppendLine($"Ignored by config: {ignored} file{(ignored == 1 ? "" : "s")} ({string.Join("; ", config.Ignore.Select(Describe))}).");
+        }
+
         summary.AppendLine();
         summary.AppendLine("| Check | Severity | Findings |");
         summary.AppendLine("|---|---|---|");
@@ -115,4 +128,8 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         "Review failed",
         $"Aibysitter could not complete this review ({ex.GetType().Name}). Push a new commit or redeliver the webhook to retry.",
         []);
+
+    private static string Describe(IgnoreEntry entry) =>
+        string.Join(", ", entry.Paths.Select(g => $"`{g.Pattern}`"))
+        + (entry.Checks is null ? "" : $" for {string.Join(", ", entry.Checks.Order(StringComparer.Ordinal))}");
 }

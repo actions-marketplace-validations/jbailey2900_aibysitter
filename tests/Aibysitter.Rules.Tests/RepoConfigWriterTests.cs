@@ -57,4 +57,15 @@ public class RepoConfigWriterTests
         Assert.DoesNotContain("comment", RepoConfigWriter.Write([], ConclusionMode.Advisory, [], comment: false));
         Assert.True(RepoConfig.Parse(RepoConfigWriter.Write(["src/**"], ConclusionMode.Advisory, ["P002"], comment: true)).Config.Comment);
     }
+
+    [Fact]
+    public void Ignore_WrittenAfterDisable_RoundTrips()
+    {
+        var json = RepoConfigWriter.Write(["src/**"], ConclusionMode.Advisory, ["P002"], comment: true, ignore: ["docs/**"]);
+
+        Assert.Equal("{\n  \"scope\": [\n    \"src/**\"\n  ],\n  \"conclusion\": \"advisory\",\n  \"disable\": [\n    \"P002\"\n  ],\n  \"ignore\": [\n    \"docs/**\"\n  ],\n  \"comment\": true\n}\n", json);
+        var (config, errors) = RepoConfig.Parse(json);
+        Assert.Empty(errors);
+        Assert.True(config.IsIgnored("P001", "docs/a.md"));
+    }
 }

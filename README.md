@@ -75,6 +75,8 @@ Optional repo config, `.github/aibysitter.json`, read from the pull request's he
 - `scope`: path globs from the repo root. `**` must be a whole segment; `{a,b}`, `[...]`, `!` and `\` are rejected. Turns on P004. Not set: P004 is off.
 - `conclusion`: `advisory` (default) reports findings as neutral. `fail-on-errors` fails the check on any Error finding or config error.
 - `disable`: check IDs to skip, and rule IDs (R001–R016) to skip inside P014.
+- `ignore`: path globs, or `{ "paths": [...], "checks": [...] }`, skipped by content checks (not P004, P008, P011, P013, P014).
+- The config is read from the base branch; a pull request that changes it is reviewed with the base version.
 - `comment`: `true` posts one PR comment with the summary and up to 25 linked findings, updated on each new commit. Default `false`.
 
 Install: [github.com/apps/aibysitter](https://github.com/apps/aibysitter/installations/new). Setup and configuration: [docs/installing-on-your-repos.md](docs/installing-on-your-repos.md). Details: [aibysitting.net/GitHub](https://aibysitting.net/GitHub).

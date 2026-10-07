@@ -24,7 +24,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             await MarkInProgressAsync(job, cancellationToken);
 
             var files = await gateway.GetChangedFilesAsync(pr, cancellationToken);
-            var (config, configErrors) = RepoConfig.Parse(await gateway.GetFileContentAsync(pr, RepoConfig.FilePath, cancellationToken));
+            var (config, configErrors, configNote) = await ReadConfigAsync(pr, files, cancellationToken);
 
             var notes = new List<string>();
             var tree = await TreeForRulesFilesAsync(pr, files, config, cancellationToken);
@@ -51,7 +51,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             var (repo, unchanged) = await BuildRepoViewAsync(pr, files, enriched, config, tree, notes, cancellationToken);
 
             var review = reviewer.Review(new PullRequestContext(enriched, config, repo, unchanged));
-            var report = CheckRunReport.Build(review, reviewer.Checks, enriched, config, configErrors, notes);
+            var report = CheckRunReport.Build(review, reviewer.Checks, enriched, config, configErrors, notes, configNote);
             if (config.Comment)
             {
                 var note = await new ReviewCommentPublisher(gateway, logger)
@@ -89,6 +89,35 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
                 return false;
             }
         }
+    }
+
+    public const string ConfigChangedNote =
+        "This pull request changes `.github/aibysitter.json`. It was reviewed with the base branch's version; the change applies after merge.";
+
+    /// <summary>
+    /// Config from the base commit, so a pull request cannot change how it is itself reviewed. When the pull request
+    /// changes the config file, its errors are those of the head version (the annotated file) and the summary says so.
+    /// Jobs saved before the base commit was recorded read the head version.
+    /// </summary>
+    private async Task<(RepoConfig Config, IReadOnlyList<ConfigError> Errors, string? Note)> ReadConfigAsync(
+        PullRequestRef pr, IReadOnlyList<ChangedFile> files, CancellationToken cancellationToken)
+    {
+        if (pr.BaseSha is null)
+        {
+            var (headConfig, headErrors) = RepoConfig.Parse(await gateway.GetFileContentAsync(pr, RepoConfig.FilePath, cancellationToken));
+            return (headConfig, headErrors, null);
+        }
+
+        var (config, errors) = RepoConfig.Parse(await gateway.GetBaseFileContentAsync(pr, RepoConfig.FilePath, cancellationToken));
+        if (!files.Any(f => f.Path == RepoConfig.FilePath || f.PreviousPath == RepoConfig.FilePath))
+        {
+            return (config, errors, null);
+        }
+
+        var headVersion = files.Any(f => f.Path == RepoConfig.FilePath && f.Status != FileChangeStatus.Removed)
+            ? await gateway.GetFileContentAsync(pr, RepoConfig.FilePath, cancellationToken)
+            : null;
+        return (config, RepoConfig.Parse(headVersion).Errors, ConfigChangedNote);
     }
 
     /// <summary>The in_progress status is cosmetic; a failure is logged and the review continues.</summary>

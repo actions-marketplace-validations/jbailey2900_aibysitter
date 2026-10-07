@@ -8,13 +8,15 @@ internal static class WebhookTestData
 {
     public const string Secret = "test-webhook-secret";
 
+    public const string BaseSha = "fedcba9876543210fedcba9876543210fedcba98";
+
     public static string PullRequestPayload(string action = "opened", string sha = "0123456789abcdef0123456789abcdef01234567") =>
         JsonSerializer.Serialize(new
         {
             action,
             installation = new { id = 42 },
             repository = new { name = "sandbox", owner = new { login = "jbailey2900" } },
-            pull_request = new { number = 7, head = new { sha } },
+            pull_request = new { number = 7, head = new { sha }, @base = new { sha = BaseSha } },
         });
 
     public static HttpRequestMessage Request(string eventName, string json, string? signature = null, string? deliveryId = null)
