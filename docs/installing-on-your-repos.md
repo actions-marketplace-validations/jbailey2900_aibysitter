@@ -44,7 +44,9 @@ Optional. Path: `.github/aibysitter.json`. The App reads it from the base branch
 - Comments and trailing commas are allowed.
 - An invalid entry falls back to its default, is listed under **Config errors** in the summary and is annotated on its line of the config file.
 - Under `fail-on-errors`, any config error fails the check. Under `advisory`, config errors do not change the conclusion.
-- Editing the config file in a pull request makes it a changed file: outside `scope`, it gets a P004 finding. The pull request is reviewed with the base branch's config; the summary says the config changed, and config errors are those of the new version. The change applies to pull requests opened after it merges.
+- Config changes take effect only after they merge to the base branch. Reviews after that, including new commits on pull requests already open against that branch, use the merged version.
+- A pull request that edits `.github/aibysitter.json` is reviewed with the base version, and the summary says so. Config errors are reported for the edited version.
+- Editing the config file makes it a changed file: outside `scope`, it gets a P004 finding.
 
 Starter config:
 

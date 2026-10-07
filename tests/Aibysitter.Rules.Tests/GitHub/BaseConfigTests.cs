@@ -106,4 +106,10 @@ public class BaseConfigTests
         Assert.Equal(ReviewConclusion.Failure, report.Conclusion);
         Assert.DoesNotContain(fake.Calls, c => c.StartsWith("base content", StringComparison.Ordinal));
     }
+
+    [Theory]
+    [InlineData("Config changes take effect only after they merge to the base branch.")]
+    [InlineData("A pull request that edits `.github/aibysitter.json` is reviewed with the base version, and the summary says so.")]
+    public void InstallDoc_StatesBaseBranchConfig(string sentence) =>
+        Assert.Contains(sentence, File.ReadAllText(Path.Combine(Parity.NodeRunner.RepoRoot, "docs", "installing-on-your-repos.md")), StringComparison.Ordinal);
 }
