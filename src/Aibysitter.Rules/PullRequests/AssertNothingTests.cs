@@ -186,7 +186,7 @@ public sealed partial class AssertNothingTests : IPullRequestCheck
     [GeneratedRegex(@"^\s*(?:(?:public|private|protected|internal|static|async|override|virtual|sealed|new|unsafe|extern)\s+)+[\w<>\[\],.?() ]+?\s+(?<name>[A-Za-z_]\w*)\s*(?:<[^>]*>)?\s*\(")]
     private static partial Regex MethodDeclarationRegex();
 
-    [GeneratedRegex(@"\[\s*(?:Xunit\.)?(?:Fact|Theory|Test|TestCase|TestCaseSource|TestMethod|DataTestMethod)\b")]
+    [GeneratedRegex(@"^\s*\[\s*(?:Xunit\.)?(?:Fact|Theory|Test|TestCase|TestCaseSource|TestMethod|DataTestMethod)\b")]
     private static partial Regex TestAttributeRegex();
 
     [GeneratedRegex(@"\bSkip\s*=")]

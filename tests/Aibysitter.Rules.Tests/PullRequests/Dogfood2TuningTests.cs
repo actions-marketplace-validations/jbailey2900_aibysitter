@@ -121,6 +121,16 @@ public class Dogfood2TuningTests
     }
 
     [Fact]
+    public void P003_AttributeNamesInCommentsAndStrings_NotTests() =>
+        Assert.Empty(Run(new AssertNothingTests(), Added("src/Checks/PlaceholderIdentifiers.cs",
+            "/// <summary>Test-data attributes ([InlineData], [TestCase], [DataRow]) are skipped.</summary>",
+            "protected override IEnumerable<string> Keep(string line)",
+            "{",
+            "    var names = Regex.Matches(line, \"[Fact]\");",
+            "    return [];",
+            "}")));
+
+    [Fact]
     public void P003_IsInfo() => Assert.Equal(Severity.Info, new AssertNothingTests().Severity);
 
     // P005
