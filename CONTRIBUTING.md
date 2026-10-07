@@ -7,6 +7,7 @@
 
 ## Pull requests
 - Every pull request gets CI and the Aibysitter GitHub App's check, `Aibysitter review`.
+- `.github/aibysitter.json` disables P005 here: the check docs and test fixtures contain example credentials.
 - New packages need agreement in an issue first.
 
 ## Rule changes
