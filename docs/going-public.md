@@ -16,7 +16,7 @@ Steps in order. Repository settings paths are under `github.com/jbailey2900/aiby
 - [ ] Rules → Rulesets → new branch ruleset for `main`: require a pull request; require status checks `build-test` and `catalogs-windows`; block force pushes; restrict deletions.
 - [ ] Install the Aibysitter GitHub App on `jbailey2900/aibysitter` (`CONTRIBUTING.md` says every pull request gets its check).
 - [ ] Issues → Labels: create `false positive` (the False positive template applies it; `bug` and `enhancement` exist by default).
-- [ ] Secrets and variables → Actions → New repository secret `NUGET_API_KEY`: a nuget.org API key with Push scope for `Aibysitter.Cli`.
+- [ ] nuget.org → Trusted Publishing: policy `aibysitter-github-actions` (owner `aibysitter`, repository `jbailey2900/aibysitter`, workflow `release-cli.yml`, no environment) shows Active. Created 2026-10-07 while private: temporarily active for 7 days, then inactive. Restart the 7-day window before the CLI release; the first publish makes it permanent. No `NUGET_API_KEY` secret.
 
 ## After
 

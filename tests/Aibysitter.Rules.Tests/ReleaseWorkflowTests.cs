@@ -28,15 +28,28 @@ public class ReleaseWorkflowTests
         Assert.Contains("[ \"cli-v$version\" = \"$GITHUB_REF_NAME\" ]", ReleaseCli, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void ReleaseCli_PushesOnlyWhenPublic_WithApiKeySecret()
-    {
-        var push = Regex.Match(ReleaseCli, @"- name: Push to nuget\.org\n(?<body>(?:        .*\n)+)").Groups["body"].Value;
+    private static string Step(string name) =>
+        Regex.Match(ReleaseCli, @"- name: " + Regex.Escape(name) + @"\n(?<body>(?:        .*\n)+)").Groups["body"].Value;
 
+    [Fact]
+    public void ReleaseCli_JobMayRequestOidcToken() =>
+        Assert.Contains("  release:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: read\n      id-token: write\n", ReleaseCli, StringComparison.Ordinal);
+
+    [Fact]
+    public void ReleaseCli_PushesOnlyWhenPublic_WithTrustedPublishingKey()
+    {
+        var login = Step("NuGet login");
+        var push = Step("Push to nuget.org");
+
+        Assert.Contains("id: login", login, StringComparison.Ordinal);
+        Assert.Contains("if: ${{ !github.event.repository.private }}", login, StringComparison.Ordinal);
+        Assert.Matches(@"uses: NuGet/login@[0-9a-f]{40} ", login);
+        Assert.Contains("user: jbailey2900", login, StringComparison.Ordinal);
         Assert.Contains("if: ${{ !github.event.repository.private }}", push, StringComparison.Ordinal);
-        Assert.Contains("NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}", push, StringComparison.Ordinal);
+        Assert.Contains("NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}", push, StringComparison.Ordinal);
         Assert.Contains("--api-key \"$NUGET_API_KEY\"", push, StringComparison.Ordinal);
-        Assert.Single(Regex.Matches(ReleaseCli, @"secrets\."));
+        Assert.True(ReleaseCli.IndexOf("- name: NuGet login", StringComparison.Ordinal) < ReleaseCli.IndexOf("- name: Push to nuget.org", StringComparison.Ordinal));
+        Assert.DoesNotMatch(@"secrets\.", ReleaseCli);
     }
 
     [Theory]
