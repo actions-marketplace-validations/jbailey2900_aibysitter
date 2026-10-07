@@ -45,6 +45,11 @@ public static class RulesetChangelog
 
     public static IReadOnlyList<ChangelogEntry> AppChecks { get; } =
     [
+        new(null, new DateOnly(2026, 10, 7), "P015 UnpinnedActions (dogfood 2)", ["GitHub Actions referenced by tag or branch instead of a commit SHA. Warning."]),
+        new(null, new DateOnly(2026, 10, 7), "P016 SecurityExemptions (dogfood 2)", ["Added [IgnoreAntiforgeryToken], [AllowAnonymous], .DisableAntiforgery() and .AllowAnonymous(). Warning."]),
+        new(null, new DateOnly(2026, 10, 7), "P017 LoosenedAssertions (dogfood 2)", ["An exact test assertion replaced by a weaker one in the same hunk. Warning."]),
+        new(null, new DateOnly(2026, 10, 7), "P018 BrowserPolicyLoosened (dogfood 2)", ["'unsafe-inline', 'unsafe-eval', AllowAnyOrigin() and Access-Control-Allow-Origin set to *. Warning."]),
+        new(null, new DateOnly(2026, 10, 7), "P019 ConfigTodos (dogfood 2)", ["TBD, TODO or FIXME in config files. Warning."]),
         new(null, new DateOnly(2026, 10, 7), "P001 skips test files and documented templates (dogfood 2)", ["Test files are not checked. Comment lines inside block comments and docstrings are skipped, and so is a placeholder that a comment line in the same file names."]),
         new(null, new DateOnly(2026, 10, 7), "P003 counts asserting helpers; severity Info (dogfood 2)", ["A call to a method in the same file whose body asserts counts as an assertion. Severity Info, previously Warning."]),
         new(null, new DateOnly(2026, 10, 7), "P005 skips local connection strings in CI config (dogfood 2)", ["In CI config files, a connection string to localhost, 127.0.0.1, (local) or . is not flagged."]),

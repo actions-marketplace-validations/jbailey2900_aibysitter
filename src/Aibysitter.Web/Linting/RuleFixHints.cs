@@ -56,6 +56,9 @@ public sealed class RuleFixHints(LintEngine engine, PullRequestReviewer reviewer
         "P011" => Default(new ChangedFile(".github/workflows/ci.yml", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n-name: CI\n+name: Build", HeadContent: "name: Build")),
         "P013" => Default(Added("src/Api/bin/Debug/net10.0/Api.dll", "x"), Added(".env", "API_KEY=1")),
         "P014" => Default(Added("CLAUDE.md", "- Handle errors properly.")),
+        "P015" => Default(Added(".github/workflows/ci.yml", doc.BadExample)),
+        "P017" => Default(new ChangedFile("tests/Api/CacheTests.cs", FileChangeStatus.Modified, "@@ -10,1 +10,1 @@\n" + doc.BadExample.Replace("- ", "-", StringComparison.Ordinal).Replace("\n+ ", "\n+", StringComparison.Ordinal))),
+        "P019" => Default(Added("src/Api/appsettings.json", doc.BadExample)),
         _ => Default(Added("src/Example.cs", doc.BadExample.Split('\n'))),
     };
 

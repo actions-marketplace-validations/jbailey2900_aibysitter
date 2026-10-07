@@ -56,6 +56,11 @@ Reviews pull requests and posts a check named `Aibysitter review`, with an annot
 | P012 | DebugLeftovers | Info |
 | P013 | CommittedArtifacts | Error |
 | P014 | RulesFileLint (R001–R016 on changed rules files) | Per rule |
+| P015 | UnpinnedActions | Warning |
+| P016 | SecurityExemptions | Warning |
+| P017 | LoosenedAssertions (test files) | Warning |
+| P018 | BrowserPolicyLoosened | Warning |
+| P019 | ConfigTodos | Warning |
 
 Optional repo config, `.github/aibysitter.json`, read from the pull request's head commit:
 
