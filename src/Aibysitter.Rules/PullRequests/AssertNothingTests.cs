@@ -2,12 +2,15 @@ using System.Text.RegularExpressions;
 
 namespace Aibysitter.Rules.PullRequests;
 
-/// <summary>C# only: flags xUnit/NUnit/MSTest test methods touched by the PR whose body contains no assertion.</summary>
+/// <summary>
+/// C# only: flags xUnit/NUnit/MSTest test methods touched by the PR whose body contains no assertion.
+/// A call to a method declared in the same file whose body asserts counts as an assertion (one level).
+/// </summary>
 public sealed partial class AssertNothingTests : IPullRequestCheck
 {
     public string Id => "P003";
     public string Title => "Assert-nothing tests";
-    public Severity Severity => Severity.Warning;
+    public Severity Severity => Severity.Info;
 
     public IEnumerable<PullRequestFinding> Evaluate(PullRequestContext context)
     {
@@ -23,6 +26,7 @@ public sealed partial class AssertNothingTests : IPullRequestCheck
 
             var added = file.AddedLines.Select(l => l.NewLine!.Value).ToHashSet();
             var lines = content.Replace("\r\n", "\n").Split('\n');
+            var helpers = AssertingHelpers(lines);
 
             foreach (var method in FindTestMethods(lines))
             {
@@ -31,7 +35,7 @@ public sealed partial class AssertNothingTests : IPullRequestCheck
                     continue;
                 }
 
-                if (!AssertionRegex().IsMatch(method.Body))
+                if (!AssertionRegex().IsMatch(method.Body) && !helpers.Any(h => CallsMethod(method.Body, h)))
                 {
                     yield return new PullRequestFinding(
                         Id,
@@ -159,6 +163,28 @@ public sealed partial class AssertNothingTests : IPullRequestCheck
     }
 
     private sealed record TestMethod(string Name, int StartLine, int SignatureLine, int EndLine, string Body, bool Skipped);
+
+    /// <summary>Names of methods declared in the file whose body contains an assertion.</summary>
+    private static HashSet<string> AssertingHelpers(string[] lines)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var declaration = MethodDeclarationRegex().Match(lines[i]);
+            if (declaration.Success && AssertionRegex().IsMatch(ReadBody(lines, i).Body))
+            {
+                names.Add(declaration.Groups["name"].Value);
+            }
+        }
+
+        return names;
+    }
+
+    private static bool CallsMethod(string body, string name) =>
+        Regex.IsMatch(body, $@"(?<![\w.])(?:this\.)?{Regex.Escape(name)}\s*(?:<[^>]*>)?\s*\(");
+
+    [GeneratedRegex(@"^\s*(?:(?:public|private|protected|internal|static|async|override|virtual|sealed|new|unsafe|extern)\s+)+[\w<>\[\],.?() ]+?\s+(?<name>[A-Za-z_]\w*)\s*(?:<[^>]*>)?\s*\(")]
+    private static partial Regex MethodDeclarationRegex();
 
     [GeneratedRegex(@"\[\s*(?:Xunit\.)?(?:Fact|Theory|Test|TestCase|TestCaseSource|TestMethod|DataTestMethod)\b")]
     private static partial Regex TestAttributeRegex();

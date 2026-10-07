@@ -1,10 +1,13 @@
+using System.Text.RegularExpressions;
+
 namespace Aibysitter.Rules.PullRequests;
 
 /// <summary>
 /// Credential-like values on added lines of any file. Uses the same patterns as R009.
-/// In code files, a connection-string password counts only inside a string literal.
+/// In code files, a connection-string password counts only inside a string literal. In CI config files, a
+/// connection string to localhost, 127.0.0.1, (local) or . is a throwaway test credential and is not flagged.
 /// </summary>
-public sealed class SecretsInDiff : IPullRequestCheck
+public sealed partial class SecretsInDiff : IPullRequestCheck
 {
     private const string ConnectionPasswordKind = "Password in connection string";
 
@@ -20,10 +23,12 @@ public sealed class SecretsInDiff : IPullRequestCheck
         {
             var code = FileKinds.IsCode(file.Path);
             var hashComments = CodeText.UsesHashComments(file.Path);
+            var ci = CiConfigEdited.IsCiConfig(file.Path);
             foreach (var line in file.AddedLines)
             {
                 var matches = SecretPatterns.Find(line.Text)
                     .Where(m => !code || m.Kind != ConnectionPasswordKind || CodeText.IsInsideStringLiteral(line.Text, m.Column - 1, hashComments))
+                    .Where(m => !ci || m.Kind != ConnectionPasswordKind || !LocalServerRegex().IsMatch(line.Text))
                     .ToList();
                 if (matches.Count > 0)
                 {
@@ -37,4 +42,7 @@ public sealed class SecretsInDiff : IPullRequestCheck
             }
         }
     }
+
+    [GeneratedRegex(@"\b(?:Server|Data\s+Source|Host|Address|Addr)\s*=\s*(?:tcp:)?(?:localhost|127\.0\.0\.1|\(local\)|\.)(?=\s*[,;:\\]|\s*$)", RegexOptions.IgnoreCase)]
+    private static partial Regex LocalServerRegex();
 }

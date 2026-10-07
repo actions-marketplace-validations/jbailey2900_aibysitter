@@ -221,7 +221,6 @@ public class DebugLeftoversTests
     [InlineData("src/a.ts", "console.debug(x)", "console.debug(")]
     [InlineData("src/a.js", "  debugger;", "debugger;")]
     [InlineData("src/A.cs", "Debug.WriteLine(total);", "Debug.WriteLine(")]
-    [InlineData("src/a.py", "    print(order)", "print(")]
     [InlineData("src/a.py", "    breakpoint()", "breakpoint()")]
     [InlineData("src/a.py", "import pdb; pdb.set_trace()", "import pdb")]
     [InlineData("app/a.rb", "binding.pry", "binding.pry")]
@@ -234,6 +233,7 @@ public class DebugLeftoversTests
     }
 
     [Theory]
+    [InlineData("src/a.py", "print(order)")]
     [InlineData("tests/test_a.py", "print(x)")]
     [InlineData("src/a.test.ts", "console.log(x)")]
     [InlineData("src/a.ts", "// console.log(x)")]

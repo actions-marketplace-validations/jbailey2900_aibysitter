@@ -28,7 +28,7 @@ public class CheckRunReportTests
     [Fact]
     public void Title_CountsNotices_WhenAny()
     {
-        var report = Build(RepoConfig.Default, [], Added(".github/workflows/ci.yml", "on: push"), Added("app/run.py", "print(x)"));
+        var report = Build(RepoConfig.Default, [], Added(".github/workflows/ci.yml", "on: push"), Added(".github/workflows/deploy.yml", "on: push"));
 
         Assert.Equal("2 findings (0 errors, 0 warnings, 2 notices)", report.Title);
     }
@@ -36,7 +36,7 @@ public class CheckRunReportTests
     [Fact]
     public void Title_OneNotice_Singular()
     {
-        var report = Build(RepoConfig.Default, [], Added("src/A.cs", "var k = ::KEY::;"), Added("app/run.py", "print(x)"));
+        var report = Build(RepoConfig.Default, [], Added("src/A.cs", "var k = ::KEY::;"), Added(".github/workflows/ci.yml", "on: push"));
 
         Assert.Equal("2 findings (1 error, 0 warnings, 1 notice)", report.Title);
     }
