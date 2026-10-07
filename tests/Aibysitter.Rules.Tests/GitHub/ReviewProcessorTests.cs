@@ -13,6 +13,27 @@ public class ReviewProcessorTests
         new(fake, new PullRequestReviewer(), NullLogger<ReviewProcessor>.Instance);
 
     [Fact]
+    public async Task InProgressFails_ReviewStillCompletes()
+    {
+        var fake = new FakeGitHubGateway { ThrowOnInProgress = new HttpRequestException("404") };
+        fake.Files.Add(Added("src/A.cs", "var k = ::KEY::;"));
+
+        Assert.True(await Processor(fake).ProcessAsync(Job, CancellationToken.None));
+
+        var report = await fake.Completed.Task;
+        Assert.Equal("1 finding (1 error, 0 warnings)", report.Title);
+    }
+
+    [Fact]
+    public async Task CompleteAndErrorCloseFail_ReturnsFalse()
+    {
+        var fake = new FakeGitHubGateway { ThrowOnComplete = new HttpRequestException("404") };
+
+        Assert.False(await Processor(fake).ProcessAsync(Job, CancellationToken.None));
+        Assert.Equal(2, fake.Calls.Count(c => c == "complete 99"));
+    }
+
+    [Fact]
     public async Task Findings_CompleteNeutral_UnderDefaultConfig()
     {
         var fake = new FakeGitHubGateway();
