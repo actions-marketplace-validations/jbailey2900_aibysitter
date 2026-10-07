@@ -26,7 +26,7 @@ public class GoingPublicChecklistTests
     [InlineData("refs/pull/1–14/head")]
     [InlineData("Private vulnerability reporting")]
     [InlineData("`build-test` and `catalogs-windows`")]
-    [InlineData("`NUGET_API_KEY`")]
+    [InlineData("`aibysitter-github-actions`")]
     [InlineData("`false positive`")]
     [InlineData("docs/brand/social-preview-1280x640.png")]
     [InlineData("`release-cli.yml`")]
