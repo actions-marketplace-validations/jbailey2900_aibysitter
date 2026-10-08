@@ -38,7 +38,21 @@ Rules: [aibysitting.net/Rules](https://aibysitting.net/Rules). Ruleset version a
 
 ## GitHub App
 
-Reviews pull requests and posts a check named `Aibysitter review`, with an annotation on each flagged line.
+Install the App, add a three-line config, and make **Aibysitter review** a required check. A pull request that adds an unpinned action, a new dependency, a leaked key or a security exemption then cannot merge until a human looks.
+
+```json
+{
+  "conclusion": "fail-on-warnings"
+}
+```
+
+Save it as `.github/aibysitter.json` on the default branch, then require the **Aibysitter review** status check on that branch (**Settings → Rules → Rulesets**, or **Settings → Branches**).
+
+- `fail-on-errors` is the lighter setting: only Error findings block.
+- `advisory` is the default and the trial mode: every finding is an annotation and nothing blocks.
+- Bot dependency bumps (Dependabot, Renovate) block too, by design: a bot bumping a dependency is a change a human should sign off on.
+
+Every review posts a check named `Aibysitter review`, with an annotation on each flagged line.
 
 | ID | Check | Severity |
 |---|---|---|
@@ -59,19 +73,19 @@ Reviews pull requests and posts a check named `Aibysitter review`, with an annot
 | P018 | BrowserPolicyLoosened | Warning |
 | P019 | ConfigTodos | Warning |
 
-Optional repo config, `.github/aibysitter.json`, read from the pull request's base branch:
+All config keys, read from the pull request's base branch:
 
 ```json
 {
   "scope": ["src/**", "tests/**"],
-  "conclusion": "fail-on-errors",
+  "conclusion": "fail-on-warnings",
   "disable": ["P002"],
   "comment": true
 }
 ```
 
-- `scope`: path globs from the repo root. `**` must be a whole segment; `{a,b}`, `[...]`, `!` and `\` are rejected. Turns on P004. Not set: P004 is off.
-- `conclusion`: `advisory` (default) reports findings as neutral. `fail-on-warnings` fails the check on any Warning or Error finding (P014: Error only) or config error. `fail-on-errors` fails it on any Error finding or config error.
+- `scope`: path globs from the repo root. `**` must be a whole segment; `{a,b}`, `[...]`, `!` and `\` are rejected. Turns on P004, and is read only by P004. Not set: P004 is off.
+- `conclusion`: `fail-on-warnings` fails the check on any Warning or Error finding (P014: Error only) or config error. `fail-on-errors` fails it on any Error finding or config error. `advisory` (default) reports findings as neutral.
 - `disable`: check IDs to skip, and rule IDs (R001–R016) to skip inside P014.
 - `ignore`: path globs, or `{ "paths": [...], "checks": [...] }`, skipped by content checks (not P004, P008, P011, P013, P014).
 - The config is read from the base branch; a pull request that changes it is reviewed with the base version.

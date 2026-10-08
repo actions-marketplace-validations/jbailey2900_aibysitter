@@ -11,7 +11,7 @@ Steps in order. Repository settings paths are under `github.com/jbailey2900/aiby
 
 - [x] General → Danger Zone → Change visibility → Public. (2026-10-08)
 - [x] Security → Private vulnerability reporting: on (`SECURITY.md` and the issue chooser link to it).
-- [ ] Security → Secret scanning and push protection: on.
+- [x] Security → Secret scanning and push protection: on.
 - [x] Security → Dependabot alerts: on.
 - [x] Rules → Rulesets → new branch ruleset for `main`: require a pull request; require status checks `build-test` and `catalogs-windows`; block force pushes; restrict deletions.
 - [x] Install the Aibysitter GitHub App on `jbailey2900/aibysitter` (`CONTRIBUTING.md` says every pull request gets its check).
