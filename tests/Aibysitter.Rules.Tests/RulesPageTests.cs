@@ -65,9 +65,9 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
-    public async Task CheckPage_P003_IsInfo()
+    public async Task CheckPage_P011_IsInfo()
     {
-        var html = await factory.CreateClient().GetStringAsync("/Rules/P003");
+        var html = await factory.CreateClient().GetStringAsync("/Rules/P011");
 
         Assert.Contains("<dd>Info</dd>", html);
         Assert.DoesNotContain("fails the check when the repo sets fail-on-errors", html);
@@ -76,6 +76,8 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     [Theory]
     [InlineData("/Rules/R999")]
     [InlineData("/Rules/P999")]
+    [InlineData("/Rules/P003")]
+    [InlineData("/Rules/P012")]
     [InlineData("/Rules/R099")]
     public async Task RulePage_UnknownId_Returns404(string path)
     {
@@ -107,7 +109,7 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
 
     [Theory]
     [InlineData("/Notes/R003", "/Rules/R003")]
-    [InlineData("/Notes/p003", "/Rules/P003")]
+    [InlineData("/Notes/p001", "/Rules/P001")]
     public async Task OldRuleUrl_RedirectsPermanently(string from, string to)
     {
         var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });

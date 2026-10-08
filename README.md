@@ -44,7 +44,6 @@ Reviews pull requests and posts a check named `Aibysitter review`, with an annot
 |---|---|---|
 | P001 | PlaceholderIdentifiers | Error |
 | P002 | TodoStubs | Warning |
-| P003 | AssertNothingTests (C# only) | Info |
 | P004 | OutOfScopeFiles | Error |
 | P005 | SecretsInDiff | Error |
 | P006 | SkippedTests | Error |
@@ -53,7 +52,6 @@ Reviews pull requests and posts a check named `Aibysitter review`, with an annot
 | P009 | SwallowedExceptions | Warning |
 | P010 | NewDependencies | Warning |
 | P011 | CiConfigEdited | Info |
-| P012 | DebugLeftovers | Info |
 | P013 | CommittedArtifacts | Error |
 | P014 | RulesFileLint (R001–R016 on changed rules files) | Per rule |
 | P015 | UnpinnedActions | Warning |

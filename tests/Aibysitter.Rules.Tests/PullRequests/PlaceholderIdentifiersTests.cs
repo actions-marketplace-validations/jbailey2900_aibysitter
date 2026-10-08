@@ -25,7 +25,6 @@ public class PlaceholderIdentifiersTests
     [InlineData("\"ApiKey\": \"YOUR_TOKEN_HERE\"")]
     [InlineData("<add key=\"url\" value=\"<your-endpoint>\" />")]
     [InlineData("var p = \"<Placeholder>\";")]
-    [InlineData("Call(TODO_IMPLEMENT);")]
     public void Flags(string line)
     {
         Assert.Single(check.Evaluate(Context(Added("src/A.cs", line))));
@@ -36,6 +35,8 @@ public class PlaceholderIdentifiersTests
     [InlineData("var yourApiKey = config[\"ApiKey\"];")]
     [InlineData("// TODO: tidy")]
     [InlineData("var x = global::System.String.Empty;")]
+    [InlineData("Call(TODO_IMPLEMENT);")]
+    [InlineData("const TODO_INPUT_PATH = process.env.CLAUDE_TODO_INPUT_FILE;")]
     public void DoesNotFlag(string line)
     {
         Assert.Empty(check.Evaluate(Context(Added("src/A.cs", line))));

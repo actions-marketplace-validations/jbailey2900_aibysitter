@@ -18,7 +18,7 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
 
         Assert.DoesNotContain("coming soon", html, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("fail-on-errors", html);
-        Assert.Contains("Multiply_Works", html);
+        Assert.Contains("CI config modified: .github/workflows/ci.yml", html);
     }
 
     [Fact]

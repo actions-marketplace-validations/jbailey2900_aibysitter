@@ -89,50 +89,6 @@ public class Dogfood2TuningTests
     public void P001_PendingValues_StillFlagged(string path, string line) =>
         Assert.Single(Run(new PlaceholderIdentifiers(), Added(path, line)));
 
-    // P003
-
-    private const string HelperDelegation = """
-        public class GuardTests
-        {
-            [Theory]
-            [InlineData("omitted")]
-            public Task Invite_needs_a_decision(string caseKey) =>
-                RunAsync(caseKey);
-
-            private async Task RunAsync(string caseKey)
-            {
-                var result = await SeedAsync(caseKey);
-                Assert.Equal(caseKey, result);
-            }
-        }
-        """;
-
-    [Fact]
-    public void P003_HelperThatAsserts_CountsAsAssertion() =>
-        Assert.Empty(Run(new AssertNothingTests(), Added("tests/GuardTests.cs", HelperDelegation.Split('\n'))));
-
-    [Fact]
-    public void P003_HelperWithoutAssertion_StillFlagged()
-    {
-        var source = HelperDelegation.Replace("Assert.Equal(caseKey, result);", "_ = result;", StringComparison.Ordinal);
-
-        var finding = Assert.Single(Run(new AssertNothingTests(), Added("tests/GuardTests.cs", source.Split('\n'))));
-        Assert.Contains("Invite_needs_a_decision", finding.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void P003_AttributeNamesInCommentsAndStrings_NotTests() =>
-        Assert.Empty(Run(new AssertNothingTests(), Added("src/Checks/PlaceholderIdentifiers.cs",
-            "/// <summary>Test-data attributes ([InlineData], [TestCase], [DataRow]) are skipped.</summary>",
-            "protected override IEnumerable<string> Keep(string line)",
-            "{",
-            "    var names = Regex.Matches(line, \"[Fact]\");",
-            "    return [];",
-            "}")));
-
-    [Fact]
-    public void P003_IsInfo() => Assert.Equal(Severity.Info, new AssertNothingTests().Severity);
-
     // P005
 
     [Theory]
@@ -150,11 +106,4 @@ public class Dogfood2TuningTests
     public void P005_RemoteOrNonCi_StillFlagged(string path, string line) =>
         Assert.Single(Run(new SecretsInDiff(), Added(path, line)));
 
-    // P012
-
-    [Theory]
-    [InlineData("docs/brand/build.py", "print(\"built\", OUT)")]
-    [InlineData("app/orders.py", "    print(order)")]
-    public void P012_Print_NotFlagged(string path, string line) =>
-        Assert.Empty(Run(new DebugLeftovers(), Added(path, line)));
 }
