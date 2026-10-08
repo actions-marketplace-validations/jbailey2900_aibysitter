@@ -45,6 +45,7 @@ public static class RulesetChangelog
 
     public static IReadOnlyList<ChangelogEntry> AppChecks { get; } =
     [
+        new(null, new DateOnly(2026, 10, 8), "Repo config: conclusion fail-on-warnings", ["Fails the check on any Warning or Error finding, or a config error. P014 fails only when a rule fires at Error. Info findings never fail the check."]),
         new(null, new DateOnly(2026, 10, 8), "P003 AssertNothingTests withdrawn", ["No true positives in dogfood 1–3. The ID stays reserved."]),
         new(null, new DateOnly(2026, 10, 8), "P012 DebugLeftovers withdrawn", ["No true positives in dogfood 1–3 or corpus PR pass 1. The ID stays reserved."]),
         new(null, new DateOnly(2026, 10, 8), "P001 drops TODO_… (corpus PR pass 1)", ["TODO_ names are not flagged."]),

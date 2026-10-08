@@ -36,14 +36,14 @@ Optional. Path: `.github/aibysitter.json`. The App reads it from the base branch
 | Key | Value | Default |
 |---|---|---|
 | `scope` | Path globs from the repository root. `**` spans folders and must be a whole segment (`**/*.cs`, not `**.cs`); `*` and `?` stay within one. Case-sensitive. Not supported: `{a,b}`, `[...]`, `!`, `\`. Turns on P004. Read only by P004; other checks review every changed file. | Not set; P004 off |
-| `conclusion` | `advisory`: findings report as `neutral`. `fail-on-errors`: any Error finding fails the check. | `advisory` |
+| `conclusion` | `advisory`: findings report as `neutral` (trial mode). `fail-on-warnings`: any Warning or Error finding fails the check; P014 fails only when a rule fires at Error. `fail-on-errors`: any Error finding fails the check. Info findings never fail the check. | `advisory` |
 | `disable` | Check IDs (`P001`–`P019`) skip that check. Rule IDs (`R001`–`R016`) skip that rule inside P014. | None |
 | `ignore` | Entries are a path glob (skipped by every content check) or `{ "paths": [globs], "checks": [IDs] }` (skipped by those checks only). Globs as in `scope`. P004, P008, P011, P013 and P014 read paths or rules files and do not apply `ignore`. Up to 50 entries. The summary lists the entries and how many changed files they match. The only key that removes files from checks. | None |
 | `comment` | `true`: one comment on the pull request with the summary table and up to 25 findings linked to their lines, updated on each new commit. No comment is created while there are no findings; turning it off leaves an existing comment as it is. | `false` |
 
 - Comments and trailing commas are allowed.
 - An invalid entry falls back to its default, is listed under **Config errors** in the summary and is annotated on its line of the config file.
-- Under `fail-on-errors`, any config error fails the check. Under `advisory`, config errors do not change the conclusion.
+- Under `fail-on-warnings` and `fail-on-errors`, any config error fails the check. Under `advisory`, config errors do not change the conclusion.
 - Config changes take effect only after they merge to the base branch. Reviews after that, including new commits on pull requests already open against that branch, use the merged version.
 - A pull request that edits `.github/aibysitter.json` is reviewed with the base version, and the summary says so. Config errors are reported for the edited version.
 - Editing the config file makes it a changed file: outside `scope`, it gets a P004 finding.
@@ -79,7 +79,7 @@ Precedence: comments in the file, then rule IDs in `disable`, then `"disable": [
 
 ## Failing the build
 
-1. Set `"conclusion": "fail-on-errors"`.
+1. Set `"conclusion": "fail-on-warnings"` (or `"fail-on-errors"` to fail on Error findings only).
 2. Under **Settings → Branches** (or **Rules → Rulesets**), require the **Aibysitter review** status check on the default branch.
 3. Disable noisy checks first: P011 (CI config edited), R013 (prose paragraphs). P011 is Info; it never fails the check, but it adds annotations.
 

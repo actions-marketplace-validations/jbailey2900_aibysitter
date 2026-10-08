@@ -60,7 +60,7 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
 
         Assert.Contains("<h1>P001 PlaceholderIdentifiers</h1>", html);
         Assert.Contains("Pull requests, through the", html);
-        Assert.Contains("fails the check when the repo sets fail-on-errors", html);
+        Assert.Contains("<dd>Error (fails the check under fail-on-warnings and fail-on-errors)</dd>", html);
         Assert.DoesNotContain("per finding", html);
     }
 
@@ -79,8 +79,14 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
         var html = await factory.CreateClient().GetStringAsync("/Rules/P011");
 
         Assert.Contains("<dd>Info</dd>", html);
-        Assert.DoesNotContain("fails the check when the repo sets fail-on-errors", html);
+        Assert.DoesNotContain("fails the check", html);
     }
+
+    [Theory]
+    [InlineData("/Rules/P015", "<dd>Warning (fails the check under fail-on-warnings)</dd>")]
+    [InlineData("/Rules/P014", "<dd>Per rule (fails the check under fail-on-warnings or fail-on-errors when a rule fires at Error)</dd>")]
+    public async Task CheckPage_SeverityStatesWhichModesFail(string path, string expected) =>
+        Assert.Contains(expected, await factory.CreateClient().GetStringAsync(path));
 
     [Theory]
     [InlineData("/Rules/R999")]

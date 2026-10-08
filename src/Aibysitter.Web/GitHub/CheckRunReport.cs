@@ -57,7 +57,7 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
             title += $"; {configErrors.Count} config error{(configErrors.Count == 1 ? "" : "s")}";
         }
 
-        var conclusion = config.Conclusion == ConclusionMode.FailOnErrors && configErrors.Count > 0 ? ReviewConclusion.Failure : review.Conclusion;
+        var conclusion = config.FailsCheck && configErrors.Count > 0 ? ReviewConclusion.Failure : review.Conclusion;
 
         var summary = new StringBuilder();
         if (configNote is not null)
@@ -66,7 +66,7 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
             summary.AppendLine();
         }
 
-        summary.AppendLine($"Conclusion mode: `{(config.Conclusion == ConclusionMode.FailOnErrors ? "fail-on-errors" : "advisory")}`. Scope: {(config.HasScope ? string.Join(", ", config.Scope.Select(g => $"`{g.Pattern}`")) : "not declared")}.");
+        summary.AppendLine($"Conclusion mode: `{RepoConfig.ConclusionName(config.Conclusion)}`. Scope: {(config.HasScope ? string.Join(", ", config.Scope.Select(g => $"`{g.Pattern}`")) : "not declared")}.");
         if (config.Ignore.Count > 0)
         {
             var ignored = files.Count(f => config.IsIgnoredByAny(f.Path));
@@ -111,8 +111,8 @@ public sealed record CheckRunReport(ReviewConclusion Conclusion, string Title, s
         if (configErrors.Count > 0)
         {
             summary.AppendLine();
-            summary.AppendLine(config.Conclusion == ConclusionMode.FailOnErrors
-                ? "Config errors (defaults used for these; the check fails under fail-on-errors):"
+            summary.AppendLine(config.FailsCheck
+                ? $"Config errors (defaults used for these; the check fails under {RepoConfig.ConclusionName(config.Conclusion)}):"
                 : "Config errors (defaults used for these):");
             foreach (var error in configErrors)
             {

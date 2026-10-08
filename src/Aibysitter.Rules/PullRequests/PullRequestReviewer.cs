@@ -54,10 +54,10 @@ public sealed class PullRequestReviewer
             return ReviewConclusion.Success;
         }
 
-        if (config.Conclusion == ConclusionMode.FailOnErrors)
+        if (config.FailsCheck)
         {
             var severityByCheck = Checks.ToDictionary(c => c.Id, c => c.Severity, StringComparer.Ordinal);
-            if (findings.Any(f => f.SeverityOr(severityByCheck[f.CheckId]) == Severity.Error))
+            if (findings.Any(f => Fails(f.CheckId, f.SeverityOr(severityByCheck[f.CheckId]), config.Conclusion)))
             {
                 return ReviewConclusion.Failure;
             }
@@ -65,6 +65,17 @@ public sealed class PullRequestReviewer
 
         return ReviewConclusion.Neutral;
     }
+
+    /// <summary>
+    /// fail-on-errors: Error findings fail. fail-on-warnings: Warning and Error findings fail, except P014, which fails
+    /// only at Error. Info never fails.
+    /// </summary>
+    public static bool Fails(string checkId, Severity severity, ConclusionMode mode) => mode switch
+    {
+        ConclusionMode.FailOnErrors => severity == Severity.Error,
+        ConclusionMode.FailOnWarnings => severity == Severity.Error || (severity == Severity.Warning && checkId != RulesFileLint.CheckId),
+        _ => false,
+    };
 
     public static IReadOnlyList<IPullRequestCheck> DiscoverChecks() =>
         typeof(IPullRequestCheck).Assembly
