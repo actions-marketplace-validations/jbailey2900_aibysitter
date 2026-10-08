@@ -65,6 +65,15 @@ public class RulesPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task CheckPage_P008_ListsKnownLimit()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/Rules/P008");
+
+        Assert.Contains("<dt>Known limits</dt>", html);
+        Assert.Contains("A non-test file whose name ends in Test or Tests", html);
+    }
+
+    [Fact]
     public async Task CheckPage_P011_IsInfo()
     {
         var html = await factory.CreateClient().GetStringAsync("/Rules/P011");
