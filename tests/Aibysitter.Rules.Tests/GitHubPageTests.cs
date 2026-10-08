@@ -63,6 +63,21 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
         Assert.Contains("a bot bumping a dependency is a change a human should sign off on", lead);
     }
 
+    [Fact]
+    public void Readme_GitHubApp_LeadsWithTheGate()
+    {
+        var readme = File.ReadAllText(Path.Combine(Parity.NodeRunner.RepoRoot, "README.md")).ReplaceLineEndings("\n");
+        var section = readme[readme.IndexOf("## GitHub App", StringComparison.Ordinal)..readme.IndexOf("## API", StringComparison.Ordinal)];
+        var lead = section[..section.IndexOf("| ID |", StringComparison.Ordinal)];
+
+        Assert.Contains(GateSentence, lead);
+        Assert.Contains("```json\n{\n  \"conclusion\": \"fail-on-warnings\"\n}\n```", lead);
+        Assert.Contains("`fail-on-errors` is the lighter setting", lead);
+        Assert.Contains("`advisory` is the default and the trial mode", lead);
+        Assert.Contains("a bot bumping a dependency is a change a human should sign off on", lead);
+        Assert.DoesNotContain("\"conclusion\": \"fail-on-errors\"", section);
+    }
+
     [Theory]
     [InlineData("P015")]
     [InlineData("P010")]
