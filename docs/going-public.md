@@ -4,8 +4,8 @@ Steps in order. Repository settings paths are under `github.com/jbailey2900/aiby
 
 ## Before
 
-- [ ] GitHub Support has removed `refs/pull/1–14/head` and run garbage collection. Check from a fresh mirror clone: none of the 35 old commit SHAs is fetchable.
-- [x] History secrets scan (2026-10-03): every blob reachable from the 64 refs (1,076 blobs) against `SecretPatterns`. 60 matches, all test data, documentation examples or the CI test container password. No credentials.
+- [x] GitHub Support has removed `refs/pull/1–14/head` and run garbage collection. Checked 2026-10-08 from a fresh mirror clone (57 refs: `main`, `refs/pull/15–70/head`): none of the 35 old commit SHAs is fetchable by hash or found by the commits API.
+- [x] History secrets scan (2026-10-03, repeated 2026-10-08): every reachable blob against `SecretPatterns`. 2026-10-08: 57 refs, 1,197 blobs, 123 matches, all test data, documentation examples or the CI test container password. No credentials.
 
 ## At the flip
 
@@ -14,8 +14,8 @@ Steps in order. Repository settings paths are under `github.com/jbailey2900/aiby
 - [ ] Security → Secret scanning and push protection: on.
 - [ ] Security → Dependabot alerts: on.
 - [ ] Rules → Rulesets → new branch ruleset for `main`: require a pull request; require status checks `build-test` and `catalogs-windows`; block force pushes; restrict deletions.
-- [ ] Install the Aibysitter GitHub App on `jbailey2900/aibysitter` (`CONTRIBUTING.md` says every pull request gets its check).
-- [ ] Issues → Labels: create `false positive` (the False positive template applies it; `bug` and `enhancement` exist by default).
+- [x] Install the Aibysitter GitHub App on `jbailey2900/aibysitter` (`CONTRIBUTING.md` says every pull request gets its check).
+- [x] Issues → Labels: create `false positive` (the False positive template applies it; `bug` and `enhancement` exist by default).
 - [ ] nuget.org → Trusted Publishing: policy `aibysitter-github-actions` (owner `aibysitter`, repository `jbailey2900/aibysitter`, workflow `release-cli.yml`, no environment) shows Active. Created 2026-10-07 while private: temporarily active for 7 days, then inactive. Restart the 7-day window before the CLI release; the first publish makes it permanent. No `NUGET_API_KEY` secret.
 
 ## After
