@@ -4,6 +4,9 @@
 # Inputs (env): REPORT (report.json), GH_TOKEN, GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_EVENT_PATH.
 set -uo pipefail
 
+# jq on Windows writes CRLF.
+jq() { command jq "$@" | tr -d '\r'; }
+
 report="${REPORT:?}"
 name="Aibysitter rules"
 batch=50

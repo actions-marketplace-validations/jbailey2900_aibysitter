@@ -66,7 +66,11 @@ jobs:
           test -z "$NONE_GRADE"
 
   failing:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
     steps:
@@ -105,6 +109,7 @@ jobs:
           BELOW_OUTCOME: ${{ steps.below.outcome }}
           BELOW_GRADE: ${{ steps.below.outputs.grade }}
           MISSING_OUTCOME: ${{ steps.missing.outcome }}
+        shell: bash
         run: |
           set -e
           test "$ERROR_OUTCOME" = failure

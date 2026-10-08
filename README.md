@@ -141,7 +141,7 @@ steps:
 
 | Input | Default | |
 |---|---|---|
-| `files` | empty | Paths or globs, space- or newline-separated. Empty: the supported rules files tracked in the repository. |
+| `files` | empty | Paths or globs, space- or newline-separated. Globs match files git tracks or would track; `**/` matches zero or more folders. Empty: the supported rules files tracked in the repository. |
 | `fail-on-error` | `false` | Fail when any Error finding remains. |
 | `fail-below` | empty | Fail when a file's grade is below A, B, C or D. |
 | `cli-version` | the CLI version released with this tag | `Aibysitter.Cli` version installed from nuget.org. Empty: build the CLI from the action's source (about a minute). |
