@@ -22,6 +22,17 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task ScopeIsReadOnlyByP004_OnPageAndInstallDoc()
+    {
+        const string sentence = "Read only by P004; other checks review every changed file.";
+        var html = await factory.CreateClient().GetStringAsync("/GitHub");
+
+        Assert.Contains(sentence, html);
+        Assert.DoesNotContain("tests without assertions", html);
+        Assert.Contains(sentence, File.ReadAllText(Path.Combine(Parity.NodeRunner.RepoRoot, "docs", "installing-on-your-repos.md")));
+    }
+
+    [Fact]
     public async Task CheckRunName_IsAibysitterReview_OnPageAndPrivacy()
     {
         var client = factory.CreateClient();
