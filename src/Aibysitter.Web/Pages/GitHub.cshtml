@@ -2,14 +2,27 @@
 @model GitHubModel
 @{
     ViewData["Title"] = "GitHub App";
-    ViewData["Description"] = "A GitHub App that checks agent-authored pull requests for placeholders, stubs, deleted tests, out-of-scope files and more.";
+    ViewData["Description"] = "A GitHub App that holds agent-authored pull requests with an unpinned action, a new dependency, a leaked key or a security exemption until a human looks.";
 }
 
 <section class="hero">
-    <h1>Review agent pull requests.</h1>
-    <p class="lede">The Aibysitter GitHub App reads every pull request in a repository where it is installed. It posts a check named Aibysitter review, with an annotation on each line it flags.</p>
+    <h1>Gate agent pull requests.</h1>
+    <p class="lede">Install the App, add a three-line config with <code>"conclusion": "fail-on-warnings"</code>, and make <strong>Aibysitter review</strong> a required check. A pull request that adds an unpinned action, a new dependency, a leaked key or a security exemption then cannot merge until a human looks.</p>
+    <p class="view-switch">
+        <button type="button" class="button" data-copy="gate-config" data-copy-status="gate-copy-status" hidden>Copy</button>
+        <span id="gate-copy-status" class="note" aria-live="polite"></span>
+    </p>
+    <pre id="gate-config"><code>{
+  "conclusion": "fail-on-warnings"
+}</code></pre>
+    <p>Save it as <code>.github/aibysitter.json</code> on the default branch. Then require the <strong>Aibysitter review</strong> status check on that branch: <strong>Settings → Rules → Rulesets</strong>, or <strong>Settings → Branches</strong>.</p>
+    <ul>
+        <li><code>fail-on-errors</code> is the lighter setting: only Error findings block, such as a leaked key, a placeholder, a skipped or deleted test, a file outside <code>scope</code> or a committed <code>.env</code>.</li>
+        <li><code>advisory</code> is the default and the trial mode: every finding is an annotation and nothing blocks.</li>
+        <li>Bot dependency bumps (Dependabot, Renovate) block too, by design: a bot bumping a dependency is a change a human should sign off on.</li>
+    </ul>
     <p><a class="button" href="@Aibysitter.Web.GitHub.GitHubAppLinks.InstallUrl">Install the GitHub App</a></p>
-    <p><a asp-page="/Privacy">What the App reads and keeps</a></p>
+    <p>The App reads every pull request in a repository where it is installed. It posts a check named Aibysitter review, with an annotation on each line it flags. <a asp-page="/Privacy">What the App reads and keeps</a></p>
 </section>
 
 <section class="section">
@@ -98,3 +111,7 @@
     <p><a href="@Aibysitter.Web.GitHub.GitHubAppLinks.InstallUrl">Install the App</a>, pick the account or organization, and choose all repositories or selected ones. Installing needs owner or admin rights on the account.</p>
     <p>To uninstall: <strong>Settings → Applications → Installed GitHub Apps → Aibysitter → Configure → Uninstall</strong> (organizations: <strong>Settings → GitHub Apps</strong>). Details: <a asp-page="/Privacy">Privacy</a>.</p>
 </section>
+
+@section Scripts {
+    <script type="module" src="~/js/copy.mjs" asp-append-version="true"></script>
+}

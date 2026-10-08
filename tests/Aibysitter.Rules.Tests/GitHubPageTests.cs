@@ -32,6 +32,50 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
         Assert.Contains(sentence, File.ReadAllText(Path.Combine(Parity.NodeRunner.RepoRoot, "docs", "installing-on-your-repos.md")));
     }
 
+    private const string GateSentence = "A pull request that adds an unpinned action, a new dependency, a leaked key or a security exemption then cannot merge until a human looks.";
+
+    [Fact]
+    public async Task GitHubPage_LeadsWithTheGate()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/GitHub");
+        var hero = html[html.IndexOf("<section class=\"hero\">", StringComparison.Ordinal)..html.IndexOf("</section>", StringComparison.Ordinal)];
+
+        Assert.Contains("<h1>Gate agent pull requests.</h1>", hero);
+        Assert.Contains(GateSentence, hero);
+        Assert.Contains("<pre id=\"gate-config\"><code>{\n  \"conclusion\": \"fail-on-warnings\"\n}</code></pre>", hero);
+        Assert.Contains("data-copy=\"gate-config\"", hero);
+        Assert.Contains("<code>fail-on-errors</code> is the lighter setting", hero);
+        Assert.Contains("<code>advisory</code> is the default and the trial mode", hero);
+        Assert.Contains("a bot bumping a dependency is a change a human should sign off on", hero);
+        Assert.Matches(@"<script type=""module"" src=""/js/copy\.[^""]*mjs", html);
+    }
+
+    [Fact]
+    public void InstallDoc_LeadsWithTheGate()
+    {
+        var doc = File.ReadAllText(Path.Combine(Parity.NodeRunner.RepoRoot, "docs", "installing-on-your-repos.md")).ReplaceLineEndings("\n");
+        var lead = doc[..doc.IndexOf("## Install", StringComparison.Ordinal)];
+
+        Assert.Contains(GateSentence, lead);
+        Assert.Contains("```json\n{\n  \"conclusion\": \"fail-on-warnings\"\n}\n```", lead);
+        Assert.Contains("`fail-on-errors` is the lighter setting", lead);
+        Assert.Contains("`advisory` is the default and the trial mode", lead);
+        Assert.Contains("a bot bumping a dependency is a change a human should sign off on", lead);
+    }
+
+    [Theory]
+    [InlineData("P015")]
+    [InlineData("P010")]
+    [InlineData("P005")]
+    [InlineData("P016")]
+    public void GateExamples_FailUnderFailOnWarnings(string id)
+    {
+        var check = PullRequestReviewer.DiscoverChecks().Single(c => c.Id == id);
+
+        Assert.True(PullRequestReviewer.Fails(id, check.Severity, ConclusionMode.FailOnWarnings));
+        Assert.Equal(ConclusionMode.FailOnWarnings, RepoConfig.Parse("{\n  \"conclusion\": \"fail-on-warnings\"\n}").Config.Conclusion);
+    }
+
     [Fact]
     public async Task CheckRunName_IsAibysitterReview_OnPageAndPrivacy()
     {

@@ -1,5 +1,19 @@
 # Installing the GitHub App
 
+Install the App, add a three-line config, and make **Aibysitter review** a required check. A pull request that adds an unpinned action, a new dependency, a leaked key or a security exemption then cannot merge until a human looks.
+
+```json
+{
+  "conclusion": "fail-on-warnings"
+}
+```
+
+Save it as `.github/aibysitter.json` on the default branch. Then require the **Aibysitter review** status check on that branch: **Settings → Rules → Rulesets**, or **Settings → Branches**.
+
+- `fail-on-errors` is the lighter setting: only Error findings block, such as a leaked key, a placeholder, a skipped or deleted test, a file outside `scope` or a committed `.env`.
+- `advisory` is the default and the trial mode: every finding is an annotation and nothing blocks.
+- Bot dependency bumps (Dependabot, Renovate) block too, by design: a bot bumping a dependency is a change a human should sign off on.
+
 Install: https://github.com/apps/aibysitter/installations/new
 
 ## Install
