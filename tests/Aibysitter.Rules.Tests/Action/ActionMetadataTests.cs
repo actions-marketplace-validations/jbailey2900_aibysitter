@@ -29,6 +29,9 @@ public class ActionMetadataTests
     public void Description_IsPresent() => Assert.False(string.IsNullOrWhiteSpace(TopLevel("description")));
 
     [Fact]
+    public void Description_UnderMarketplaceLimit() => Assert.InRange(TopLevel("description")!.Length, 1, 124);
+
+    [Fact]
     public void Branding_IconAndColor()
     {
         Assert.Equal("check-square", Branding("icon"));

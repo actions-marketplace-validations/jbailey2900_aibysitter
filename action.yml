@@ -1,5 +1,5 @@
 name: Aibysitter rules lint
-description: Lints rules files for AI coding agents (CLAUDE.md, AGENTS.md, Cursor rules, Copilot instructions, GEMINI.md, .windsurfrules) and annotates findings.
+description: Lints AI agent rules files (CLAUDE.md, AGENTS.md, Cursor, Copilot, Gemini, Windsurf) and posts findings as a check run.
 author: Jon Bailey
 branding:
   icon: check-square
