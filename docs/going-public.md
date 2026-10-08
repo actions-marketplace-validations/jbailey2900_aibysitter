@@ -21,7 +21,7 @@ Steps in order. Repository settings paths are under `github.com/jbailey2900/aiby
 ## After
 
 - [ ] General → Social preview: upload `docs/brand/social-preview-1280x640.png`.
-- [ ] One pull request for the text that changes:
+- [x] One pull request for the text that changes:
 
 | File | Text now | Change to |
 |---|---|---|
