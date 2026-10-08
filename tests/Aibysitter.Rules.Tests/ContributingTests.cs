@@ -64,6 +64,8 @@ public class ContributingTests
     [InlineData("`Aibysitter review`")]
     [InlineData("measurement note")]
     [InlineData("False positive issue template")]
+    [InlineData("the `cli-version` default in `action.yml` in the same pull request")]
+    [InlineData("after the CLI version is on nuget.org, tag `v<major>.<minor>.<patch>`")]
     public void Contributing_Covers(string text) =>
         Assert.Contains(text, File.ReadAllText(Path.Combine(NodeRunner.RepoRoot, "CONTRIBUTING.md")), StringComparison.Ordinal);
 }

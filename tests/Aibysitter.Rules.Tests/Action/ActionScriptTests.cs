@@ -78,7 +78,7 @@ public sealed class ActionScriptTests(ITestOutputHelper output) : IDisposable
         return (process.ExitCode, stdout.Result + stderr.Result);
     }
 
-    private (Dictionary<string, string> Outputs, JsonObject Report, string Summary, string Log) Lint(string files = "", bool failOnError = false, string failBelow = "")
+    private (Dictionary<string, string> Outputs, JsonObject Report, string Summary, string Log) Lint(string files = "", bool failOnError = false, string failBelow = "", string? outDir = null)
     {
         var outputs = Path.Combine(root, "github-output");
         var summary = Path.Combine(root, "summary.md");
@@ -90,7 +90,7 @@ public sealed class ActionScriptTests(ITestOutputHelper output) : IDisposable
             ["INPUT_FAIL_ON_ERROR"] = failOnError ? "true" : "false",
             ["INPUT_FAIL_BELOW"] = failBelow,
             ["AIBYSITTER_CLI"] = "dotnet " + Path.Combine(AppContext.BaseDirectory, "Aibysitter.Cli.dll"),
-            ["AIBYSITTER_OUT"] = Out,
+            ["AIBYSITTER_OUT"] = outDir ?? Out,
             ["GITHUB_OUTPUT"] = outputs,
             ["GITHUB_STEP_SUMMARY"] = summary,
             ["GITHUB_WORKSPACE"] = Repo,
@@ -146,6 +146,65 @@ public sealed class ActionScriptTests(ITestOutputHelper output) : IDisposable
         Assert.Equal("1", outputs["findings"]);
         Assert.Contains("| `errors/CLAUDE.md` | 90 | A | 1 |", summary);
         Assert.Contains("| `errors/CLAUDE.md:3` | Error | R003 |", summary);
+    }
+
+    [Theory]
+    [InlineData("docs/**/CLAUDE.md", "docs/CLAUDE.md,docs/a/b/CLAUDE.md")]
+    [InlineData("docs/*.md", "docs/CLAUDE.md")]
+    [InlineData("**/CLAUDE.md", "docs/CLAUDE.md,docs/a/b/CLAUDE.md,other/CLAUDE.md")]
+    [InlineData("d[o]cs/?LAUDE.md", "docs/CLAUDE.md")]
+    [InlineData("[!d]*/CLAUDE.md", "other/CLAUDE.md")]
+    [InlineData("ignored/*.md", "")]
+    [InlineData("ignored/CLAUDE.md", "ignored/CLAUDE.md")]
+    public void Globs_MatchFilesGitTracksOrWouldTrack(string files, string expected)
+    {
+        if (!ToolsOrSkip())
+        {
+            return;
+        }
+
+        RepoWith(
+            (".gitignore", "ignored/\n"),
+            ("docs/CLAUDE.md", Clean),
+            ("docs/a/b/CLAUDE.md", Clean),
+            ("other/CLAUDE.md", Clean),
+            ("ignored/CLAUDE.md", Clean));
+
+        var (_, report, _, _) = Lint(files);
+
+        Assert.Equal(expected.Split(',', StringSplitOptions.RemoveEmptyEntries), Files(report));
+    }
+
+    [Fact]
+    public void OutputFolderWithBackslash_ReportStillMerged()
+    {
+        if (!ToolsOrSkip())
+        {
+            return;
+        }
+
+        RepoWith(("CLAUDE.md", Contradiction));
+
+        var (outputs, report, _, _) = Lint("CLAUDE.md", outDir: Path.Combine(root, "out\\a_temp"));
+
+        Assert.Equal(["CLAUDE.md"], Files(report));
+        Assert.Equal("1", outputs["findings"]);
+    }
+
+    [Theory]
+    [InlineData("lint.sh")]
+    [InlineData("post.sh")]
+    public void Scripts_RunOnBash32(string script)
+    {
+        var text = File.ReadAllText(Path.Combine(ActionDir, script));
+
+        foreach (var feature in new[] { "mapfile", "readarray", "globstar", "declare -A", "local -n", ",,}", "^^}", "&>>", "|&" })
+        {
+            Assert.DoesNotContain(feature, text, StringComparison.Ordinal);
+        }
+
+        Assert.DoesNotMatch(@"(?<!\+)""\$\{[a-z_]+\[@\]\}""", text.Replace("\"${cli[@]}\"", "", StringComparison.Ordinal));
+        Assert.Contains("jq() { command jq \"$@\" | tr -d '\\r'; }", text, StringComparison.Ordinal);
     }
 
     [Theory]

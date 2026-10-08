@@ -14,5 +14,9 @@
 - A change to an R rule or P check needs a measurement note in the pull request: corpus or repos, sample size, findings, false positives per finding from two judges, before and after.
 - An R rule change bumps the ruleset version and adds a changelog entry; a P check change adds an App checks changelog entry.
 
+## Releases
+- CLI: bump `<Version>` in `src/Aibysitter.Cli/Aibysitter.Cli.csproj` and the `cli-version` default in `action.yml` in the same pull request. After merge, tag `cli-v<Version>` on `main`; `release-cli.yml` publishes to nuget.org.
+- Action: after the CLI version is on nuget.org, tag `v<major>.<minor>.<patch>` on `main`, move `v<major>`, and publish the release to the Marketplace.
+
 ## False positives
 Report with the False positive issue template: rule ID, the line, why it is wrong.

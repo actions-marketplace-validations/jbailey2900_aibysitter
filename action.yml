@@ -18,6 +18,10 @@ inputs:
     description: Fail when a file's grade is below A, B, C or D.
     required: false
     default: ""
+  cli-version:
+    description: Aibysitter.Cli version to install from nuget.org. Empty builds the CLI from the action's source.
+    required: false
+    default: "0.4.1"
   token:
     description: Token for the check run. Needs checks write; without it, annotations go to the log.
     required: false
@@ -44,9 +48,32 @@ runs:
       with:
         dotnet-version: 10.0.x
 
+    - name: Install aibysitter CLI
+      if: ${{ inputs.cli-version != '' }}
+      shell: bash
+      working-directory: ${{ runner.temp }}
+      env:
+        CLI_VERSION: ${{ inputs.cli-version }}
+      run: dotnet tool update Aibysitter.Cli --version "$CLI_VERSION" --tool-path "$RUNNER_TEMP/aibysitter-tool"
+
     - name: Build aibysitter CLI
+      if: ${{ inputs.cli-version == '' }}
       shell: bash
       run: dotnet build "$GITHUB_ACTION_PATH/src/Aibysitter.Cli/Aibysitter.Cli.csproj" --configuration Release --output "$RUNNER_TEMP/aibysitter-cli" --nologo --verbosity quiet
+
+    - name: Locate aibysitter CLI
+      id: cli
+      shell: bash
+      env:
+        CLI_VERSION: ${{ inputs.cli-version }}
+      run: |
+        temp="$RUNNER_TEMP"
+        if [ "$RUNNER_OS" = Windows ]; then temp=$(cygpath -u "$RUNNER_TEMP"); fi
+        if [ -z "$CLI_VERSION" ]; then command="dotnet $temp/aibysitter-cli/Aibysitter.Cli.dll"
+        elif [ "$RUNNER_OS" = Windows ]; then command="$temp/aibysitter-tool/aibysitter.exe"
+        else command="$temp/aibysitter-tool/aibysitter"
+        fi
+        echo "command=$command" >> "$GITHUB_OUTPUT"
 
     - name: Lint rules files
       id: lint
@@ -55,7 +82,7 @@ runs:
         INPUT_FILES: ${{ inputs.files }}
         INPUT_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
         INPUT_FAIL_BELOW: ${{ inputs.fail-below }}
-        AIBYSITTER_CLI: dotnet ${{ runner.temp }}/aibysitter-cli/Aibysitter.Cli.dll
+        AIBYSITTER_CLI: ${{ steps.cli.outputs.command }}
         AIBYSITTER_OUT: ${{ runner.temp }}/aibysitter
       run: bash "$GITHUB_ACTION_PATH/action/lint.sh"
 
