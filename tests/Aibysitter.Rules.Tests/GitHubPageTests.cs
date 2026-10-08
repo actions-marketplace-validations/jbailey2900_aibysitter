@@ -50,6 +50,32 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
         Assert.Matches(@"<script type=""module"" src=""/js/copy\.[^""]*mjs", html);
     }
 
+    private static readonly string[] WhatWeStore =
+    [
+        "Code is fetched from GitHub for the duration of one review and discarded. Diffs, file contents and finding text are never written to disk, database or logs.",
+        "Results go back to GitHub only: the check run, its annotations and summary, and the PR comment when {0} is on.",
+        "Stored per review: a daily count by conclusion. No repo, PR or installation identifier.",
+        "Logs keep repo owner/name, PR number, short SHA and finding count for 14 days.",
+    ];
+
+    [Fact]
+    public async Task WhatWeStore_SameText_BetweenModesAndConfigReference()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/GitHub");
+        var page = html[html.IndexOf("</section>", StringComparison.Ordinal)..html.IndexOf("<h2>Configuration</h2>", StringComparison.Ordinal)];
+        page = page[page.IndexOf("<h2>What we store</h2>", StringComparison.Ordinal)..];
+
+        var doc = File.ReadAllText(Path.Combine(Parity.NodeRunner.RepoRoot, "docs", "installing-on-your-repos.md")).ReplaceLineEndings("\n");
+        var section = doc[doc.IndexOf("## Install", StringComparison.Ordinal)..doc.IndexOf("## Config file", StringComparison.Ordinal)];
+        section = section[section.IndexOf("## What we store", StringComparison.Ordinal)..];
+
+        foreach (var line in WhatWeStore)
+        {
+            Assert.Contains($"<li>{string.Format(line, "<code>comment</code>")}</li>", page);
+            Assert.Contains($"- {string.Format(line, "`comment`")}\n", section);
+        }
+    }
+
     [Fact]
     public void InstallDoc_LeadsWithTheGate()
     {

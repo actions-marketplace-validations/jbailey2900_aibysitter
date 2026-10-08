@@ -35,6 +35,13 @@ The default conclusion is `advisory`. Every review completes as `success` (no fi
 
 Checks: [aibysitting.net/Rules](https://aibysitting.net/Rules). What the App reads and keeps: [aibysitting.net/Privacy](https://aibysitting.net/Privacy).
 
+## What we store
+
+- Code is fetched from GitHub for the duration of one review and discarded. Diffs, file contents and finding text are never written to disk, database or logs.
+- Results go back to GitHub only: the check run, its annotations and summary, and the PR comment when `comment` is on.
+- Stored per review: a daily count by conclusion. No repo, PR or installation identifier.
+- Logs keep repo owner/name, PR number, short SHA and finding count for 14 days.
+
 ## Config file
 
 Optional. Path: `.github/aibysitter.json`. The App reads it from the base branch commit of the pull request, so a pull request cannot change how it is itself reviewed.
