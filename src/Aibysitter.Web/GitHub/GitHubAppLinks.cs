@@ -4,4 +4,8 @@ namespace Aibysitter.Web.GitHub;
 public static class GitHubAppLinks
 {
     public const string InstallUrl = "https://github.com/apps/aibysitter/installations/new";
+
+    public const string InstallDocPath = "docs/installing-on-your-repos.md";
+
+    public const string InstallDocUrl = "https://github.com/jbailey2900/aibysitter/blob/main/" + InstallDocPath;
 }

@@ -32,6 +32,7 @@ public class LintByUrlPageTests(WebApplicationFactory<Program> factory)
 
         Assert.Contains("<form method=\"post\" id=\"url-form\" class=\"url-form\" action=\"/Lint?handler=Url\">", html);
         Assert.Contains("Stores the score for score history (<a href=\"/Privacy\">Privacy</a>).", html);
+        Assert.Contains("Cursor rules (<code>.cursor/rules/*.mdc</code>) can't be read by URL; paste them above.", html);
         Assert.DoesNotContain("Nothing is stored or logged.", html);
     }
 
@@ -87,7 +88,7 @@ public class LintByUrlPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Theory]
-    [InlineData("missing", "No supported rules file found on the default branch of o/r. Private repositories can&#x27;t be read.")]
+    [InlineData("missing", "No supported rules file found on the default branch of o/r. Private repositories can&#x27;t be read. Cursor .mdc rules: paste them above.")]
     [InlineData("large", "CLAUDE.md is over 100 KB.")]
     [InlineData("down", "GitHub could not be reached. Try again later.")]
     public async Task Failures_PlainMessage_NoResults(string kind, string message)
@@ -109,6 +110,24 @@ public class LintByUrlPageTests(WebApplicationFactory<Program> factory)
 
         Assert.Contains($"<p class=\"error\" role=\"alert\">{message}</p>", html);
         Assert.DoesNotContain("<h2>Findings", html);
+    }
+
+    [Fact]
+    public async Task NotUtf8_NamesFile_NotLinted_NoHistory_OffersOthers()
+    {
+        var raw = new FakeRaw();
+        raw.Bytes("CLAUDE.md", Latin1);
+        raw.File("AGENTS.md", "- a");
+        var history = new Data.FakeScoreHistory();
+
+        var response = await LintClient.PostUrlAsync(Data.ScoreHistoryPageTests.Client(factory, raw, history), "o/r", null);
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("<p class=\"error\" role=\"alert\">CLAUDE.md is not UTF-8 text; it was not linted.</p>", html);
+        Assert.DoesNotContain("<h2>Findings", html);
+        Assert.Contains("Lint AGENTS.md instead", html);
+        Assert.Empty(history.Records);
     }
 
     [Fact]

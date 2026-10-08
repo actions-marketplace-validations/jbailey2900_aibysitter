@@ -39,6 +39,19 @@ public class BadgeEndpointTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task NotUtf8_IsUnknown_NoRow()
+    {
+        var raw = new FakeRaw();
+        raw.Bytes("CLAUDE.md", Latin1);
+        var history = new FakeScoreHistory();
+
+        var (_, body) = await Get(ScoreHistoryPageTests.Client(factory, raw, history), "/badge/o/r.svg");
+
+        Assert.Contains(">unknown</text>", body);
+        Assert.Empty(history.Records);
+    }
+
+    [Fact]
     public async Task FileParameter_PicksThatFile_MissingOneIsUnknown()
     {
         var raw = new FakeRaw();

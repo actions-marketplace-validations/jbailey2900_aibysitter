@@ -33,7 +33,7 @@ public static class Hardening
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.OnRejected = WriteApiRejectionAsync;
+            options.OnRejected = (context, cancellationToken) => WriteRejectionAsync(context, lint, cancellationToken);
             options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
                 IsLintRequest(context.Request)
                     ? RateLimitPartition.GetFixedWindowLimiter(
@@ -69,11 +69,30 @@ public static class Hardening
     private static bool IsBadgeRequest(HttpRequest request) =>
         HttpMethods.IsGet(request.Method) && request.Path.StartsWithSegments(BadgeEndpoints.Prefix.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>API callers get a ProblemDetails body and no-store; the form keeps the bare 429.</summary>
-    private static ValueTask WriteApiRejectionAsync(OnRejectedContext context, CancellationToken cancellationToken)
+    /// <summary>
+    /// API callers get a ProblemDetails body and no-store. Form posts get a text body with the limit and retry window,
+    /// no-store and Retry-After. Badges keep the bare 429.
+    /// </summary>
+    private static ValueTask WriteRejectionAsync(OnRejectedContext context, LintRateLimitSettings lint, CancellationToken cancellationToken)
     {
+        var request = context.HttpContext.Request;
         var response = context.HttpContext.Response;
-        if (!context.HttpContext.Request.Path.Equals(LintApi.Path, StringComparison.OrdinalIgnoreCase))
+        if (HttpMethods.IsPost(request.Method) && request.Path.Equals("/Lint", StringComparison.OrdinalIgnoreCase))
+        {
+            response.Headers.CacheControl = "no-store";
+            var retry = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var after)
+                ? (int?)Math.Max(1, (int)Math.Ceiling(after.TotalSeconds))
+                : null;
+            if (retry is { } seconds)
+            {
+                response.Headers.RetryAfter = seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            response.ContentType = "text/plain; charset=utf-8";
+            return new ValueTask(response.WriteAsync(FormRejectionText(lint, retry), cancellationToken));
+        }
+
+        if (!request.Path.Equals(LintApi.Path, StringComparison.OrdinalIgnoreCase))
         {
             return ValueTask.CompletedTask;
         }
@@ -85,6 +104,10 @@ public static class Hardening
             contentType: "application/problem+json",
             cancellationToken));
     }
+
+    internal static string FormRejectionText(LintRateLimitSettings lint, int? retrySeconds) =>
+        $"Too many lint requests. Limit: {lint.PermitLimit} per {lint.WindowSeconds} seconds. "
+        + (retrySeconds is { } seconds ? $"Try again in {seconds} seconds." : "Try again in a minute.");
 
     public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app) =>
         app.Use(async (context, next) =>

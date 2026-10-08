@@ -53,6 +53,35 @@ public class HardeningTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task FormRejection_IsTextWithRetryWindow_NoStore()
+    {
+        var client = CreateClient(permitLimit: 1);
+
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, (await PostLint(client, NonCloudflareIp)).StatusCode);
+        var rejected = await PostLint(client, NonCloudflareIp);
+        var body = await rejected.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
+        Assert.Equal("text/plain", rejected.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("utf-8", rejected.Content.Headers.ContentType?.CharSet);
+        Assert.Equal("no-store", rejected.Headers.CacheControl?.ToString());
+        var retry = rejected.Headers.RetryAfter?.Delta;
+        Assert.NotNull(retry);
+        Assert.InRange(retry!.Value.TotalSeconds, 1, 60);
+        Assert.Equal($"Too many lint requests. Limit: 1 per 60 seconds. Try again in {(int)retry.Value.TotalSeconds} seconds.", body);
+
+        var api = await PostApi(client, NonCloudflareIp);
+        Assert.Equal("application/problem+json", api.Content.Headers.ContentType?.MediaType);
+        Assert.Null(api.Headers.RetryAfter);
+    }
+
+    [Fact]
+    public void FormRejectionText_WithoutRetryMetadata_SaysAMinute() =>
+        Assert.Equal(
+            "Too many lint requests. Limit: 20 per 60 seconds. Try again in a minute.",
+            Hardening.FormRejectionText(new Web.Infrastructure.LintRateLimitSettings(), null));
+
+    [Fact]
     public async Task UrlLint_SharesTheBucket()
     {
         var client = CreateClient(permitLimit: 2);

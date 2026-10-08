@@ -16,6 +16,9 @@ public enum FetchStatus
 
     /// <summary>The file links to another link; links are followed one level.</summary>
     LinkTooDeep,
+
+    /// <summary>The file (or its link target) is not valid UTF-8; it is not linted.</summary>
+    NotUtf8,
 }
 
 /// <param name="FileName">The supported file chosen, when one was found.</param>
@@ -35,6 +38,8 @@ public sealed class RawGitHubFetcher(HttpClient http)
     public const int MaxBytes = 100 * 1024;
     public const int MaxRedirects = 3;
 
+    private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
     public static readonly IReadOnlyList<string> FileNames =
         ["CLAUDE.md", "AGENTS.md", ".github/copilot-instructions.md", "GEMINI.md", ".cursorrules", ".windsurfrules"];
 
@@ -43,6 +48,7 @@ public sealed class RawGitHubFetcher(HttpClient http)
         Missing,
         Found,
         TooLarge,
+        NotUtf8,
         TimedOut,
         Failed,
     }
@@ -76,6 +82,7 @@ public sealed class RawGitHubFetcher(HttpClient http)
             ProbeState.Found when LinkPath.TryResolve(target, probe.Content!, out var next) => result with { Status = FetchStatus.LinkTooDeep, NextLink = next },
             ProbeState.Found => result with { Content = probe.Content },
             ProbeState.TooLarge => result with { Status = FetchStatus.TooLarge },
+            ProbeState.NotUtf8 => result with { Status = FetchStatus.NotUtf8 },
             ProbeState.TimedOut => result with { Status = FetchStatus.TimedOut },
             ProbeState.Failed => result with { Status = FetchStatus.Unreachable },
             _ => result with { Status = FetchStatus.LinkTargetMissing },
@@ -84,7 +91,7 @@ public sealed class RawGitHubFetcher(HttpClient http)
 
     private static FetchResult Choose(Probe[] probes, string? preferred)
     {
-        var present = probes.Where(p => p.State is ProbeState.Found or ProbeState.TooLarge).ToList();
+        var present = probes.Where(p => p.State is ProbeState.Found or ProbeState.TooLarge or ProbeState.NotUtf8).ToList();
         var chosen = present.FirstOrDefault(p => p.FileName == preferred) ?? present.FirstOrDefault();
         if (chosen is null)
         {
@@ -92,9 +99,12 @@ public sealed class RawGitHubFetcher(HttpClient http)
         }
 
         var others = present.Where(p => p != chosen).Select(p => p.FileName).ToList();
-        return chosen.State == ProbeState.Found
-            ? new FetchResult(FetchStatus.Found, chosen.FileName, chosen.Content, others)
-            : new FetchResult(FetchStatus.TooLarge, chosen.FileName, null, others);
+        return chosen.State switch
+        {
+            ProbeState.Found => new FetchResult(FetchStatus.Found, chosen.FileName, chosen.Content, others),
+            ProbeState.NotUtf8 => new FetchResult(FetchStatus.NotUtf8, chosen.FileName, null, others),
+            _ => new FetchResult(FetchStatus.TooLarge, chosen.FileName, null, others),
+        };
     }
 
     private static FetchStatus EmptyStatus(Probe[] probes) =>
@@ -158,7 +168,17 @@ public sealed class RawGitHubFetcher(HttpClient http)
             return new Probe(fileName, ProbeState.TooLarge, null);
         }
 
-        var text = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetString(bytes).TrimStart('﻿');
+        string text;
+        try
+        {
+            text = StrictUtf8.GetString(bytes).TrimStart('﻿');
+        }
+        catch (DecoderFallbackException)
+        {
+            return new Probe(fileName, ProbeState.NotUtf8, null);
+        }
+
+
         return text.Length > LintLimits.MaxContentLength
             ? new Probe(fileName, ProbeState.TooLarge, null)
             : new Probe(fileName, ProbeState.Found, text);

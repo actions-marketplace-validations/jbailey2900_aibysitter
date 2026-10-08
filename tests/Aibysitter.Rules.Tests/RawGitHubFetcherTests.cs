@@ -20,6 +20,9 @@ public class RawGitHubFetcherTests
         public void File(string name, string content) =>
             Routes[RawGitHubFetcher.RawUrl(Repo, name).ToString()] = () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) };
 
+        public void Bytes(string path, byte[] content) =>
+            Routes[$"https://raw.githubusercontent.com/{Repo.Owner}/{Repo.Repo}/HEAD/{path}"] = () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(content) };
+
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requested.Enqueue(request.RequestUri!.ToString());
@@ -203,6 +206,49 @@ public class RawGitHubFetcherTests
 
     private static void Raw(FakeRaw raw, string path, string content) =>
         raw.Routes[$"https://raw.githubusercontent.com/o/r/HEAD/{path}"] = () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) };
+
+    internal static readonly byte[] Latin1 = [(byte)'c', (byte)'a', (byte)'f', 0xE9, (byte)'\n'];
+
+    [Fact]
+    public async Task NotUtf8_IsReported_NotDecoded_OthersListed()
+    {
+        var raw = new FakeRaw();
+        raw.Bytes("CLAUDE.md", Latin1);
+        raw.File("AGENTS.md", "- a");
+
+        var result = await Fetcher(raw).FetchAsync(Repo, null, CancellationToken.None);
+
+        Assert.Equal(FetchStatus.NotUtf8, result.Status);
+        Assert.Equal("CLAUDE.md", result.FileName);
+        Assert.Null(result.Content);
+        Assert.Equal(new[] { "AGENTS.md" }, result.OtherFiles);
+    }
+
+    [Fact]
+    public async Task Utf8WithBom_IsFound_BomStripped()
+    {
+        var raw = new FakeRaw();
+        raw.Bytes("CLAUDE.md", [0xEF, 0xBB, 0xBF, .. "- caf\u00e9"u8.ToArray()]);
+
+        var result = await Fetcher(raw).FetchAsync(Repo, null, CancellationToken.None);
+
+        Assert.Equal(FetchStatus.Found, result.Status);
+        Assert.Equal("- caf\u00e9", result.Content);
+    }
+
+    [Fact]
+    public async Task SymlinkTarget_NotUtf8_IsReported()
+    {
+        var raw = new FakeRaw();
+        raw.File("CLAUDE.md", ".ai/AGENTS.md");
+        raw.Bytes(".ai/AGENTS.md", Latin1);
+
+        var result = await Fetcher(raw).FetchAsync(Repo, null, CancellationToken.None);
+
+        Assert.Equal(FetchStatus.NotUtf8, result.Status);
+        Assert.Equal(".ai/AGENTS.md", result.LinkTarget);
+        Assert.Null(result.Content);
+    }
 
     [Fact]
     public async Task Symlink_IsFollowedOnce()
