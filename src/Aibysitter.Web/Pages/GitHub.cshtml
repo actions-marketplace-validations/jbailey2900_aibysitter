@@ -46,6 +46,16 @@
 </figure>
 
 <section class="section">
+    <h2>What we store</h2>
+    <ul>
+        <li>Code is fetched from GitHub for the duration of one review and discarded. Diffs, file contents and finding text are never written to disk, database or logs.</li>
+        <li>Results go back to GitHub only: the check run, its annotations and summary, and the PR comment when <code>comment</code> is on.</li>
+        <li>Stored per review: a daily count by conclusion. No repo, PR or installation identifier.</li>
+        <li>Logs keep repo owner/name, PR number, short SHA and finding count for 14 days.</li>
+    </ul>
+</section>
+
+<section class="section">
     <h2>Configuration</h2>
     <p>Optional. Add <code>.github/aibysitter.json</code> to the repository. The App reads it from the pull request's base branch, so a pull request cannot change how it is itself reviewed.</p>
     <pre><code>{
