@@ -3,6 +3,8 @@ name: Action test
 # Runs action.yml from this checkout (uses: ./) against tests/action-fixtures.
 # Jobs whose thresholds are meant to fail run without checks: write, so their failures go to the log
 # (exercising the fallback) instead of posting a failed check on the pull request.
+# These jobs build the CLI from this checkout (cli-version: ""). The nuget job runs the default cli-version from
+# nuget.org on Linux, Windows and macOS, once that version is published.
 
 on:
   pull_request:
@@ -25,11 +27,14 @@ jobs:
       - name: Discovery (no files input)
         id: discover
         uses: ./
+        with:
+          cli-version: ""
 
       - name: Glob, fail-below A on an A-grade file
         id: glob
         uses: ./
         with:
+          cli-version: ""
           files: tests/action-fixtures/errors/*.md tests/action-fixtures/clean/**/*.md
           fail-below: A
 
@@ -37,6 +42,7 @@ jobs:
         id: none
         uses: ./
         with:
+          cli-version: ""
           files: tests/action-fixtures/nothing-here/*.md
 
       - name: Check outputs
@@ -71,6 +77,7 @@ jobs:
         continue-on-error: true
         uses: ./
         with:
+          cli-version: ""
           files: tests/action-fixtures/errors/CLAUDE.md
           fail-on-error: "true"
 
@@ -79,6 +86,7 @@ jobs:
         continue-on-error: true
         uses: ./
         with:
+          cli-version: ""
           files: tests/action-fixtures/lowgrade/GEMINI.md
           fail-below: B
 
@@ -87,6 +95,7 @@ jobs:
         continue-on-error: true
         uses: ./
         with:
+          cli-version: ""
           files: tests/action-fixtures/missing/CLAUDE.md
 
       - name: Check outcomes
@@ -103,3 +112,46 @@ jobs:
           test "$BELOW_OUTCOME" = failure
           test "$BELOW_GRADE" = C
           test "$MISSING_OUTCOME" = failure
+
+  nuget:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Default cli-version published
+        id: published
+        shell: bash
+        run: |
+          version=$(sed -n '/^  cli-version:/,/^  [a-z]/s/^    default: "\(.*\)"$/\1/p' action.yml)
+          if curl -fsS https://api.nuget.org/v3-flatcontainer/aibysitter.cli/index.json | grep -q "\"$version\""; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Aibysitter.Cli $version is not on nuget.org yet; NuGet install not tested."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Default cli-version from nuget.org
+        id: lint
+        if: ${{ steps.published.outputs.found == 'true' }}
+        uses: ./
+        with:
+          files: tests/action-fixtures/errors/*.md tests/action-fixtures/clean/**/*.md
+
+      - name: Check outputs
+        if: ${{ steps.published.outputs.found == 'true' }}
+        shell: bash
+        env:
+          GRADE: ${{ steps.lint.outputs.grade }}
+          SCORE: ${{ steps.lint.outputs.score }}
+          FINDINGS: ${{ steps.lint.outputs.findings }}
+        run: |
+          set -e
+          test "$GRADE" = A
+          test "$SCORE" = 90
+          test "$FINDINGS" = 1

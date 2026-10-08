@@ -144,11 +144,12 @@ steps:
 | `files` | empty | Paths or globs, space- or newline-separated. Empty: the supported rules files tracked in the repository. |
 | `fail-on-error` | `false` | Fail when any Error finding remains. |
 | `fail-below` | empty | Fail when a file's grade is below A, B, C or D. |
+| `cli-version` | the CLI version released with this tag | `Aibysitter.Cli` version installed from nuget.org. Empty: build the CLI from the action's source (about a minute). |
 | `token` | `github.token` | Needs `checks: write`. Without it, annotations are written to the log (GitHub shows 10 per type per step) and the job summary lists all findings. |
 
 Outputs: `grade` and `score` (lowest across files), `findings` (total), `report` (path to the merged JSON).
 
-Check conclusion: `failure` when a threshold fails, `neutral` with findings, `success` with none or no files. Annotation levels: Error → failure, Warning → warning, Info → notice. The CLI is built from source on each run (about a minute) until it is published.
+Check conclusion: `failure` when a threshold fails, `neutral` with findings, `success` with none or no files. Annotation levels: Error → failure, Warning → warning, Info → notice. Runs on Linux, Windows and macOS runners.
 
 ## Score history and badges
 
