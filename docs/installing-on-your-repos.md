@@ -39,8 +39,8 @@ Checks: [aibysitting.net/Rules](https://aibysitting.net/Rules). What the App rea
 
 - Code is fetched from GitHub for the duration of one review and discarded. Diffs, file contents and finding text are never written to disk, database or logs.
 - Results go back to GitHub only: the check run, its annotations and summary, and the PR comment when `comment` is on.
-- Stored per review: a daily count by conclusion. No repo, PR or installation identifier.
-- Logs keep repo owner/name, PR number, short SHA and finding count for 14 days.
+- Stored per review: a daily count by conclusion. A queue file holding the repo, PR number and commit SHAs exists only while the review runs and is deleted when it finishes.
+- Logs keep the repo owner and name, PR number, short SHA, delivery and check-run IDs, finding count and any error text for 14 days.
 
 ## Config file
 

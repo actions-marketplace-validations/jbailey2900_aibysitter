@@ -54,8 +54,8 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
     [
         "Code is fetched from GitHub for the duration of one review and discarded. Diffs, file contents and finding text are never written to disk, database or logs.",
         "Results go back to GitHub only: the check run, its annotations and summary, and the PR comment when {0} is on.",
-        "Stored per review: a daily count by conclusion. No repo, PR or installation identifier.",
-        "Logs keep repo owner/name, PR number, short SHA and finding count for 14 days.",
+        "Stored per review: a daily count by conclusion. A queue file holding the repo, PR number and commit SHAs exists only while the review runs and is deleted when it finishes.",
+        "Logs keep the repo owner and name, PR number, short SHA, delivery and check-run IDs, finding count and any error text for 14 days.",
     ];
 
     [Fact]
@@ -74,6 +74,18 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
             Assert.Contains($"<li>{string.Format(line, "<code>comment</code>")}</li>", page);
             Assert.Contains($"- {string.Format(line, "`comment`")}\n", section);
         }
+    }
+
+    [Fact]
+    public async Task SecurityModel_ListsPermissionsFromInstallDoc()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/GitHub");
+        var section = html[html.IndexOf("<h2>Security model</h2>", StringComparison.Ordinal)..];
+        section = section[..section.IndexOf("</section>", StringComparison.Ordinal)];
+
+        Assert.Contains("<li>Permissions: Checks (read and write), Pull requests (read and write, used only for the <code>comment</code> option), Contents (read). It cannot push, merge, or change settings.</li>", section);
+        Assert.DoesNotContain("only write permission", section);
+        Assert.Contains("Checks (read and write), Pull requests (read and write), Contents (read)", File.ReadAllText(Path.Combine(Parity.NodeRunner.RepoRoot, "docs", "installing-on-your-repos.md")));
     }
 
     [Fact]

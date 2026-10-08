@@ -50,8 +50,8 @@
     <ul>
         <li>Code is fetched from GitHub for the duration of one review and discarded. Diffs, file contents and finding text are never written to disk, database or logs.</li>
         <li>Results go back to GitHub only: the check run, its annotations and summary, and the PR comment when <code>comment</code> is on.</li>
-        <li>Stored per review: a daily count by conclusion. No repo, PR or installation identifier.</li>
-        <li>Logs keep repo owner/name, PR number, short SHA and finding count for 14 days.</li>
+        <li>Stored per review: a daily count by conclusion. A queue file holding the repo, PR number and commit SHAs exists only while the review runs and is deleted when it finishes.</li>
+        <li>Logs keep the repo owner and name, PR number, short SHA, delivery and check-run IDs, finding count and any error text for 14 days.</li>
     </ul>
 </section>
 
@@ -109,7 +109,7 @@
     <ul>
         <li>Every webhook is verified against its HMAC-SHA256 signature; unsigned or mis-signed deliveries are rejected.</li>
         <li>The App acts as each installation with short-lived installation tokens. The App's private key stays on the server.</li>
-        <li>Its only write permission is Checks. It cannot push, comment, merge, or change settings.</li>
+        <li>Permissions: Checks (read and write), Pull requests (read and write, used only for the <code>comment</code> option), Contents (read). It cannot push, merge, or change settings.</li>
         <li>Checks are static text analysis. Code from the pull request is never run.</li>
         <li>It reads at the pull request's head commit only, with fixed caps: file contents for at most @Aibysitter.Web.GitHub.ReviewProcessor.MaxContentFetches changed files, @Aibysitter.Web.GitHub.ReviewProcessor.MaxUnchangedRulesFiles unchanged rules files and @Aibysitter.Web.GitHub.ReviewProcessor.MaxManifestFetches manifests per review.</li>
     </ul>
