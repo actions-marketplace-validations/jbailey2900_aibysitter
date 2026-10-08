@@ -29,7 +29,7 @@ Optional. Path: `.github/aibysitter.json`. The App reads it from the base branch
 {
   "scope": ["src/**", "tests/**"],
   "conclusion": "advisory",
-  "disable": ["P012", "R013"]
+  "disable": ["P011", "R013"]
 }
 ```
 
@@ -53,7 +53,7 @@ Starter config:
 ```json
 {
   "conclusion": "advisory",
-  "disable": ["P011", "P012"]
+  "disable": ["P011"]
 }
 ```
 
@@ -81,7 +81,7 @@ Precedence: comments in the file, then rule IDs in `disable`, then `"disable": [
 
 1. Set `"conclusion": "fail-on-errors"`.
 2. Under **Settings → Branches** (or **Rules → Rulesets**), require the **Aibysitter review** status check on the default branch.
-3. Disable noisy checks first: P012 (debug leftovers), P011 (CI config edited), R013 (prose paragraphs). P012 and P011 are Info; they never fail the check, but they add annotations.
+3. Disable noisy checks first: P011 (CI config edited), R013 (prose paragraphs). P011 is Info; it never fails the check, but it adds annotations.
 
 ## Troubleshooting
 

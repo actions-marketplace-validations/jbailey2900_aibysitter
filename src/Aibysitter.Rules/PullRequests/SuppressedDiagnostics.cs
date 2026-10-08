@@ -15,6 +15,20 @@ public sealed partial class SuppressedDiagnostics : AddedLinePatternCheck
     protected override bool AppliesTo(string path) =>
         FileKinds.IsCodeOrConfig(path) || Path.GetFileName(path).Equals(".editorconfig", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Not flagged inside a string literal: on the same line, or a multi-line literal opened earlier.</summary>
+    protected override IEnumerable<string> Keep(ChangedFile file, DiffLine line, IReadOnlyList<string> matches)
+    {
+        if (line.NewLine is { } n && strings.GetValue(file, CodeText.StringLines).Contains(n))
+        {
+            return [];
+        }
+
+        var hashComments = CodeText.UsesHashComments(file.Path);
+        return matches.Where(m => !CodeText.IsInsideStringLiteral(line.Text, line.Text.IndexOf(m, StringComparison.OrdinalIgnoreCase), hashComments));
+    }
+
+    private readonly System.Runtime.CompilerServices.ConditionalWeakTable<ChangedFile, IReadOnlySet<int>> strings = new();
+
     /// <summary>
     /// C# #pragma warning disable, [SuppressMessage], ReSharper disable, &lt;NoWarn&gt;, .editorconfig severity = none;
     /// eslint-disable, @ts-ignore, @ts-nocheck; noqa, type: ignore, pylint: disable, pyright: ignore;

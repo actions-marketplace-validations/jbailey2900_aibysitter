@@ -81,7 +81,7 @@ public class RepoConfigTests
 
         Assert.Equal(new[] { "P001", "P002" }, config.Disabled.Order());
         Assert.False(config.IsEnabled("P002"));
-        Assert.True(config.IsEnabled("P003"));
+        Assert.True(config.IsEnabled("P004"));
         Assert.Single(errors);
     }
 

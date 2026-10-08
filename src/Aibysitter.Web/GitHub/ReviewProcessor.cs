@@ -28,6 +28,11 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
 
             var notes = new List<string>();
             var tree = await TreeForRulesFilesAsync(pr, files, config, cancellationToken);
+            if (NeedsTreeForDeletedTests(files, config))
+            {
+                tree ??= await gateway.GetTreeAsync(pr, cancellationToken);
+            }
+
             var symlinks = files.Where(f => RulesFileLint.IsRulesFile(f) && tree?.Symlinks.Contains(f.Path) == true).ToList();
             notes.AddRange(symlinks.Select(SymlinkNote));
 
@@ -50,7 +55,7 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
 
             var (repo, unchanged) = await BuildRepoViewAsync(pr, files, enriched, config, tree, notes, cancellationToken);
 
-            var review = reviewer.Review(new PullRequestContext(enriched, config, repo, unchanged));
+            var review = reviewer.Review(new PullRequestContext(enriched, config, repo, unchanged, tree?.Paths));
             var report = CheckRunReport.Build(review, reviewer.Checks, enriched, config, configErrors, notes, configNote);
             if (config.Comment)
             {
@@ -139,6 +144,10 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
             ? await gateway.GetTreeAsync(pr, cancellationToken)
             : null;
 
+    /// <summary>P008 reads the head file list when the pull request removes a test file.</summary>
+    internal static bool NeedsTreeForDeletedTests(IReadOnlyList<ChangedFile> files, RepoConfig config) =>
+        config.IsEnabled("P008") && files.Any(f => f.Status == FileChangeStatus.Removed && FileKinds.IsTestFile(f.Path));
+
     internal static string SymlinkNote(ChangedFile file) =>
         file.AddedLines.FirstOrDefault()?.Text.Trim() is { Length: > 0 } target
             ? $"P014 skipped {file.Path}: symlink to {target}."
@@ -219,5 +228,5 @@ public sealed class ReviewProcessor(IGitHubGateway gateway, PullRequestReviewer 
         RulesFileLint.IsRulesFile(file)
         || (file.Status != FileChangeStatus.Removed
             && file.Path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)
-            && (file.Path.Contains("test", StringComparison.OrdinalIgnoreCase) || (file.Patch?.Contains('[') ?? false)));
+            && (file.Patch?.Contains('[') ?? false));
 }

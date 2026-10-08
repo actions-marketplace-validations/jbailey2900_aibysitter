@@ -59,24 +59,9 @@ public class ReviewProcessorTests
         Assert.Contains("invalid JSON", (await fake.Completed.Task).Summary);
     }
 
-    [Fact]
-    public async Task ModifiedTestFile_FetchesHeadContent_ForP003()
-    {
-        var head = "public class T\n{\n    [Fact]\n    public void Nothing()\n    {\n        var x = 1;\n    }\n}";
-        var fake = new FakeGitHubGateway();
-        fake.Files.Add(new ChangedFile("tests/TTests.cs", FileChangeStatus.Modified, "@@ -5,1 +6,1 @@\n+        var x = 1;"));
-        fake.Contents["tests/TTests.cs"] = head;
-
-        await Processor(fake).ProcessAsync(Job, CancellationToken.None);
-        var report = await fake.Completed.Task;
-
-        Assert.Contains("content tests/TTests.cs", fake.Calls);
-        var annotation = Assert.Single(report.Annotations);
-        Assert.Equal(("tests/TTests.cs", 4, "P003 Assert-nothing tests"), (annotation.Path, annotation.Line, annotation.Title));
-    }
-
     [Theory]
-    [InlineData("tests/ATests.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x", true)]
+    [InlineData("tests/ATests.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x", false)]
+    [InlineData("tests/ATests.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+[Fact]", true)]
     [InlineData("src/A.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+[Fact]", true)]
     [InlineData("src/A.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+var x = 1;", false)]
     [InlineData("tests/ATests.cs", FileChangeStatus.Removed, "@@ -1,1 +0,0 @@\n-x", false)]
@@ -94,12 +79,34 @@ public class ReviewProcessorTests
     }
 
     [Fact]
+    public async Task RemovedTestFile_ReadsHeadTree_ForP008PackageExemption()
+    {
+        var fake = new FakeGitHubGateway { Paths = ["sdk/other/src/index.ts"] };
+        fake.Files.Add(new ChangedFile("sdk/pkg/test/a.spec.ts", FileChangeStatus.Removed, "@@ -1,1 +0,0 @@\n-x"));
+        fake.Files.Add(new ChangedFile("sdk/pkg/src/b.ts", FileChangeStatus.Removed, "@@ -1,1 +0,0 @@\n-x"));
+
+        await Processor(fake).ProcessAsync(Job, CancellationToken.None);
+        var report = await fake.Completed.Task;
+
+        Assert.Contains("tree", fake.Calls);
+        Assert.DoesNotContain(report.Annotations, a => a.Title.StartsWith("P008", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("tests/a.spec.ts", FileChangeStatus.Removed, "{}", true)]
+    [InlineData("tests/a.spec.ts", FileChangeStatus.Modified, "{}", false)]
+    [InlineData("src/a.ts", FileChangeStatus.Removed, "{}", false)]
+    [InlineData("tests/a.spec.ts", FileChangeStatus.Removed, "{ \"disable\": [\"P008\"] }", false)]
+    public void NeedsTreeForDeletedTests_OnlyWhenATestFileIsRemoved(string path, FileChangeStatus status, string config, bool expected) =>
+        Assert.Equal(expected, ReviewProcessor.NeedsTreeForDeletedTests([new ChangedFile(path, status)], RepoConfig.Parse(config).Config));
+
+    [Fact]
     public async Task ContentFetches_AreCapped()
     {
         var fake = new FakeGitHubGateway();
         for (var i = 0; i < ReviewProcessor.MaxContentFetches + 20; i++)
         {
-            fake.Files.Add(new ChangedFile($"tests/T{i}Tests.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x"));
+            fake.Files.Add(new ChangedFile($"tests/T{i}Tests.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+[Fact]"));
         }
 
         await Processor(fake).ProcessAsync(Job, CancellationToken.None);
@@ -151,7 +158,7 @@ public class ReviewProcessorTests
         var fake = new FakeGitHubGateway();
         for (var i = 0; i < ReviewProcessor.MaxContentFetches; i++)
         {
-            fake.Files.Add(new ChangedFile($"tests/T{i}Tests.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+x"));
+            fake.Files.Add(new ChangedFile($"tests/T{i}Tests.cs", FileChangeStatus.Modified, "@@ -1,1 +1,1 @@\n+[Fact]"));
         }
 
         fake.Files.Add(new ChangedFile("CLAUDE.md", FileChangeStatus.Added, "@@ -0,0 +1,1 @@\n+- Handle errors properly."));

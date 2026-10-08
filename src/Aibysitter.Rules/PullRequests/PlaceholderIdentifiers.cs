@@ -47,6 +47,6 @@ public sealed partial class PlaceholderIdentifiers : AddedLinePatternCheck
     [GeneratedRegex(@"^\s*\[\s*(?:[\w.]+(?:\([^)]*\))?\s*,\s*)*(?:InlineData|TestCase|DataRow)(?:Attribute)?\s*\(")]
     private static partial Regex TestDataRegex();
 
-    [GeneratedRegex(@"::[A-Z][A-Z0-9_]*::|\bREPLACE_ME\b|\bYOUR_[A-Z0-9_]+\b|(?i:<placeholder>|<your[-_ ][^>]+>)|\bTODO_[A-Z0-9_]+\b")]
+    [GeneratedRegex(@"::[A-Z][A-Z0-9_]*::|\bREPLACE_ME\b|\bYOUR_[A-Z0-9_]+\b|(?i:<placeholder>|<your[-_ ][^>]+>)")]
     private static partial Regex PlaceholderRegex();
 }

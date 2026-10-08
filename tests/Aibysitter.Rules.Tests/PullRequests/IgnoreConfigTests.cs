@@ -26,7 +26,7 @@ public class IgnoreConfigTests
 
     [Theory]
     [InlineData("P001", "src/Aibysitter.Rules/PullRequests/PullRequestCheckDocs.cs", true)]
-    [InlineData("P012", "src/Aibysitter.Rules/PullRequests/PullRequestCheckDocs.cs", true)]
+    [InlineData("P009", "src/Aibysitter.Rules/PullRequests/PullRequestCheckDocs.cs", true)]
     [InlineData("P005", "tests/Fixtures/Secrets.cs", true)]
     [InlineData("P002", "tests/Fixtures/Secrets.cs", true)]
     [InlineData("P001", "tests/Fixtures/Secrets.cs", false)]

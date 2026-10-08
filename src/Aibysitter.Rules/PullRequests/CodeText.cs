@@ -170,6 +170,170 @@ public static partial class CodeText
         return result;
     }
 
+    /// <summary>
+    /// Line numbers (head side) that start inside a string literal opened on an earlier line: C# raw """…""" and
+    /// verbatim @"…", JS/TS template literals `…`, Python triple-quoted strings. Read like <see cref="CommentLines"/>.
+    /// </summary>
+    public static IReadOnlySet<int> StringLines(ChangedFile file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        var lines = file.HeadContent is { } head
+            ? head.Replace("\r\n", "\n").Split('\n').Select((text, i) => (Number: i + 1, Text: text))
+            : file.Lines.Where(l => l.NewLine is not null).Select(l => (Number: l.NewLine!.Value, l.Text));
+        var hashComments = UsesHashComments(file.Path);
+        var python = Path.GetExtension(file.Path).Equals(".py", StringComparison.OrdinalIgnoreCase);
+
+        var result = new HashSet<int>();
+        string? open = null;
+        var previous = 0;
+        foreach (var (number, text) in lines)
+        {
+            if (number != previous + 1)
+            {
+                open = null;
+            }
+
+            previous = number;
+            if (open is not null)
+            {
+                result.Add(number);
+            }
+
+            open = ScanOpenLiteral(text, open, hashComments, python);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// The multi-line literal still open at the end of <paramref name="line"/>, given the one open at its start:
+    /// a run of quotes (raw or Python triple), "@" (verbatim) or "`" (template); null when none.
+    /// </summary>
+    private static string? ScanOpenLiteral(string line, string? open, bool hashComments, bool python)
+    {
+        var i = 0;
+        while (i < line.Length)
+        {
+            var c = line[i];
+            if (open is null)
+            {
+                if ((c == '/' && i + 1 < line.Length && line[i + 1] == '/') || (hashComments && c == '#'))
+                {
+                    return null;
+                }
+
+                if (c == '`')
+                {
+                    open = "`";
+                    i++;
+                }
+                else if (c is '"' or '\'')
+                {
+                    var run = Run(line, i, c);
+                    if (run >= 3 && (c == '"' || python))
+                    {
+                        open = new string(c, python ? 3 : run);
+                        i += python ? 3 : run;
+                    }
+                    else if (c == '"' && i > 0 && (line[i - 1] == '@' || (line[i - 1] == '$' && i > 1 && line[i - 2] == '@')))
+                    {
+                        open = "@";
+                        i++;
+                    }
+                    else
+                    {
+                        i = SkipSingleLine(line, i, c);
+                    }
+                }
+                else
+                {
+                    i++;
+                }
+            }
+            else if (open == "`")
+            {
+                if (c == '\\')
+                {
+                    i += 2;
+                    continue;
+                }
+
+                if (c == '`')
+                {
+                    open = null;
+                }
+
+                i++;
+            }
+            else if (open == "@")
+            {
+                if (c == '"')
+                {
+                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        i += 2;
+                        continue;
+                    }
+
+                    open = null;
+                }
+
+                i++;
+            }
+            else
+            {
+                if (python && c == '\\')
+                {
+                    i += 2;
+                    continue;
+                }
+
+                var run = c == open[0] ? Run(line, i, c) : 0;
+                if (run >= open.Length)
+                {
+                    i += run;
+                    open = null;
+                }
+                else
+                {
+                    i += Math.Max(run, 1);
+                }
+            }
+        }
+
+        return open;
+    }
+
+    private static int Run(string line, int start, char c)
+    {
+        var end = start;
+        while (end < line.Length && line[end] == c)
+        {
+            end++;
+        }
+
+        return end - start;
+    }
+
+    /// <summary>Index after a "…" or '…' literal that closes on this line (or the line end).</summary>
+    private static int SkipSingleLine(string line, int start, char quote)
+    {
+        for (var i = start + 1; i < line.Length; i++)
+        {
+            if (line[i] == '\\')
+            {
+                i++;
+            }
+            else if (line[i] == quote)
+            {
+                return i + 1;
+            }
+        }
+
+        return line.Length;
+    }
+
     /// <summary>Python, shell, PowerShell, Ruby: # starts a comment.</summary>
     public static bool UsesHashComments(string path) =>
         Path.GetExtension(path).ToLowerInvariant() is ".py" or ".sh" or ".ps1" or ".psm1" or ".rb";

@@ -45,6 +45,11 @@ public static class RulesetChangelog
 
     public static IReadOnlyList<ChangelogEntry> AppChecks { get; } =
     [
+        new(null, new DateOnly(2026, 10, 8), "P003 AssertNothingTests withdrawn", ["No true positives in dogfood 1–3. The ID stays reserved."]),
+        new(null, new DateOnly(2026, 10, 8), "P012 DebugLeftovers withdrawn", ["No true positives in dogfood 1–3 or corpus PR pass 1. The ID stays reserved."]),
+        new(null, new DateOnly(2026, 10, 8), "P001 drops TODO_… (corpus PR pass 1)", ["TODO_ names are not flagged."]),
+        new(null, new DateOnly(2026, 10, 8), "P007 skips string literals (corpus PR pass 1)", ["A suppression inside a string literal, on its line or in a multi-line literal opened earlier, is not flagged."]),
+        new(null, new DateOnly(2026, 10, 8), "P008 skips whole-package removals (corpus PR pass 1)", ["A removed test file is not flagged when the folder above its test folder, or the folder X its test project X.Tests is named after, holds no code files at the head."]),
         new(null, new DateOnly(2026, 10, 7), "Config read from the base branch", ["A pull request is reviewed with the base branch's .github/aibysitter.json. When it changes the file, the summary says so and config errors are those of the new version."]),
         new(null, new DateOnly(2026, 10, 7), "Repo config: ignore", ["Path globs, or {paths, checks} objects, skipped by content checks. Not applied to P004, P008, P011, P013, P014. Up to 50 entries; listed in the summary."]),
         new(null, new DateOnly(2026, 10, 7), "P017 LoosenedAssertions withdrawn", ["No true positives on pull request diffs in two dogfood passes. The ID stays reserved. The check would need per-commit review: loosened assertions were inside test files added by the same pull request."]),

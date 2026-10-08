@@ -8,7 +8,7 @@ public class WithdrawnAndStringsTests
     [Fact]
     public void ReservedIds_NotUsedByAnyCheckOrDoc()
     {
-        Assert.Equal(["P017"], PullRequestCheckDocs.Reserved);
+        Assert.Equal(["P003", "P012", "P017"], PullRequestCheckDocs.Reserved);
         Assert.DoesNotContain(PullRequestReviewer.DiscoverChecks(), c => PullRequestCheckDocs.Reserved.Contains(c.Id));
         Assert.DoesNotContain(PullRequestCheckDocs.All, d => PullRequestCheckDocs.Reserved.Contains(d.Id));
     }
