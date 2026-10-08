@@ -2,7 +2,7 @@
 @model GitHubModel
 @{
     ViewData["Title"] = "GitHub App";
-    ViewData["Description"] = "A GitHub App that checks agent-authored pull requests for placeholders, stubs, tests without assertions, out-of-scope files and more.";
+    ViewData["Description"] = "A GitHub App that checks agent-authored pull requests for placeholders, stubs, deleted tests, out-of-scope files and more.";
 }
 
 <section class="hero">
@@ -52,7 +52,7 @@
         <tbody>
             <tr>
                 <td><code>scope</code></td>
-                <td>Path globs from the repository root. <code>**</code> matches any number of folders and must be a whole segment (<code>**/*.cs</code>, not <code>**.cs</code>); <code>*</code> and <code>?</code> match within one folder. Case-sensitive. Not supported: <code>{a,b}</code>, <code>[...]</code>, <code>!</code>, <code>\</code>. Turns on P004.</td>
+                <td>Path globs from the repository root. <code>**</code> matches any number of folders and must be a whole segment (<code>**/*.cs</code>, not <code>**.cs</code>); <code>*</code> and <code>?</code> match within one folder. Case-sensitive. Not supported: <code>{a,b}</code>, <code>[...]</code>, <code>!</code>, <code>\</code>. Turns on P004. Read only by P004; other checks review every changed file.</td>
                 <td>Not set; P004 is off</td>
             </tr>
             <tr>
