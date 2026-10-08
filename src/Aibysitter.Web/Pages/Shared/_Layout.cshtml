@@ -14,7 +14,14 @@
     {
         <meta name="description" content="@description" />
     }
-    <link rel="canonical" href="@canonical" />
+    @if (ViewData["NoIndex"] is true)
+    {
+        <meta name="robots" content="noindex" />
+    }
+    else
+    {
+        <link rel="canonical" href="@canonical" />
+    }
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="aibysitter" />
     <meta property="og:title" content="@ViewData["Title"]" />

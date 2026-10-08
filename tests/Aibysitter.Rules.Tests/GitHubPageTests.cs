@@ -89,6 +89,17 @@ public class GitHubPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task InstallSection_LinksInstallDoc()
+    {
+        var html = await factory.CreateClient().GetStringAsync("/GitHub");
+        var install = html[html.IndexOf("<h2>Install</h2>", StringComparison.Ordinal)..];
+        install = install[..install.IndexOf("</section>", StringComparison.Ordinal)];
+
+        Assert.Contains("<a href=\"https://github.com/jbailey2900/aibysitter/blob/main/docs/installing-on-your-repos.md\">Step-by-step install guide</a>", install);
+        Assert.True(File.Exists(Path.Combine(Parity.NodeRunner.RepoRoot, Aibysitter.Web.GitHub.GitHubAppLinks.InstallDocPath)));
+    }
+
+    [Fact]
     public void InstallDoc_LeadsWithTheGate()
     {
         var doc = File.ReadAllText(Path.Combine(Parity.NodeRunner.RepoRoot, "docs", "installing-on-your-repos.md")).ReplaceLineEndings("\n");

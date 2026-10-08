@@ -703,3 +703,7 @@ dd { margin: 0; max-width: var(--measure); }
 
 main code { background: var(--surface); padding: 0 3px; border-radius: 2px; }
 main pre code, .terminal code { background: none; padding: 0; }
+
+/* Error page (standalone, no layout) */
+
+.error-page code { overflow-wrap: anywhere; }

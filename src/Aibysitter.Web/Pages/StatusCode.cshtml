@@ -1,0 +1,13 @@
+@page "/StatusCode/{code:int}"
+@model StatusCodeModel
+@{
+    ViewData["Title"] = Model.Title;
+    ViewData["NoIndex"] = true;
+}
+
+<h1>@Model.Title</h1>
+@if (Model.Code == StatusCodes.Status404NotFound)
+{
+    <p>Nothing is at this address.</p>
+}
+<p><a href="/">Home</a> · <a href="/Lint">Lint</a> · <a href="/Rules">Rules</a></p>

@@ -103,8 +103,25 @@ public class ErrorPageTests(WebApplicationFactory<Program> factory)
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains(Message, html);
-        Assert.DoesNotContain("site.css", html);
+        Assert.DoesNotContain("class=\"site-header\"", html);
         Assert.DoesNotContain("rel=\"canonical\"", html);
+    }
+
+    [Fact]
+    public async Task ErrorPage_UsesSiteStylesheet_NoInlineStyle()
+    {
+        var response = await BrokenCatalogsClient().GetAsync("/Error");
+        var html = await response.Content.ReadAsStringAsync();
+
+        Assert.Contains("<link rel=\"stylesheet\" href=\"/css/site.css\" />", html);
+        Assert.DoesNotContain("<style", html);
+        Assert.DoesNotContain(" style=", html);
+        Assert.Contains("no-store", response.Headers.CacheControl!.ToString());
+        Assert.Contains("<meta name=\"robots\" content=\"noindex\" />", html);
+
+        var css = await BrokenCatalogsClient().GetAsync("/css/site.css");
+        Assert.Equal(HttpStatusCode.OK, css.StatusCode);
+        Assert.Contains(".error-page code", await css.Content.ReadAsStringAsync());
     }
 
     [Theory]

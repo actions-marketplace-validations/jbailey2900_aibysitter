@@ -63,6 +63,9 @@ try
     }
 
     app.UseSecurityHeaders();
+    app.UseWhen(
+        context => HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method),
+        branch => branch.UseStatusCodePagesWithReExecute("/StatusCode/{0}"));
     app.UseSerilogRequestLogging();
     app.UseHttpsRedirection();
     app.UseRateLimiter();
