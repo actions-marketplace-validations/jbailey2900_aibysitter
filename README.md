@@ -87,11 +87,10 @@ Install: [github.com/apps/aibysitter](https://github.com/apps/aibysitter/install
 
 ## CLI
 
-`aibysitter`, a .NET tool using the same rules, ruleset version and scoring as the site. Runs offline. Not yet published to nuget.org; build and install from source:
+`aibysitter`, a .NET tool using the same rules, ruleset version and scoring as the site. Runs offline. On nuget.org:
 
 ```
-dotnet pack src/Aibysitter.Cli -o artifacts
-dotnet tool install --global Aibysitter.Cli --add-source artifacts
+dotnet tool install --global Aibysitter.Cli
 ```
 
 ```
@@ -127,7 +126,7 @@ Composition: `# title`, the intro when one pack is chosen, then sections in pack
 
 ## GitHub Action
 
-`action.yml` lints rules files with the CLI and posts a check run named `Aibysitter rules` with an annotation per finding. Not on the Marketplace yet; while the repository is private, other repositories of the same owner can use it once Settings → Actions → General → Access allows it.
+`action.yml` lints rules files with the CLI and posts a check run named `Aibysitter rules` with an annotation per finding. On the [GitHub Marketplace](https://github.com/marketplace/actions/aibysitter-rules-lint).
 
 ```yaml
 permissions:
@@ -135,7 +134,7 @@ permissions:
   checks: write
 steps:
   - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-  - uses: jbailey2900/aibysitter@main
+  - uses: jbailey2900/aibysitter@v1
     with:
       fail-on-error: "true"
 ```

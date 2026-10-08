@@ -10,7 +10,7 @@
 <h1>Rules packs</h1>
 <p class="lede">Sections for a rules file, grouped by stack. Combine packs into one file with the CLI; each section is scored on its own, each pack as a whole CLAUDE.md. Public domain (CC0).</p>
 <pre><code>aibysitter init --packs starter,aspnet-web-api --format claude</code></pre>
-<p class="note">Formats: @string.Join(", ", PackComposer.ShortNames.Keys). A heading in more than one pack becomes one section. The CLI is not published yet: <a href="https://github.com/jbailey2900/aibysitter#cli">build it from source</a>. Machine-readable: <a href="/packs/registry.json">/packs/registry.json</a>.</p>
+<p class="note">Formats: @string.Join(", ", PackComposer.ShortNames.Keys). A heading in more than one pack becomes one section. CLI: <code>dotnet tool install --global Aibysitter.Cli</code>. Machine-readable: <a href="/packs/registry.json">/packs/registry.json</a>.</p>
 
 <ul class="packs">
     @foreach (var view in Model.Packs)

@@ -14,12 +14,12 @@ public class GoingPublicChecklistTests
             .ToList();
 
     [Fact]
-    public void TextThatChanges_IsStillInEachFile()
+    public void TextThatChanges_IsGoneFromEachFile()
     {
         var rows = Rows();
 
         Assert.Equal(5, rows.Count);
-        Assert.All(rows, r => Assert.Contains(r.Text, File.ReadAllText(Path.Combine(NodeRunner.RepoRoot, r.File)), StringComparison.Ordinal));
+        Assert.All(rows, r => Assert.DoesNotContain(r.Text, File.ReadAllText(Path.Combine(NodeRunner.RepoRoot, r.File)), StringComparison.Ordinal));
     }
 
     [Theory]
