@@ -105,6 +105,7 @@ h1, h2, h3 {
     font-weight: 700;
     line-height: 1.3;
     margin: 0 0 var(--space-lg);
+    overflow-wrap: break-word;
 }
 
 h1 { font-size: var(--text-display); letter-spacing: -0.01em; max-width: 24ch; }
@@ -130,6 +131,8 @@ a:hover { text-decoration-thickness: 2px; }
 }
 
 code, pre, kbd { font-family: var(--font); font-size: inherit; }
+
+main :not(pre) > code { overflow-wrap: anywhere; }
 
 .skip {
     position: absolute;
@@ -596,7 +599,6 @@ dd { margin: 0; max-width: var(--measure); }
 .pack-sections li { border-top: 1px solid var(--hairline); }
 .pack-sections summary { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding: var(--space-sm) 0; cursor: pointer; }
 .pack-sections .rendered { padding-bottom: var(--space-md); }
-.pack-sections .rendered code { overflow-wrap: anywhere; }
 .pack { min-width: 0; }
 .pack pre { max-width: 100%; }
 
@@ -703,7 +705,3 @@ dd { margin: 0; max-width: var(--measure); }
 
 main code { background: var(--surface); padding: 0 3px; border-radius: 2px; }
 main pre code, .terminal code { background: none; padding: 0; }
-
-/* Error page (standalone, no layout) */
-
-.error-page code { overflow-wrap: anywhere; }

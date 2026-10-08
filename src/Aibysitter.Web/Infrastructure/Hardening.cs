@@ -70,34 +70,35 @@ public static class Hardening
         HttpMethods.IsGet(request.Method) && request.Path.StartsWithSegments(BadgeEndpoints.Prefix.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// API callers get a ProblemDetails body and no-store. Form posts get a text body with the limit and retry window,
-    /// no-store and Retry-After. Badges keep the bare 429.
+    /// Form posts and API calls get no-store and Retry-After. Form posts get a text body with the limit and retry window;
+    /// API callers get ProblemDetails. Badges keep the bare 429.
     /// </summary>
     private static ValueTask WriteRejectionAsync(OnRejectedContext context, LintRateLimitSettings lint, CancellationToken cancellationToken)
     {
         var request = context.HttpContext.Request;
         var response = context.HttpContext.Response;
-        if (HttpMethods.IsPost(request.Method) && request.Path.Equals("/Lint", StringComparison.OrdinalIgnoreCase))
-        {
-            response.Headers.CacheControl = "no-store";
-            var retry = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var after)
-                ? (int?)Math.Max(1, (int)Math.Ceiling(after.TotalSeconds))
-                : null;
-            if (retry is { } seconds)
-            {
-                response.Headers.RetryAfter = seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            }
-
-            response.ContentType = "text/plain; charset=utf-8";
-            return new ValueTask(response.WriteAsync(FormRejectionText(lint, retry), cancellationToken));
-        }
-
-        if (!request.Path.Equals(LintApi.Path, StringComparison.OrdinalIgnoreCase))
+        var isForm = HttpMethods.IsPost(request.Method) && request.Path.Equals("/Lint", StringComparison.OrdinalIgnoreCase);
+        var isApi = request.Path.Equals(LintApi.Path, StringComparison.OrdinalIgnoreCase);
+        if (!isForm && !isApi)
         {
             return ValueTask.CompletedTask;
         }
 
         response.Headers.CacheControl = "no-store";
+        var retry = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var after)
+            ? (int?)Math.Max(1, (int)Math.Ceiling(after.TotalSeconds))
+            : null;
+        if (retry is { } seconds)
+        {
+            response.Headers.RetryAfter = seconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (isForm)
+        {
+            response.ContentType = "text/plain; charset=utf-8";
+            return new ValueTask(response.WriteAsync(FormRejectionText(lint, retry), cancellationToken));
+        }
+
         return new ValueTask(response.WriteAsJsonAsync(
             new Microsoft.AspNetCore.Mvc.ProblemDetails { Status = StatusCodes.Status429TooManyRequests, Title = "Too many requests. Try again in a minute." },
             options: null,

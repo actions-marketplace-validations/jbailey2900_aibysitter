@@ -72,7 +72,11 @@ public class HardeningTests(WebApplicationFactory<Program> factory)
 
         var api = await PostApi(client, NonCloudflareIp);
         Assert.Equal("application/problem+json", api.Content.Headers.ContentType?.MediaType);
-        Assert.Null(api.Headers.RetryAfter);
+        Assert.InRange(api.Headers.RetryAfter!.Delta!.Value.TotalSeconds, 1, 60);
+        Assert.Equal("no-store", api.Headers.CacheControl?.ToString());
+        using var problem = System.Text.Json.JsonDocument.Parse(await api.Content.ReadAsStringAsync());
+        Assert.Equal("Too many requests. Try again in a minute.", problem.RootElement.GetProperty("title").GetString());
+        Assert.Equal(429, problem.RootElement.GetProperty("status").GetInt32());
     }
 
     [Fact]
