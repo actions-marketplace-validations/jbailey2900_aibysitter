@@ -65,7 +65,7 @@ public class ConfigValidationTests
         [
             (5, ".github/aibysitter.json: scope entry \"src/**.cs\": ** must be a whole path segment; for files in any folder use **/*.cs"),
             (6, ".github/aibysitter.json: \"scope\" entries must be non-empty strings"),
-            (8, ".github/aibysitter.json: \"conclusion\" must be \"advisory\" or \"fail-on-errors\""),
+            (8, ".github/aibysitter.json: \"conclusion\" must be \"advisory\", \"fail-on-warnings\" or \"fail-on-errors\""),
             (9, ".github/aibysitter.json: \"disable\" entry \"P999\" is not a known check or rule ID"),
             (10, ".github/aibysitter.json: \"comment\" must be true or false"),
             (11, ".github/aibysitter.json: unknown key \"extra\""),
@@ -107,6 +107,25 @@ public class ConfigValidationTests
         Assert.Equal(ReviewConclusion.Failure, report.Conclusion);
         Assert.Equal("No findings; 1 config error", report.Title);
         Assert.Contains("Config errors (defaults used for these; the check fails under fail-on-errors):", report.Summary);
+    }
+
+    [Fact]
+    public void Report_FailOnWarnings_WithConfigError_Fails()
+    {
+        var report = Report("{\"conclusion\": \"fail-on-warnings\", \"scope\": [\"src/\"]}", Added("src/A.cs", "public class A { }"));
+
+        Assert.Equal(ReviewConclusion.Failure, report.Conclusion);
+        Assert.Contains("Conclusion mode: `fail-on-warnings`.", report.Summary);
+        Assert.Contains("Config errors (defaults used for these; the check fails under fail-on-warnings):", report.Summary);
+    }
+
+    [Fact]
+    public void Report_FailOnWarnings_WarningFinding_Fails()
+    {
+        var report = Report("{\"conclusion\": \"fail-on-warnings\"}", Added(".github/workflows/ci.yml", "      - uses: actions/checkout@v7"));
+
+        Assert.Equal(ReviewConclusion.Failure, report.Conclusion);
+        Assert.Contains(report.Annotations, a => a.Title.StartsWith("P015", StringComparison.Ordinal) && a.Severity == Severity.Warning);
     }
 
     [Fact]

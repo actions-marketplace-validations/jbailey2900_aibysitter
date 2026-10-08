@@ -100,6 +100,15 @@ public partial class ConfigPageTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task Post_FailOnWarnings_WritesValue_KeepsRadio()
+    {
+        var html = await PostHtml(AllIds, "", "FailOnWarnings");
+
+        Assert.Contains("<pre id=\"config-json\"><code>" + Encoded("{\n  \"conclusion\": \"fail-on-warnings\"\n}\n") + "</code></pre>", html);
+        Assert.Contains("<input type=\"radio\" name=\"Conclusion\" value=\"FailOnWarnings\" checked=\"checked\" />", html);
+    }
+
+    [Fact]
     public async Task Post_Comment_WritesKey_KeepsCheckbox()
     {
         var response = await Post(AllIds, comment: true);

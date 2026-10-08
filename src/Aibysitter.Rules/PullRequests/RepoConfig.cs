@@ -8,6 +8,7 @@ public enum ConclusionMode
 {
     Advisory,
     FailOnErrors,
+    FailOnWarnings,
 }
 
 /// <param name="Line">1-based line in the config file.</param>
@@ -25,6 +26,17 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
     public const string FilePath = ".github/aibysitter.json";
 
     public static RepoConfig Default { get; } = new([], ConclusionMode.Advisory);
+
+    /// <summary>fail-on-warnings or fail-on-errors: findings at the threshold, and config errors, fail the check.</summary>
+    public bool FailsCheck => Conclusion != ConclusionMode.Advisory;
+
+    /// <summary>The config value: advisory, fail-on-warnings or fail-on-errors.</summary>
+    public static string ConclusionName(ConclusionMode mode) => mode switch
+    {
+        ConclusionMode.FailOnErrors => "fail-on-errors",
+        ConclusionMode.FailOnWarnings => "fail-on-warnings",
+        _ => "advisory",
+    };
 
     /// <summary>Check IDs (Pnnn) and rule IDs (Rnnn) listed under <c>disable</c>. Disabled checks do not run; disabled rules are skipped by P014.</summary>
     public IReadOnlySet<string> Disabled { get; init; } = new HashSet<string>(StringComparer.Ordinal);
@@ -125,8 +137,11 @@ public sealed partial record RepoConfig(IReadOnlyList<Glob> Scope, ConclusionMod
                             case "fail-on-errors":
                                 conclusion = ConclusionMode.FailOnErrors;
                                 break;
+                            case "fail-on-warnings":
+                                conclusion = ConclusionMode.FailOnWarnings;
+                                break;
                             default:
-                                Error("conclusion", "\"conclusion\" must be \"advisory\" or \"fail-on-errors\"");
+                                Error("conclusion", "\"conclusion\" must be \"advisory\", \"fail-on-warnings\" or \"fail-on-errors\"");
                                 break;
                         }
 

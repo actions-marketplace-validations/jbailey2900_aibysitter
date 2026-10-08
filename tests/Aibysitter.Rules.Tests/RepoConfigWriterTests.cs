@@ -34,6 +34,18 @@ public class RepoConfigWriterTests
         Assert.Equal(["P002", "R006"], config.Disabled.Order(StringComparer.Ordinal));
     }
 
+    [Theory]
+    [InlineData(ConclusionMode.Advisory, "advisory")]
+    [InlineData(ConclusionMode.FailOnWarnings, "fail-on-warnings")]
+    [InlineData(ConclusionMode.FailOnErrors, "fail-on-errors")]
+    public void Conclusion_WrittenAndRoundTrips(ConclusionMode mode, string value)
+    {
+        var json = RepoConfigWriter.Write([], mode, []);
+
+        Assert.Equal("{\n  \"conclusion\": \"" + value + "\"\n}\n", json);
+        Assert.Equal(mode, RepoConfig.Parse(json).Config.Conclusion);
+    }
+
     [Fact]
     public void Glob_WithQuotesAndNonAscii_IsEscapedOnlyWhereJsonRequires()
     {

@@ -19,7 +19,7 @@ public static class RepoConfigWriter
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-    public static string ConclusionValue(ConclusionMode mode) => mode == ConclusionMode.FailOnErrors ? "fail-on-errors" : "advisory";
+    public static string ConclusionValue(ConclusionMode mode) => RepoConfig.ConclusionName(mode);
 
     /// <summary>One glob per line; lines trimmed, blank lines and repeats dropped, order kept.</summary>
     public static IReadOnlyList<string> ScopeLines(string? text) =>

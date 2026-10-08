@@ -27,7 +27,14 @@
     <dt>Severity</dt>
     @if (Model.IsPullRequestCheck)
     {
-        <dd>@Model.Severity@(Model.Severity == Aibysitter.Rules.Severity.Error ? " (fails the check when the repo sets fail-on-errors)" : "")</dd>
+        <dd>@(Model.Doc.Id == Aibysitter.Rules.PullRequests.RulesFileLint.CheckId
+            ? "Per rule (fails the check under fail-on-warnings or fail-on-errors when a rule fires at Error)"
+            : Model.Severity switch
+            {
+                Aibysitter.Rules.Severity.Error => "Error (fails the check under fail-on-warnings and fail-on-errors)",
+                Aibysitter.Rules.Severity.Warning => "Warning (fails the check under fail-on-warnings)",
+                _ => Model.Severity.ToString(),
+            })</dd>
     }
     else if (Model.Doc.AppOnly)
     {
