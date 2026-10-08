@@ -121,7 +121,7 @@ public class ErrorPageTests(WebApplicationFactory<Program> factory)
 
         var css = await BrokenCatalogsClient().GetAsync("/css/site.css");
         Assert.Equal(HttpStatusCode.OK, css.StatusCode);
-        Assert.Contains(".error-page code", await css.Content.ReadAsStringAsync());
+        Assert.Contains("main :not(pre) > code", await css.Content.ReadAsStringAsync());
     }
 
     [Theory]
