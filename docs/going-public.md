@@ -9,14 +9,14 @@ Steps in order. Repository settings paths are under `github.com/jbailey2900/aiby
 
 ## At the flip
 
-- [ ] General → Danger Zone → Change visibility → Public.
+- [x] General → Danger Zone → Change visibility → Public. (2026-10-08)
 - [ ] Security → Private vulnerability reporting: on (`SECURITY.md` and the issue chooser link to it).
 - [ ] Security → Secret scanning and push protection: on.
 - [ ] Security → Dependabot alerts: on.
 - [ ] Rules → Rulesets → new branch ruleset for `main`: require a pull request; require status checks `build-test` and `catalogs-windows`; block force pushes; restrict deletions.
 - [x] Install the Aibysitter GitHub App on `jbailey2900/aibysitter` (`CONTRIBUTING.md` says every pull request gets its check).
 - [x] Issues → Labels: create `false positive` (the False positive template applies it; `bug` and `enhancement` exist by default).
-- [ ] nuget.org → Trusted Publishing: policy `aibysitter-github-actions` (owner `aibysitter`, repository `jbailey2900/aibysitter`, workflow `release-cli.yml`, no environment) shows Active. Created 2026-10-07 while private: temporarily active for 7 days, then inactive. Restart the 7-day window before the CLI release; the first publish makes it permanent. No `NUGET_API_KEY` secret.
+- [x] nuget.org → Trusted Publishing: policy `aibysitter-github-actions` (owner `aibysitter`, repository `jbailey2900/aibysitter`, workflow `release-cli.yml`, no environment) shows Active. Created 2026-10-07 while private: temporarily active for 7 days, then inactive. Restart the 7-day window before the CLI release; the first publish makes it permanent. No `NUGET_API_KEY` secret. First publish 2026-10-08.
 
 ## After
 
@@ -31,6 +31,6 @@ Steps in order. Repository settings paths are under `github.com/jbailey2900/aiby
 | `README.md` | Not on the Marketplace yet | Marketplace link |
 | `README.md` | jbailey2900/aibysitter@main | `jbailey2900/aibysitter@v1` |
 
-- [ ] CLI release: on `main`, tag `cli-v<Version>` from `src/Aibysitter.Cli/Aibysitter.Cli.csproj` and push the tag. `release-cli.yml` checks the tag against `main` and `<Version>`, runs the CLI tests, packs and pushes. Check the package page on nuget.org.
-- [ ] Action release: accept the GitHub Marketplace Developer Agreement (account needs 2FA). On `main`, tag `v1.0.0` and `v1`. Open `action.yml` on GitHub → Draft a release → tag `v1.0.0` → Publish this Action to the GitHub Marketplace → primary category Code quality, secondary Continuous integration.
+- [x] CLI release (2026-10-08, `cli-v0.4.1`, Release CLI run 37782048429): on `main`, tag `cli-v<Version>` from `src/Aibysitter.Cli/Aibysitter.Cli.csproj` and push the tag. `release-cli.yml` checks the tag against `main` and `<Version>`, runs the CLI tests, packs and pushes. Check the package page on nuget.org.
+- [x] Action release (2026-10-08, `v1.0.0` and `v1` on `5fa71d0`, https://github.com/marketplace/actions/aibysitter-rules-lint): accept the GitHub Marketplace Developer Agreement (account needs 2FA). On `main`, tag `v1.0.0` and `v1`. Open `action.yml` on GitHub → Draft a release → tag `v1.0.0` → Publish this Action to the GitHub Marketplace → primary category Code quality, secondary Continuous integration.
 - [ ] Project description: remove "Private until the GitHub App works".
